@@ -98,9 +98,9 @@ export function compactifiedExponentialSurvival(
       : Math.log(numerator) - Math.log(denominator);
   const eta = Math.exp(
     Math.log(params.p) +
-      Math.log(params.kappa) -
-      endpointProduct -
-      Math.log(denominator),
+    Math.log(params.kappa) -
+    endpointProduct -
+    Math.log(denominator),
   );
   if (!Number.isFinite(eta))
     throw new RangeError(
