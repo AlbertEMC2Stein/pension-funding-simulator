@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { PageHeading } from "../common";
 import { useSimulationDraft } from "../SimulationDraftContext";
-import { buildSimulationOptions } from "../../lib/simulation-options";
+import {
+  buildMarketOptions,
+  buildSimulationOptions,
+} from "../../lib/simulation-options";
+import { calibrateMarket } from "../../lib/calibrate-market";
 import styles from "./developer.module.css";
 
 interface Activity {
@@ -17,6 +21,10 @@ interface Activity {
 export default function DeveloperView() {
   const { draft, prepared } = useSimulationDraft();
   const current = buildSimulationOptions(draft);
+  const marketInput = buildMarketOptions(draft.market);
+  const calibration = marketInput.ok
+    ? calibrateMarket(marketInput.market)
+    : null;
   const [activity, setActivity] = useState<Activity[]>([]);
 
   useEffect(() => {
@@ -51,6 +59,47 @@ export default function DeveloperView() {
         description="Inspect the current inputs and recent activity during local development."
       />
       <div className={styles.grid}>
+        <article className="form-card">
+          <div className="card-heading">
+            <div>
+              <span className="tiny-label">LIVE · MANUAL INPUTS</span>
+              <h3>Market calibration</h3>
+            </div>
+            <span className="chip">
+              {!calibration
+                ? "CHECK INPUTS"
+                : calibration.ok
+                  ? "CALCULATED"
+                  : "FAILED"}
+            </span>
+          </div>
+          <p>
+            Real annual parameters, covariance, Merton direction and rho. These
+            values are not yet connected to simulation or mortality results.
+          </p>
+          {!marketInput.ok ? (
+            <ul className={styles.errors}>
+              {marketInput.errors.map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+          ) : calibration && !calibration.ok ? (
+            <p role="alert">{calibration.error}</p>
+          ) : (
+            calibration?.ok && (
+              <>
+                <p>
+                  {calibration.market.paperAssumptions.positiveRho
+                    ? "Positive rho; other result-specific conditions still require checking."
+                    : "Zero rho: paper-based analytical results are outside the model's scope."}
+                </p>
+                <pre className={styles.code}>
+                  {JSON.stringify(calibration.market, null, 2)}
+                </pre>
+              </>
+            )
+          )}
+        </article>
         <article className="form-card">
           <div className="card-heading">
             <div>

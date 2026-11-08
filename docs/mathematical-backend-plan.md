@@ -21,6 +21,8 @@ The research project is a reference, not a runtime dependency. Before porting an
 
 Document the meaning of nominal return, inflation, real drift and rate, covariance, market price of risk and the paper's convention for rho. Separate input validation from assumptions that restrict only specific results. Identify small, versioned reference cases and their provenance; do not invent expected outputs.
 
+Draft for review: [manual market-calibration specification](market-calibration-specification.md).
+
 **Check:** Compare the website's interpretation of input units and asset order with the research implementation. Agree on edge cases, including zero and negative Merton-direction components, before translating dependent formulas.
 
 ### 2. Market calibration from manual inputs

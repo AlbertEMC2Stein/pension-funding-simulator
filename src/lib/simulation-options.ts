@@ -49,8 +49,8 @@ export interface SimulationOptions {
   policy: {
     projected: boolean;
     withdrawal:
-      | { mode: "targetRisk"; targetRisk: number }
-      | { mode: "customAmount"; annualAmount: number };
+    | { mode: "targetRisk"; targetRisk: number }
+    | { mode: "customAmount"; annualAmount: number };
   };
   numerical: { paths: number; timeStep: "monthly" | "fortnightly" | "weekly" };
 }
@@ -86,12 +86,37 @@ export function parseAmount(text: string): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
+/** Validate and convert market inputs independently of the investor profile. */
+export function buildMarketOptions(
+  market: MarketCalibrationDraft,
+):
+  | { ok: true; market: SimulationOptions["market"] }
+  | { ok: false; errors: string[] } {
+  const errors = marketValidationErrors(market);
+  if (errors.length) return { ok: false, errors };
+  return {
+    ok: true,
+    market: {
+      currency: "EUR",
+      realRiskFreeRate: Number(market.realRiskFreePercent) / 100,
+      inflationRate: Number(market.inflationPercent) / 100,
+      assets: market.assets.map((asset) => ({
+        name: asset.name.trim(),
+        nominalReturn: Number(asset.nominalReturnPercent) / 100,
+        volatility: Number(asset.volatilityPercent) / 100,
+      })),
+      correlation: market.correlations.map((row) => row.map(Number)),
+    },
+  };
+}
+
 /** Validate before conversion; no model-specific calculations are performed. */
 export function buildSimulationOptions(
   draft: SimulationDraft,
 ): { ok: true; options: SimulationOptions } | { ok: false; errors: string[] } {
-  const errors = marketValidationErrors(draft.market);
-  const { investor, simulation, market } = draft;
+  const marketResult = buildMarketOptions(draft.market);
+  const errors = marketResult.ok ? [] : [...marketResult.errors];
+  const { investor, simulation } = draft;
   const year = (value: string) =>
     /^\d{4}$/.test(value.trim()) ? Number(value) : NaN;
   const birthYear = year(investor.birthYear);
@@ -142,7 +167,7 @@ export function buildSimulationOptions(
     errors.push("Annual withdrawal must be non-negative.");
   if (!Number.isSafeInteger(simulation.paths) || simulation.paths <= 0)
     errors.push("Number of paths must be a positive integer.");
-  if (errors.length) return { ok: false, errors };
+  if (errors.length || !marketResult.ok) return { ok: false, errors };
   const maleWeight =
     investor.mortality === "male"
       ? 1
@@ -152,17 +177,7 @@ export function buildSimulationOptions(
   return {
     ok: true,
     options: {
-      market: {
-        currency: "EUR",
-        realRiskFreeRate: Number(market.realRiskFreePercent) / 100,
-        inflationRate: Number(market.inflationPercent) / 100,
-        assets: market.assets.map((asset) => ({
-          name: asset.name.trim(),
-          nominalReturn: Number(asset.nominalReturnPercent) / 100,
-          volatility: Number(asset.volatilityPercent) / 100,
-        })),
-        correlation: market.correlations.map((row) => row.map(Number)),
-      },
+      market: marketResult.market,
       investor: {
         birthYear,
         retirementYear,
@@ -179,13 +194,13 @@ export function buildSimulationOptions(
         withdrawal:
           simulation.withdrawalMode === "targetRisk"
             ? {
-                mode: "targetRisk",
-                targetRisk: simulation.targetRiskPercent / 100,
-              }
+              mode: "targetRisk",
+              targetRisk: simulation.targetRiskPercent / 100,
+            }
             : {
-                mode: "customAmount",
-                annualAmount: simulation.withdrawalEuros,
-              },
+              mode: "customAmount",
+              annualAmount: simulation.withdrawalEuros,
+            },
       },
       numerical: { paths: simulation.paths, timeStep: simulation.timeStep },
     },
