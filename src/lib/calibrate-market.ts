@@ -1,6 +1,6 @@
 import type { SimulationOptions } from "./simulation-options";
 
-type MarketInput = SimulationOptions["market"];
+type MarketInput = Omit<SimulationOptions["market"], "nominalRiskFreeRate">;
 
 /** Annual real model parameters, in the same asset order as the input. */
 export interface CalibratedMarket {
@@ -133,7 +133,7 @@ export function calibrateMarket(input: MarketInput): Result {
     ...correlation.map((row, i) =>
       Math.abs(
         row.reduce((sum, value, j) => sum + value * scaledDirection[j], 0) -
-        scaledExcess[i],
+          scaledExcess[i],
       ),
     ),
   );
@@ -143,7 +143,7 @@ export function calibrateMarket(input: MarketInput): Result {
         row.reduce((sum, value) => sum + Math.abs(value), 0),
       ),
     ) *
-    Math.max(...scaledDirection.map(Math.abs)) +
+      Math.max(...scaledDirection.map(Math.abs)) +
     Math.max(...scaledExcess.map(Math.abs));
   const zeroPremium = excessReturn.every((value) => value === 0);
   if (

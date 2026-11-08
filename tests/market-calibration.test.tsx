@@ -9,8 +9,37 @@ import {
   marketValidationErrors,
   MAX_ASSETS,
   removeAsset,
+  nominalRiskFreeRateError,
+  realRateFromNominal,
   setCorrelation,
 } from "../src/lib/market-calibration";
+
+test("the derived real risk-free rate must be strictly positive", () => {
+  for (const value of ["0", "-0.5", "2", "", "not a number"])
+    assert.ok(nominalRiskFreeRateError(value, "2"));
+  assert.equal(nominalRiskFreeRateError("2.5", "2"), null);
+  assert.equal(nominalRiskFreeRateError("0", "-1"), null);
+  const market = initialMarketCalibration();
+  market.nominalRiskFreePercent = "0";
+  assert.ok(
+    marketValidationErrors(market).some((error) =>
+      /greater than 0%/.test(error),
+    ),
+  );
+});
+
+test("nominal rate converts using the exact compounded inflation relationship", () => {
+  const market = initialMarketCalibration();
+  const realRate = realRateFromNominal(
+    market.nominalRiskFreePercent,
+    market.inflationPercent,
+  )!;
+  assert.ok(Math.abs(realRate - Math.log(1.025 / 1.02)) < 1e-14);
+  assert.ok(
+    Math.abs(realRateFromNominal("2.5", "1")! - Math.log(1.025 / 1.01)) < 1e-14,
+  );
+  assert.equal(realRateFromNominal("2.5", "-100"), null);
+});
 
 test("initial correlation matrix uses the paper's correlation and is valid", () => {
   const market = initialMarketCalibration();

@@ -21,6 +21,8 @@ function close(actual: number, expected: number, tolerance = 1e-12) {
 
 test("manual calibration matches the paper's two-asset reference", () => {
   const input = baseline();
+  // The paper's reference rate is 0.5% real; the website default is 0.489%.
+  input.realRiskFreeRate = 0.005;
   const copy = structuredClone(input);
   const result = calibrateMarket(input);
   assert.ok(result.ok);

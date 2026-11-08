@@ -9,7 +9,11 @@ import {
   TermLink,
   useDraft,
 } from "../common";
-import { type MarketCalibrationDraft } from "../../lib/market-calibration";
+import {
+  nominalRiskFreeRateError,
+  realRateFromNominal,
+  type MarketCalibrationDraft,
+} from "../../lib/market-calibration";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import { MarketEditor } from "./MarketEditor";
 import { parseAmount } from "../../lib/simulation-options";
@@ -31,6 +35,14 @@ function MarketSetup() {
   const [stress, setStress] = useState(false);
   const { draft, setDraft } = useSimulationDraft();
   const market = draft.market;
+  const riskFreeError = nominalRiskFreeRateError(
+    market.nominalRiskFreePercent,
+    market.inflationPercent,
+  );
+  const realRate = realRateFromNominal(
+    market.nominalRiskFreePercent,
+    market.inflationPercent,
+  );
   // Enable only after a CSV time-series import has successfully been calibrated.
   // Selecting the draft import option alone does not create a calibration.
   const hasHistoricalCsvCalibration = false;
@@ -125,20 +137,36 @@ function MarketSetup() {
               </select>
             </label>
             <label>
-              Real risk-free rate
-              <div className="input-suffix">
+              Nominal risk-free rate
+              <div
+                className={`input-suffix${riskFreeError ? " input-suffix-invalid" : ""}`}
+              >
                 <input
-                  value={market.realRiskFreePercent}
+                  value={market.nominalRiskFreePercent}
+                  aria-invalid={!!riskFreeError}
+                  aria-describedby="risk-free-rate-hint risk-free-rate-error"
                   onChange={(event) =>
                     editMarket({
                       ...market,
-                      realRiskFreePercent: event.target.value,
+                      nominalRiskFreePercent: event.target.value,
                     })
                   }
                   inputMode="decimal"
                 />
                 <span>% / year</span>
               </div>
+              <small id="risk-free-rate-hint" className="cohort-input-hint">
+                {realRate === null
+                  ? "Enter a valid rate and inflation assumption."
+                  : `Real rate after inflation: ${Number((realRate * 100).toPrecision(4))}% / year (continuously compounded).`}
+              </small>
+              <small
+                id="risk-free-rate-error"
+                className="field-error"
+                aria-live="polite"
+              >
+                {riskFreeError}
+              </small>
             </label>
             <label>
               Inflation assumption

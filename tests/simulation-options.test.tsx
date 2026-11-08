@@ -15,6 +15,11 @@ test("builds a numerical, independent snapshot from current inputs", () => {
   const result = buildSimulationOptions(draft);
   assert.ok(result.ok);
   assert.equal(result.options.market.assets[0].nominalReturn, 0.0675);
+  assert.equal(result.options.market.nominalRiskFreeRate, 0.025);
+  assert.ok(
+    Math.abs(result.options.market.realRiskFreeRate - Math.log(1.025 / 1.02)) <
+      1e-14,
+  );
   assert.equal(result.options.market.assets[0].volatility, 0.145);
   assert.deepEqual(result.options.market.correlation, [
     [1, 0.25],

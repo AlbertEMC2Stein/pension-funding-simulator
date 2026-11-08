@@ -6,7 +6,7 @@ Status: **proposed specification for review**. The website does not yet perform 
 
 The primary reference is the research manuscript, sections 2.1 and 6.1.1, together with `code/utils/getMarketCalibration.m` in the sibling `gompertz-pension-funding` project. The manuscript uses a constant-coefficient, multi-asset Black–Scholes market in real terms. Its numerical example describes how its nominal annualized inputs are interpreted and converted. The manuscript is a research draft; this specification is not an independent verification of its mathematical results.
 
-The website will implement its own calculation and tests; it will not import or run MATLAB code at runtime. The website's initial values match the paper's numerical market inputs, although its asset names are more generic. Restoring the preset is not yet implemented.
+The website implements its own calculation and tests; it does not import or run MATLAB code at runtime. Its initial asset and inflation assumptions match the paper's numerical example, although the asset names are more generic. Its default 2.5% effective annual nominal risk-free rate implies approximately 0.489% real at 2% inflation; the paper reference uses 0.5% real. Restoring the preset is not yet implemented.
 
 ## Inputs and units
 
@@ -17,7 +17,7 @@ All model rates and probabilities below are decimal fractions: for example, the 
 | `gN[i]` | Expected annual nominal compounded growth rate for risky asset `i` | Finite, greater than -1 |
 | `vol[i]` | Annualized volatility of the asset's log return | Finite and strictly positive; units per square root of a year |
 | `inflation` | Effective annual deterministic inflation assumption | Finite, greater than -1 |
-| `r` | Continuously compounded real risk-free rate per year | Finite and strictly positive for the present model |
+| `iN` | Effective annual nominal risk-free rate | Finite, greater than -1; must imply `r > 0` |
 | `R[i][j]` | Correlation of risky-asset returns | Symmetric, diagonal 1, positive definite, with entries in [-1, 1] |
 | asset names | Labels for each risky asset | Nonempty and unique in the editor; order matches vectors and matrix |
 
@@ -25,7 +25,7 @@ The editor currently permits 1–10 risky assets. Its `nominalReturn` snapshot f
 
 ## Derived quantities
 
-For each asset, the paper's **interpretation of its annualized forecast** leads to
+First convert the effective nominal cash rate and inflation to the model rate, `r = ln(1 + iN) - ln(1 + inflation)`. The current analytical model requires `r > 0`. For each asset, the paper's **interpretation of its annualized forecast** then leads to
 
 ```text
 realLogGrowth[i] = ln(1 + gN[i]) - ln(1 + inflation)
@@ -44,7 +44,7 @@ rho = (theta transpose * m) / 2
 
 The factor one-half follows the manuscript. `m` is not, by itself, a portfolio allocation. The market price of Brownian risk is not generally the same vector as `m` and depends on the chosen factorization of `Sigma`; it is not needed as a manual input for this calibration.
 
-An optional derived nominal cash rate for inspection is `exp(r) * (1 + inflation) - 1`, an effective annual rate. All computations use unrounded inputs and intermediate values. Display rounding must not feed back into the model. Real withdrawals and capital use euros of the calibration year; do not apply inflation to a real withdrawal a second time.
+The inverse relationship is `iN = exp(r) * (1 + inflation) - 1`. All computations use unrounded inputs and intermediate values. Display rounding must not feed back into the model. Real withdrawals and capital use euros of the calibration year; do not apply inflation to a real withdrawal a second time.
 
 ## Validation and diagnostics
 

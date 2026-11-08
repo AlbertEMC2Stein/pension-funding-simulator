@@ -19,7 +19,7 @@ export interface MarketCalibrationDraft {
   assets: MarketAsset[];
   /** String-valued correlation matrix ordered exactly like `assets`. */
   correlations: string[][];
-  realRiskFreePercent: string;
+  nominalRiskFreePercent: string;
   inflationPercent: string;
   /** Monotone counter so removed asset IDs are not reused during this session. */
   nextAssetId: number;
@@ -50,7 +50,7 @@ export function initialMarketCalibration(): MarketCalibrationDraft {
       ["1", "0.08"],
       ["0.08", "1"],
     ],
-    realRiskFreePercent: "0.50",
+    nominalRiskFreePercent: "2.50",
     inflationPercent: "2.00",
     nextAssetId: 3,
   };
@@ -136,6 +136,37 @@ function parseDecimal(value: string): number | null {
   return Number.isFinite(number) ? number : null;
 }
 
+/** Convert effective annual nominal and inflation percentages to real continuous rate. */
+export function realRateFromNominal(
+  nominalPercent: string,
+  inflationPercent: string,
+): number | null {
+  const nominal = parseDecimal(nominalPercent);
+  const inflation = parseDecimal(inflationPercent);
+  if (
+    nominal === null ||
+    inflation === null ||
+    nominal <= -100 ||
+    inflation <= -100
+  )
+    return null;
+  return Math.log1p(nominal / 100) - Math.log1p(inflation / 100);
+}
+
+/** Validate the nominal input and the model's strictly positive real-rate condition. */
+export function nominalRiskFreeRateError(
+  value: string,
+  inflationPercent: string,
+): string | null {
+  const nominal = parseDecimal(value);
+  if (nominal === null || nominal <= -100)
+    return "Enter a nominal risk-free rate greater than −100%.";
+  const real = realRateFromNominal(value, inflationPercent);
+  if (real !== null && real <= 0)
+    return "The nominal risk-free rate must exceed inflation, so the real rate is greater than 0%.";
+  return null;
+}
+
 /**
  * Check dimensions, entries, symmetry and positive definiteness. Returns the
  * first human-readable error, or null when accepted. A Cholesky diagonal pivot
@@ -212,9 +243,11 @@ export function marketValidationErrors(
   ) {
     errors.push("Enter a positive annual volatility for each asset.");
   }
-  const rate = parseDecimal(market.realRiskFreePercent);
-  if (rate === null || rate <= 0)
-    errors.push("Enter a positive real risk-free rate for the current model.");
+  const rateError = nominalRiskFreeRateError(
+    market.nominalRiskFreePercent,
+    market.inflationPercent,
+  );
+  if (rateError) errors.push(rateError);
   const inflation = parseDecimal(market.inflationPercent);
   if (inflation === null || inflation <= -100)
     errors.push("Enter an inflation assumption greater than −100%.");

@@ -1,6 +1,7 @@
 import {
   initialMarketCalibration,
   marketValidationErrors,
+  realRateFromNominal,
   type MarketCalibrationDraft,
 } from "./market-calibration";
 import { validateCohortYears } from "./cohort-survival";
@@ -31,6 +32,7 @@ export interface SimulationDraft {
 export interface SimulationOptions {
   market: {
     currency: "EUR";
+    nominalRiskFreeRate: number;
     realRiskFreeRate: number;
     inflationRate: number;
     assets: { name: string; nominalReturn: number; volatility: number }[];
@@ -99,7 +101,11 @@ export function buildMarketOptions(
     ok: true,
     market: {
       currency: "EUR",
-      realRiskFreeRate: Number(market.realRiskFreePercent) / 100,
+      nominalRiskFreeRate: Number(market.nominalRiskFreePercent) / 100,
+      realRiskFreeRate: realRateFromNominal(
+        market.nominalRiskFreePercent,
+        market.inflationPercent,
+      )!,
       inflationRate: Number(market.inflationPercent) / 100,
       assets: market.assets.map((asset) => ({
         name: asset.name.trim(),
