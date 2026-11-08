@@ -1,0 +1,60 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { renderToStaticMarkup } from "react-dom/server";
+import { DraftContext } from "../src/components/common";
+import { Evaluation } from "../src/components/evaluation/Evaluation";
+import { Setup } from "../src/components/setup/Setup";
+import { DataView } from "../src/components/DataView";
+import { HelpView } from "../src/components/HelpView";
+import { SimulationDraftProvider } from "../src/components/SimulationDraftContext";
+
+const actions = { navigate: () => {}, notice: () => {} };
+
+test("evaluation renders illustrative results and the main controls", () => {
+  const html = renderToStaticMarkup(
+    <DraftContext.Provider value={actions}>
+      <SimulationDraftProvider>
+        <Evaluation />
+      </SimulationDraftProvider>
+    </DraftContext.Provider>,
+  );
+  assert.match(html, /Run simulation/);
+  assert.match(html, /Gompertz–Makeham/);
+  assert.match(html, /Borrowing exposure/);
+  assert.match(html, /NOT CALCULATED/);
+});
+
+test("setup and data views retain the requested design elements", () => {
+  const setup = renderToStaticMarkup(
+    <DraftContext.Provider value={actions}>
+      <SimulationDraftProvider>
+        <Setup />
+      </SimulationDraftProvider>
+    </DraftContext.Provider>,
+  );
+  const data = renderToStaticMarkup(
+    <DraftContext.Provider value={actions}>
+      <DataView />
+    </DraftContext.Provider>,
+  );
+  assert.doesNotMatch(setup, /Estimation uncertainty/);
+  assert.match(setup, /Custom mixture/);
+  assert.match(
+    setup,
+    /fitted mortality model can depend on market assumptions/,
+  );
+  assert.match(
+    setup,
+    /Market assumptions can affect the fitted mortality model/,
+  );
+  assert.match(setup, /cohort data themselves do not change/i);
+  assert.match(data, /Export scenario/);
+  assert.match(data, /Export results/);
+});
+
+test("dictionary renders its examples and mathematical notation", () => {
+  const html = renderToStaticMarkup(<HelpView selectedTerm={null} />);
+  assert.match(html, /Safe boundary/);
+  assert.match(html, /class="katex"/);
+  assert.match(html, /NEEDS UPDATE/);
+});

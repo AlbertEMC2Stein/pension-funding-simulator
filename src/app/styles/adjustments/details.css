@@ -1,0 +1,45 @@
+@media (max-width: 850px) {
+  .nav-label {
+    display: none;
+  }
+}
+.table-description {
+  margin: 0;
+  padding: 0 20px 16px;
+  color: var(--text-muted, #748e80);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.table-description-note {
+  padding-top: 0;
+}
+
+.mortality-market-note {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--surface-soft, rgba(127, 149, 144, 0.1));
+  line-height: 1.5;
+}
+.input-with-help {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.input-label-row {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.input-label-row .term-link {
+  font: inherit;
+}
+
+.input-hint {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}

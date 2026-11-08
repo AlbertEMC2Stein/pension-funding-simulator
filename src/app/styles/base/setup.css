@@ -1,0 +1,229 @@
+.tabs {
+    display: flex;
+    gap: 30px;
+    border-bottom: 1px solid #dde8df;
+    margin-top: 29px
+}
+
+.tab {
+    border: 0;
+    background: none;
+    padding: 0 3px 14px;
+    color: #a3b2a7;
+    font-size: 11px;
+    font-weight: 700
+}
+
+.tab.active {
+    color: #347c6b;
+    border-bottom: 2px solid #438a79
+}
+
+.setup-tab {
+    display: none
+}
+
+.setup-tab.active {
+    display: block
+}
+
+.form-card {
+    padding: 23px;
+    margin-bottom: 15px
+}
+
+.method-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 20px 0
+}
+
+.method {
+    background: #fff;
+    border: 1px solid #e3ebe4;
+    border-radius: 7px;
+    padding: 13px;
+    text-align: left;
+    color: #719283
+}
+
+.method.active {
+    border-color: #80b4a0;
+    background: #f3f9f3
+}
+
+.method span,
+.method strong,
+.method small {
+    display: block
+}
+
+.method span {
+    font-size: 19px;
+    color: #73a28d
+}
+
+.method strong {
+    font-size: 11px;
+    color: #47675b;
+    margin: 8px 0 4px
+}
+
+.method small {
+    font-size: 9px;
+    color: #a0b1a4
+}
+
+.input-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 18px
+}
+
+.input-grid label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #779083;
+    display: flex;
+    flex-direction: column;
+    gap: 8px
+}
+
+.input-grid input,
+.input-grid select {
+    width: 100%;
+    font-size: 11px
+}
+
+.input-suffix {
+    display: flex;
+    align-items: center;
+    border: 1px solid #e1eae2;
+    border-radius: 6px
+}
+
+.input-suffix input {
+    border: 0 !important
+}
+
+.input-suffix span {
+    font-size: 10px;
+    color: #9fb0a3;
+    padding-right: 11px;
+    white-space: nowrap
+}
+
+.asset-table {
+    margin-top: 17px
+}
+
+.asset-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 0;
+    border-top: 1px solid #edf2ed;
+    color: #698579;
+    font-size: 11px
+}
+
+.asset-head {
+    font-size: 8px;
+    letter-spacing: .8px;
+    font-weight: 700;
+    color: #a6b6aa
+}
+
+.asset-row small {
+    display: block;
+    margin: 4px 0 0 17px;
+    font-size: 9px;
+    color: #a7b6aa
+}
+
+.asset-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #72a995;
+    margin-right: 9px
+}
+
+.asset-dot.gold {
+    background: #c4a474
+}
+
+.inline-link {
+    padding: 10px 0
+}
+
+.insight-card {
+    background: #eaf2e8;
+    border-radius: 9px;
+    padding: 23px;
+    height: max-content;
+    margin-top: 34px
+}
+
+.insight-art {
+    height: 140px;
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    color: #598f7a
+}
+
+.insight-art span {
+    font-size: 60px;
+    font-weight: 400;
+    z-index: 1
+}
+
+.orbit {
+    position: absolute;
+    border: 1px solid #bfd5c1;
+    border-radius: 50%;
+    width: 125px;
+    height: 125px
+}
+
+.orbit.two {
+    width: 190px;
+    height: 190px;
+    border-color: #d3e3d0
+}
+
+.insight-card h3 {
+    font-size: 19px;
+    line-height: 1.4;
+    margin: 10px 0
+}
+
+.insight-card p {
+    font-size: 11px;
+    color: #88a394;
+    line-height: 1.8
+}
+
+.insight-divider {
+    border-top: 1px solid #d7e7d8;
+    margin: 23px 0 15px
+}
+
+.insight-link {
+    font-size: 10px;
+    font-weight: 700;
+    color: #6f9884
+}
+
+.mortality-card svg {
+    width: 100%;
+    height: 150px;
+    margin-top: 12px
+}
+

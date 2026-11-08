@@ -1,0 +1,21 @@
+/* Small React-specific adjustments; the existing draft theme is preserved. */
+.nav-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setting-callout .withdrawal-status {
+  color: var(--text-secondary);
+}
+
+/* Keep actions consistent across panel headings and cards. */
+.card-heading {
+  flex-wrap: wrap;
+}
+
+.card-secondary-action,
+.data-cards .button {
+  margin-top: 14px;
+}
+

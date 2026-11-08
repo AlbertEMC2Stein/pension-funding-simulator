@@ -1,0 +1,608 @@
+"use client";
+
+import { useState } from "react";
+import {
+  DemoAction,
+  PageHeading,
+  PreviewBanner,
+  SectionHeading,
+  TermLink,
+  useDraft,
+} from "../common";
+import { type MarketCalibrationDraft } from "../../lib/market-calibration";
+import { useSimulationDraft } from "../SimulationDraftContext";
+import { MarketEditor } from "./MarketEditor";
+import { parseAmount } from "../../lib/simulation-options";
+
+/**
+ * Market tab: owns the temporary editable market and shows calibration and
+ * stress-test placeholders. Importing data and restoring presets are not wired.
+ */
+function MarketSetup({ onMarketEdit }: { onMarketEdit: () => void }) {
+  const [method, setMethod] = useState("Preset");
+  const [stress, setStress] = useState(false);
+  const { draft, setDraft } = useSimulationDraft();
+  const market = draft.market;
+  // Enable only after a CSV time-series import has successfully been calibrated.
+  // Selecting the draft import option alone does not create a calibration.
+  const hasHistoricalCsvCalibration = false;
+  const { notice } = useDraft();
+  /** A change to an example assumption makes the current input mode manual. */
+  function editMarket(next: MarketCalibrationDraft) {
+    setDraft((current) => ({ ...current, market: next }));
+    setMethod("Manual");
+    onMarketEdit();
+  }
+  const methods = [
+    { name: "Preset", symbol: "✳", text: "Start with an example market" },
+    { name: "Manual", symbol: "≡", text: "Enter assumptions yourself" },
+    { name: "Import file", symbol: "↥", text: "CSV, YAML, or JSON" },
+  ];
+  return (
+    <div className="setup-layout">
+      <aside className="insight-card">
+        <div className="insight-art">
+          <span>✳</span>
+          <div className="orbit one" />
+          <div className="orbit two" />
+        </div>
+        <span className="tiny-label">A NOTE ON CALIBRATION</span>
+        <h3>Good inputs make better questions.</h3>
+        <p>
+          Historical estimates are a starting point. Review the period,
+          currency, and assumptions before using them.
+        </p>
+        <div className="insight-divider" />
+        <DemoAction message="Market data sources are not connected in this draft.">
+          Market data sources
+        </DemoAction>
+      </aside>
+      <div>
+        <SectionHeading
+          eyebrow="THE INVESTMENT UNIVERSE"
+          title="Market assumptions"
+          description="Define up to 10 assets and how they move together."
+        />
+        <div className="form-card">
+          <div className="card-heading">
+            <div>
+              <span className="tiny-label">INPUT METHOD</span>
+              <h3>Choose your starting point</h3>
+            </div>
+          </div>
+          <div className="method-grid">
+            {methods.map((item) => (
+              <button
+                key={item.name}
+                type="button"
+                className={`method ${method === item.name ? "active" : ""}`}
+                aria-pressed={method === item.name}
+                onClick={() => {
+                  if (item.name === "Preset" && method !== "Preset") {
+                    notice(
+                      "Restoring the preset is not connected yet. Your manual inputs have been kept.",
+                    );
+                    return;
+                  }
+                  setMethod(item.name);
+                }}
+              >
+                <span>{item.symbol}</span>
+                <strong>{item.name}</strong>
+                <small>{item.text}</small>
+              </button>
+            ))}
+          </div>
+          {method === "Import file" && (
+            <p>
+              File import is not connected yet. Your current manual inputs have
+              been kept.
+            </p>
+          )}
+          {method === "Manual" && (
+            <p>
+              Manual assumptions are editable below; they are not yet connected
+              to simulation results.
+            </p>
+          )}
+          <p className="mortality-market-note">
+            Market assumptions can affect the fitted mortality model. After
+            changing them, check the fit under Investor &amp; mortality. The
+            underlying cohort data do not change.
+          </p>
+          <div className="input-grid">
+            <label>
+              Base currency
+              <select defaultValue="EUR">
+                <option value="EUR">EUR — Euro</option>
+              </select>
+            </label>
+            <label>
+              Real risk-free rate
+              <div className="input-suffix">
+                <input
+                  value={market.realRiskFreePercent}
+                  onChange={(event) =>
+                    editMarket({
+                      ...market,
+                      realRiskFreePercent: event.target.value,
+                    })
+                  }
+                  inputMode="decimal"
+                />
+                <span>% / year</span>
+              </div>
+            </label>
+            <label>
+              Inflation assumption
+              <div className="input-suffix">
+                <input
+                  value={market.inflationPercent}
+                  onChange={(event) =>
+                    editMarket({
+                      ...market,
+                      inflationPercent: event.target.value,
+                    })
+                  }
+                  inputMode="decimal"
+                />
+                <span>% / year</span>
+              </div>
+            </label>
+          </div>
+        </div>
+        <MarketEditor market={market} onChange={editMarket} />
+        {hasHistoricalCsvCalibration && (
+          <div className="form-card diagnostic-card">
+            <div className="card-heading">
+              <div>
+                <span className="tiny-label">HISTORICAL CALIBRATION</span>
+                <h3>Estimation uncertainty</h3>
+                <p>
+                  Available after calibration from historical API or uploaded
+                  data.
+                </p>
+              </div>
+              <span className="chip">NOT CALCULATED</span>
+            </div>
+            <div className="diagnostic-meta">
+              {[
+                "Period",
+                "Frequency",
+                "Currency",
+                "Observations",
+                "Method",
+              ].map((label) => (
+                <span key={label}>
+                  {label} <b>—</b>
+                </span>
+              ))}
+            </div>
+            <div className="capital-table-wrap">
+              <table className="capital-table">
+                <thead>
+                  <tr>
+                    <th>Asset</th>
+                    <th>Annual return</th>
+                    <th>95% confidence interval</th>
+                    <th>Volatility</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {market.assets.map((asset, index) => (
+                    <tr key={asset.id}>
+                      <td>{asset.name.trim() || `Asset ${index + 1}`}</td>
+                      <td>—</td>
+                      <td>—</td>
+                      <td>—</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <details className="borrowing-details diagnostic-details">
+              <summary>Covariance & correlation details</summary>
+              <dl>
+                <div>
+                  <dt>Widest individual covariance interval</dt>
+                  <dd>—</dd>
+                </div>
+                <div>
+                  <dt>Asset pair</dt>
+                  <dd>—</dd>
+                </div>
+                <div>
+                  <dt>Matrix conditioning</dt>
+                  <dd>Not evaluated</dd>
+                </div>
+              </dl>
+              <p>
+                The widest individual interval is not a confidence bound for the
+                whole matrix. A near-singular covariance warning will appear
+                when applicable.
+              </p>
+            </details>
+            <p className="chart-disclaimer">
+              Intervals describe historical-parameter estimation uncertainty,
+              not guaranteed future return ranges.
+            </p>
+          </div>
+        )}
+        <div className="form-card diagnostic-card">
+          <div className="card-heading">
+            <div>
+              <span className="tiny-label">SCENARIO COMPARISON</span>
+              <h3>Recalibrated market scenarios</h3>
+              <p>
+                Compare estimated return assumptions with covariance held fixed.
+              </p>
+            </div>
+            <span className="chip">NOT CALCULATED</span>
+          </div>
+          <label className="check-card scenario-toggle">
+            <input
+              type="checkbox"
+              checked={stress}
+              onChange={(event) => setStress(event.target.checked)}
+            />
+            <span>
+              <strong>Explore return scenarios</strong>
+              <small>
+                Recalculate the policy and compatible mortality calibration for
+                each scenario.
+              </small>
+            </span>
+          </label>
+          {stress && (
+            <>
+              <div className="capital-table-wrap">
+                <table className="capital-table">
+                  <thead>
+                    <tr>
+                      <th>Scenario</th>
+                      <th>Return assumptions</th>
+                      <th>Diagnostics</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      ["Baseline", "Historical estimates"],
+                      ["Lower returns", "Individual lower bounds"],
+                      ["Higher returns", "Individual upper bounds"],
+                    ].map(([name, assumption]) => (
+                      <tr key={name}>
+                        <td>{name}</td>
+                        <td>{assumption}</td>
+                        <td>Not evaluated</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="chart-disclaimer">
+                Individual interval endpoints are not a joint confidence region
+                or guaranteed worst- and best-case outcomes.
+              </p>
+            </>
+          )}
+        </div>
+        <div className="feasibility-status market-assumptions" role="status">
+          <strong>
+            Assumption checks <span>Not evaluated</span>
+          </strong>
+          <p>
+            Each result will be checked separately. Negative Merton-direction
+            components can restrict feasibility and borrowing diagnostics
+            without disabling every calculation.
+          </p>
+          <small>
+            Affected assets and unavailable results will be identified when
+            evaluated.
+          </small>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Investor tab with preview-only inputs and mortality fit. `mix` is the male
+ * survival-curve weight in [0, 1] when the custom mixture is selected.
+ */
+function InvestorSetup({ marketEdited }: { marketEdited: boolean }) {
+  const { draft, setDraft } = useSimulationDraft();
+  const { investor } = draft;
+  const mortality = investor.mortality;
+  const mix = investor.maleWeight;
+  const initialCapital = parseAmount(investor.initialCapital);
+  const threshold = parseAmount(investor.impoverishmentLevel);
+  const thresholdPercent =
+    initialCapital !== null &&
+    initialCapital > 0 &&
+    threshold !== null &&
+    threshold >= 1 &&
+    threshold < initialCapital
+      ? (threshold / initialCapital) * 100
+      : null;
+  function updateInvestor(change: Partial<typeof investor>) {
+    setDraft((current) => ({
+      ...current,
+      investor: { ...current.investor, ...change },
+    }));
+  }
+  return (
+    <div className="setup-layout">
+      <aside className="insight-card">
+        <div className="insight-art mortality-art">
+          <span>✳</span>
+          <div className="orbit one" />
+          <div className="orbit two" />
+        </div>
+        <span className="tiny-label">MORTALITY DATA</span>
+        <h3>Built around your cohort.</h3>
+        <p>
+          The intended design uses birth year, retirement age, and a selected
+          longevity scenario to calibrate mortality.
+        </p>
+        <div className="insight-divider" />
+        <DemoAction message="Mortality data information is not connected in this draft.">
+          About the data
+        </DemoAction>
+      </aside>
+      <div>
+        <SectionHeading
+          eyebrow="YOUR RETIREMENT PROFILE"
+          title="Investor & mortality"
+          description="Set the person and retirement context for your scenario."
+        />
+        <div className="form-card">
+          <div className="card-heading">
+            <div>
+              <span className="tiny-label">RETIREMENT PROFILE</span>
+              <h3>A few details about you</h3>
+            </div>
+          </div>
+          <div className="input-grid">
+            <label>
+              Birth year
+              <input
+                type="number"
+                value={investor.birthYear}
+                onChange={(event) =>
+                  updateInvestor({ birthYear: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Expected retirement year
+              <input
+                type="number"
+                value={investor.retirementYear}
+                onChange={(event) =>
+                  updateInvestor({ retirementYear: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Mortality table
+              <select
+                value={mortality}
+                onChange={(event) =>
+                  updateInvestor({
+                    mortality: event.target.value as typeof investor.mortality,
+                  })
+                }
+              >
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+                <option value="custom">Custom mixture</option>
+              </select>
+            </label>
+            <label>
+              Longevity scenario
+              <select
+                value={investor.longevity}
+                onChange={(event) =>
+                  updateInvestor({
+                    longevity: event.target.value as typeof investor.longevity,
+                  })
+                }
+              >
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+                <option value="high">High</option>
+              </select>
+            </label>
+            <label>
+              Initial capital
+              <div className="input-suffix">
+                <input
+                  value={investor.initialCapital}
+                  onChange={(event) =>
+                    updateInvestor({ initialCapital: event.target.value })
+                  }
+                />
+                <span>EUR</span>
+              </div>
+            </label>
+            <div className="input-with-help">
+              <div className="input-label-row">
+                <label htmlFor="impoverishment-input">Impoverishment level</label>
+                <TermLink term="impoverishment">?</TermLink>
+              </div>
+              <div className="input-suffix">
+                <input
+                  id="impoverishment-input"
+                  aria-describedby="impoverishment-percentage"
+                  value={investor.impoverishmentLevel}
+                  onChange={(event) =>
+                    updateInvestor({ impoverishmentLevel: event.target.value })
+                  }
+                />
+                <span>EUR</span>
+              </div>
+              <small id="impoverishment-percentage" className="input-hint">
+                {thresholdPercent === null
+                  ? "Enter at least €1 and less than your initial capital."
+                  : `${thresholdPercent < 0.01 ? "Less than 0.01" : new Intl.NumberFormat("en", { maximumFractionDigits: 2 }).format(thresholdPercent)}% of initial capital`}
+              </small>
+            </div>
+          </div>
+          {mortality === "custom" && (
+            <div className="mortality-mixture">
+              <label className="field-label" htmlFor="mortality-mix">
+                Male weight <b>{mix.toFixed(2)}</b>
+              </label>
+              <input
+                id="mortality-mix"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={mix}
+                onChange={(event) =>
+                  updateInvestor({ maleWeight: Number(event.target.value) })
+                }
+                aria-describedby="mix-description"
+              />
+              <div className="range-ends">
+                <span>0 · Female</span>
+                <span>1 · Male</span>
+              </div>
+              <p id="mix-description">
+                Weights the female and male survival curves; 0.50 gives an equal
+                mixture. Preview only.
+              </p>
+            </div>
+          )}
+        </div>
+        <div className="form-card mortality-card">
+          <div className="card-heading">
+            <div>
+              <span className="tiny-label">MORTALITY CALIBRATION</span>
+              <h3>Survival curve & model fit</h3>
+            </div>
+            <span className="chip">NOT CALCULATED</span>
+          </div>
+          <p>Compare the cohort data with fitted mortality models.</p>
+          <p className="mortality-market-note" role="status">
+            {marketEdited
+              ? "Market inputs have been edited. When mortality calibration is available, check the fit again: market assumptions may affect the fitted model."
+              : "The fitted mortality model can depend on market assumptions. Check the fit again after changing them."}{" "}
+            The cohort data themselves do not change. No fit has been calculated
+            in this preview.
+          </p>
+          <svg
+            viewBox="0 0 650 150"
+            role="img"
+            aria-label="Illustrative survival curves"
+          >
+            <path d="M20 25H635 M20 65H635 M20 105H635" stroke="#e5ece8" />
+            <path
+              d="M20 23 C160 23 240 31 330 58 S500 120 635 130"
+              fill="none"
+              stroke="#347d70"
+              strokeWidth="3"
+            />
+            <path
+              d="M20 24 C160 22 255 37 345 64 S510 118 635 131"
+              fill="none"
+              stroke="#c49c61"
+              strokeWidth="2"
+              strokeDasharray="6 5"
+            />
+          </svg>
+          <div className="legend">
+            <span>
+              <i className="teal" /> Cohort data
+            </span>
+            <span>
+              <i className="gold-bg" /> Model fit
+            </span>
+          </div>
+          <div className="fit-status">
+            <div>
+              <strong>Fit not evaluated</strong>
+              <span>Classification thresholds have not been established.</span>
+            </div>
+          </div>
+          <details className="borrowing-details diagnostic-details">
+            <summary>Fit details</summary>
+            <dl>
+              <div>
+                <dt>KL divergence · optimization criterion</dt>
+                <dd>—</dd>
+              </div>
+              <div>
+                <dt>Largest survival-curve difference</dt>
+                <dd>— percentage points</dd>
+              </div>
+              <div>
+                <dt>Fitting horizon</dt>
+                <dd>—</dd>
+              </div>
+            </dl>
+            <p>
+              Compares the selected fitted model with the cohort survival target
+              on the fitting grid. It is not a measure of individual life
+              expectancy.
+            </p>
+          </details>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Switch between market and investor tabs. Both remain mounted so locally
+ * edited values survive tab changes, but they do not survive a page reload.
+ */
+export function Setup() {
+  const [tab, setTab] = useState<"market" | "investor">("market");
+  // This preview has no fitted result to invalidate; remember only that edits occurred.
+  const [marketEdited, setMarketEdited] = useState(false);
+  return (
+    <section className="view active">
+      <PageHeading
+        eyebrow="BUILD YOUR SCENARIO"
+        title="The foundations"
+        description="Set the market and investor assumptions behind your analysis."
+      >
+        <DemoAction message="Scenario import is not connected in this draft.">
+          ↥ &nbsp; Import scenario
+        </DemoAction>
+      </PageHeading>
+      <PreviewBanner>
+        <strong>Design preview.</strong> Inputs can be explored, but values are
+        not saved or calibrated.
+      </PreviewBanner>
+      <div className="tabs" role="tablist" aria-label="Setup sections">
+        <button
+          type="button"
+          className={`tab ${tab === "market" ? "active" : ""}`}
+          role="tab"
+          aria-selected={tab === "market"}
+          onClick={() => setTab("market")}
+        >
+          01 &nbsp; Market
+        </button>
+        <button
+          type="button"
+          className={`tab ${tab === "investor" ? "active" : ""}`}
+          role="tab"
+          aria-selected={tab === "investor"}
+          onClick={() => setTab("investor")}
+        >
+          02 &nbsp; Investor & mortality{marketEdited && " · Review fit"}
+        </button>
+      </div>
+      <div hidden={tab !== "market"}>
+        <MarketSetup onMarketEdit={() => setMarketEdited(true)} />
+      </div>
+      <div hidden={tab !== "investor"}>
+        <InvestorSetup marketEdited={marketEdited} />
+      </div>
+    </section>
+  );
+}

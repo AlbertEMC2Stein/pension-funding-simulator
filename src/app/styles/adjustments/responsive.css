@@ -1,0 +1,40 @@
+@media (max-width: 1150px) {
+  .setup-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .setup-layout > .insight-card {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .setup-layout > .insight-card .insight-art {
+    display: none;
+  }
+
+  .setup-layout > div {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .scenario-strip .scenario-edit {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@container (max-width: 510px) {
+  .market-asset-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) 32px;
+  }
+
+  .market-asset-row label:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+.market-editor .card-secondary-action {
+  max-width: 100%;
+  white-space: normal;
+}
+

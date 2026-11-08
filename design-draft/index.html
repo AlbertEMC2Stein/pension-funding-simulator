@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f5f1">
+  <title>Stillwell — Pension funding simulator · Design draft</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+
+<body>
+  <div class="app-shell">
+    <aside class="rail" aria-label="Main navigation">
+      <a href="#overview" class="brand" aria-label="Stillwell home"><span
+          class="brand-mark"><i></i><i></i><i></i></span><span>stillwell<span class="brand-dot">.</span><small>PENSION
+            LAB</small></span></a>
+      <div class="rail-label">WORKSPACE</div>
+      <nav class="nav" aria-label="Workspace">
+        <button class="nav-item active" data-view="evaluation" aria-current="page"><span class="nav-icon">◫</span>
+          Evaluation</button>
+        <button class="nav-item" data-view="setup"><span class="nav-icon">◉</span> Market & investor</button>
+        <button class="nav-item" data-view="data"><span class="nav-icon">▤</span> Data & tables</button>
+        <button class="nav-item" data-view="help"><span class="nav-icon">ⓘ</span> Dictionary & help</button>
+      </nav>
+      <div class="rail-bottom">
+        <div class="rail-note"><span class="sparkle">✳</span><strong>Plan with perspective.</strong>
+          <p>A clearer view of the choices shaping retirement.</p>
+        </div>
+        <div class="rail-footer"><span class="status-dot"></span> Design draft <span>v0.1</span></div>
+      </div>
+    </aside>
+
+    <main class="main" id="overview">
+      <header class="topbar">
+        <div class="breadcrumb">WORKSPACE <span>/</span> <b id="breadcrumb-current">EVALUATION</b></div>
+        <div class="top-actions"><span class="draft-pill"><span></span> INTERFACE PREVIEW</span><button
+            class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false"
+            aria-label="Switch to dark theme">☾ <span>Dark mode</span></button><label class="language-control"><span
+              class="visually-hidden">Language (preview only)</span><select id="language-preview"
+              aria-label="Language (preview only)">
+              <option value="en">EN</option>
+              <option value="de">DE</option>
+            </select></label></div>
+      </header>
+      <div class="mobile-brand">stillwell<span>.</span> <small> / PENSION LAB</small></div>
+
+      <section class="view active" id="view-evaluation" aria-labelledby="evaluation-title">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow"><span></span> YOUR RETIREMENT, EXPLORED</div>
+            <h1 id="evaluation-title">See the bigger picture<span class="heading-dot">.</span></h1>
+            <p>Explore how your choices shape the path ahead.</p>
+          </div>
+          <div class="heading-actions"><button class="button button-light" id="toggle-settings"><span>☷</span>
+              Simulation settings</button><button class="button button-primary"
+              data-demo-action="Simulation is not connected in this design draft."><span>▶</span> Run
+              simulation</button></div>
+        </div>
+        <div class="preview-banner"><span class="preview-icon">✳</span>
+          <div><strong>You're exploring a design draft.</strong> Values and charts below are illustrative placeholders,
+            not simulation results.</div><span class="preview-tag">PREVIEW MODE</span>
+        </div>
+        <div class="workspace-grid" id="workspace-grid">
+          <div class="evaluation-content">
+            <div class="scenario-strip">
+              <div class="scenario-intro"><span class="tiny-label">YOUR SCENARIO</span><strong>A thoughtful start
+                  <span>✳</span></strong></div>
+              <div class="scenario-item"><span>Retirement age</span><strong>67 <small>years</small></strong></div>
+              <div class="scenario-item"><span>Starting capital</span><strong>€500,000</strong></div>
+              <div class="scenario-item"><span>Target risk</span><strong>5.0%</strong></div><button class="text-link"
+                data-go="setup">Edit scenario <span>↗</span></button>
+            </div>
+            <div class="section-title">
+              <div>
+                <div class="eyebrow muted">01 / THE DECISION</div>
+                <h2>Withdrawal & risk</h2>
+                <p>Find a balance that feels right for your retirement.</p>
+              </div><button class="subtle-button" id="visual-options" aria-expanded="false"
+                aria-controls="visual-options-panel">◫ &nbsp; Customize visuals</button>
+            </div>
+            <div class="visual-options visual-picker hidden" id="visual-options-panel">
+              <div class="visual-picker-heading">
+                <div><strong>Choose your visuals</strong>
+                  <p>Show the views you want to explore. Your choices only affect the layout.</p>
+                </div>
+              </div>
+              <div class="visual-picker-groups">
+                <fieldset>
+                  <legend>Withdrawal &amp; capital</legend>
+                  <label><input type="checkbox" checked data-chart="risk-card"> Withdrawal &amp; risk</label>
+                  <label><input type="checkbox" checked data-chart="gm-risk-card"> Estimated GM risk</label>
+                  <label><input type="checkbox" checked data-chart="capital-card"> Value of risk-taking</label>
+                </fieldset>
+                <fieldset>
+                  <legend>Portfolio &amp; policies</legend>
+                  <label><input type="checkbox" checked data-chart="allocation-card"> Portfolio allocation</label>
+                  <label><input type="checkbox" checked data-chart="comparison-card"> Policy comparison</label>
+                </fieldset>
+                <fieldset>
+                  <legend>Impoverishment &amp; borrowing</legend>
+                  <label><input type="checkbox" data-chart="impoverishment-card"> Impoverishment timing</label>
+                  <label><input type="checkbox" checked data-chart="borrowing-card"> Borrowing exposure</label>
+                </fieldset>
+                <fieldset>
+                  <legend>Other</legend>
+                  <label><input type="checkbox" data-chart="trajectory-card"> Illustrative trajectories</label>
+                </fieldset>
+              </div>
+              <p class="visual-picker-note">Mortality fit is shown in Investor &amp; mortality. All results are
+                illustrative placeholders.</p>
+            </div>
+            <div class="chart-card" id="risk-card">
+              <div class="card-top">
+                <div><span class="tiny-label">YOUR WITHDRAWAL</span>
+                  <div class="big-value">€24,800 <span>/ year</span></div>
+                  <div class="value-note"><span class="mini-dot"></span> Example amount at your target risk</div>
+                </div>
+                <div class="chart-controls"><span class="chip">NOT CALCULATED</span><button class="dots"
+                    aria-label="Chart options" data-demo-action="Chart options are a placeholder.">•••</button></div>
+              </div>
+              <div class="chart-wrap"><svg viewBox="0 0 760 245" role="img"
+                  aria-label="Illustrative rising withdrawal versus risk curve">
+                  <defs>
+                    <linearGradient id="area" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stop-color="#74b5a7" stop-opacity=".3" />
+                      <stop offset="100%" stop-color="#74b5a7" stop-opacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <g class="grid-lines">
+                    <path d="M48 28H735 M48 76H735 M48 124H735 M48 172H735" />
+                  </g>
+                  <g class="axis-text"><text x="20" y="32">€40k</text><text x="20" y="80">€30k</text><text x="20"
+                      y="128">€20k</text><text x="20" y="176">€10k</text><text x="44" y="206">0%</text><text x="206"
+                      y="206">2.5%</text><text x="379" y="206">5%</text><text x="548" y="206">7.5%</text><text x="716"
+                      y="206">10%</text></g>
+                  <text class="plot-axis-title" x="10" y="102" text-anchor="middle"
+                    transform="rotate(-90 10 102)">ANNUAL WITHDRAWAL</text>
+                  <text class="plot-axis-title" x="391" y="235" text-anchor="middle">LIFETIME IMPOVERISHMENT RISK</text>
+                  <path d="M48 169 C160 164 243 153 325 132 S500 89 570 67 S685 38 735 28 L735 172 L48 172 Z"
+                    fill="url(#area)" />
+                  <path d="M48 169 C160 164 243 153 325 132 S500 89 570 67 S685 38 735 28" fill="none" stroke="#347d70"
+                    stroke-width="3" stroke-linecap="round" />
+                  <path d="M389 116 V172" stroke="#347d70" stroke-width="1.3" stroke-dasharray="4 5" />
+                  <circle cx="389" cy="116" r="8" fill="#fff" stroke="#347d70" stroke-width="3" />
+                  <circle cx="389" cy="116" r="2.5" fill="#347d70" />
+                </svg></div>
+              <div class="chart-disclaimer">Illustrative curve · not calculated from your inputs</div>
+            </div>
+            <article class="chart-card diagnostic-card" id="gm-risk-card" aria-labelledby="gm-risk-title">
+              <div class="card-top">
+                <div><span class="tiny-label">REFERENCE MORTALITY · SIMULATION RESULT</span>
+                  <h3 id="gm-risk-title">Risk under Gompertz–Makeham mortality <button class="card-help" type="button"
+                      id="gm-help-open" aria-label="Explain the GM risk card">?</button></h3>
+                  <p class="timing-intro">Compare the policy's calibration target with its estimated risk under the
+                    fitted GM model.</p>
+                </div><span class="chip">NOT CALCULATED</span>
+              </div>
+              <div class="diagnostic-metrics">
+                <div><span>Target risk α</span><strong>—</strong><small>Unconstrained policy, own mortality
+                    model</small></div>
+                <div><span>Estimated GM risk</span><strong>—</strong><small>Unconstrained policy · Monte Carlo
+                    estimate</small></div>
+                <div><span>Difference from target</span><strong>—</strong><small>Percentage points · uncertainty shown
+                    after a run</small></div>
+              </div>
+              <div class="projection-risk-result hidden" id="projection-risk-result">
+                <div class="result-subheading"><span class="tiny-label">PROJECTED POLICY · PAIRED COMPARISON</span><span class="chip">NOT CALCULATED</span></div>
+                <div class="diagnostic-metrics">
+                  <div><span>Estimated projected GM risk</span><strong>—</strong><small>Monte Carlo estimate</small>
+                  </div>
+                  <div><span>Projection contribution</span><strong>—</strong><small>Projected minus unconstrained GM
+                      risk · percentage points</small></div>
+                  <div><span>Total difference from target</span><strong>—</strong><small>Projected GM risk minus α ·
+                      percentage points</small></div>
+                </div>
+                <p class="chart-disclaimer">Paired estimates and their uncertainty will be shown after a run.</p>
+              </div>
+              <p class="chart-disclaimer">When projection is selected, a paired policy comparison will also appear here.
+                Estimates depend on the model and are not known future risks.</p>
+            </article>
+            <article class="chart-card capital-card" id="capital-card" aria-labelledby="capital-title">
+              <div class="card-top">
+                <div><span class="tiny-label">THE VALUE OF RISK-TAKING · UNCONSTRAINED POLICY</span>
+                  <h3 id="capital-title">What does accepting risk change?</h3>
+                  <p class="timing-intro">Compare your starting capital with the risk-free capital needed for your
+                    scenario's annual withdrawal.</p>
+                </div>
+                <span class="chip">NOT CALCULATED</span>
+              </div>
+              <div class="capital-summary">
+                <div><span>Risk-free capital</span><strong>—</strong><small><button class="term-link"
+                      data-term="safe-boundary">Safe boundary</button> at retirement</small></div>
+                <div><span>Starting capital</span><strong>—</strong><small>The initial capital in your scenario</small>
+                </div>
+                <div><span>Capital relief</span><strong>—</strong><small>Difference in euros and percent</small></div>
+              </div>
+              <div class="capital-table-wrap">
+                <table class="capital-table" aria-label="Capital sensitivity at a fixed withdrawal">
+                  <thead>
+                    <tr>
+                      <th>Target lifetime risk</th>
+                      <th>Capital required</th>
+                      <th>Change from target</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>0.95 α <span>· 5% lower</span></td>
+                      <td>—</td>
+                      <td>—</td>
+                    </tr>
+                    <tr>
+                      <td>α <span>· selected target</span></td>
+                      <td>—</td>
+                      <td>—</td>
+                    </tr>
+                    <tr>
+                      <td>1.05 α <span>· 5% higher</span></td>
+                      <td>—</td>
+                      <td>—</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="chart-disclaimer">Illustrative layout · sensitivity holds the scenario's withdrawal fixed and
+                compares nearby target or implied risk levels. Results depend on the selected model and policy.</p>
+            </article>
+            <div class="lower-grid">
+              <article class="small-card" id="allocation-card">
+                <div class="card-heading">
+                  <div><span class="tiny-label">AT A GLANCE</span>
+                    <h3>Portfolio allocation</h3>
+                  </div><span class="chip">NOT CALCULATED</span>
+                </div>
+                <p>How the allocation may change with wealth.</p><svg class="mini-chart" viewBox="0 0 350 95" role="img"
+                  aria-label="Illustrative stacked allocation chart">
+                  <path d="M0 18 H350 M0 48 H350 M0 78 H350" stroke="#e8eeea" fill="none" />
+                  <path d="M0 80 C75 79 115 69 170 58 S275 34 350 22 L350 80Z" fill="#82b8aa" />
+                  <path d="M0 80 C85 79 130 75 190 66 S290 53 350 49 L350 80Z" fill="#275e59" />
+                </svg>
+                <div class="legend"><span><i class="teal"></i> Equities</span><span><i class="sage"></i>
+                    Bonds</span><span><i class="pale"></i> Risk-free</span></div>
+              </article>
+              <article class="small-card" id="comparison-card">
+                <div class="card-heading">
+                  <div><span class="tiny-label">SIDE BY SIDE</span>
+                    <h3>Policy comparison</h3>
+                  </div><span class="chip">NOT CALCULATED</span>
+                </div>
+                <p>Compare the unconstrained and projected policies.</p>
+                <div class="bar-row"><span>Unconstrained</span>
+                  <div><i style="width:63%"></i></div><b>—</b>
+                </div>
+                <div class="bar-row"><span>Projected</span>
+                  <div><i class="alt" style="width:48%"></i></div><b>—</b>
+                </div>
+                <div class="small-note">Illustrative only · run a simulation to compare</div>
+              </article>
+              <article class="small-card hidden" id="trajectory-card">
+                <div class="card-heading">
+                  <div><span class="tiny-label">OPTIONAL VISUAL</span>
+                    <h3>Illustrative trajectories</h3>
+                  </div><span class="chip">NOT CALCULATED</span>
+                </div>
+                <p>Sample paths can be displayed here when enabled.</p>
+                <div class="empty-visual">﹏　﹋　﹏</div>
+                <div class="small-note">Placeholder · not a simulation</div>
+              </article>
+            </div>
+            <section class="risk-section" id="risk-section" aria-labelledby="risk-section-title">
+              <div class="section-title">
+                <div>
+                  <div class="eyebrow muted">02 / UNDERSTANDING EXPOSURE</div>
+                  <h2 id="risk-section-title">Impoverishment & borrowing</h2>
+                  <p>Explore possible outcomes and the borrowing exposure of the unprojected policy.</p>
+                </div>
+              </div>
+              <div class="risk-section-grid">
+                <article class="chart-card timing-card hidden" id="impoverishment-card" aria-labelledby="timing-title">
+                  <div class="card-top">
+                    <div><span class="tiny-label">OPTIONAL VISUAL</span>
+                      <h3 id="timing-title">When might impoverishment occur?</h3>
+                      <p class="timing-intro">Explore risk across attained ages under the selected policy and mortality
+                        assumptions.</p>
+                    </div>
+                    <span class="chip">NOT CALCULATED</span>
+                  </div>
+                  <div class="timing-controls">
+                    <fieldset>
+                      <legend>Perspective</legend>
+                      <div class="segmented timing-switch" aria-label="Risk perspective">
+                        <button type="button" class="selected" data-timing-perspective="forecast"
+                          aria-pressed="true">Forecast</button>
+                        <button type="button" data-timing-perspective="conditional" aria-pressed="false">Conditional
+                          update</button>
+                      </div>
+                    </fieldset>
+                    <fieldset>
+                      <legend>Chart</legend>
+                      <div class="segmented timing-switch" aria-label="Chart type">
+                        <button type="button" class="selected" data-timing-chart="density"
+                          aria-pressed="true">Density</button>
+                        <button type="button" data-timing-chart="cumulative" aria-pressed="false">Cumulative</button>
+                      </div>
+                    </fieldset>
+                  </div>
+                  <div class="timing-chart">
+                    <svg viewBox="0 0 760 210" role="img" aria-labelledby="timing-svg-title">
+                      <title id="timing-svg-title">Illustrative density of impoverishment before death by attained age
+                      </title>
+                      <defs>
+                        <clipPath id="timing-tail-clip">
+                          <rect id="timing-tail-rect" x="48" y="0" width="687" height="180" />
+                        </clipPath>
+                      </defs>
+                      <g class="timing-grid">
+                        <path d="M48 30H735 M48 78H735 M48 126H735 M48 174H735" />
+                      </g>
+                      <g id="timing-density">
+                        <path class="timing-tail" clip-path="url(#timing-tail-clip)"
+                          d="M48 174 C140 171 200 159 267 116 C335 66 390 51 445 70 C512 93 570 141 635 162 C680 172 710 174 735 174 L735 174 Z" />
+                        <path class="timing-curve"
+                          d="M48 174 C140 171 200 159 267 116 C335 66 390 51 445 70 C512 93 570 141 635 162 C680 172 710 174 735 174" />
+                      </g>
+                      <g id="timing-cumulative" class="hidden">
+                        <path class="timing-curve"
+                          d="M48 174 C150 172 220 157 290 125 C365 90 430 59 505 47 C580 37 655 34 735 34" />
+                      </g>
+                      <line id="timing-age-line" class="timing-age-line" x1="48" x2="48" y1="25" y2="174" />
+                      <g class="timing-axis"><text x="48" y="198">67</text><text x="360" y="198">82</text><text x="710"
+                          y="198">100</text></g>
+                    </svg>
+                    <div class="chart-foot"><span id="timing-y-label">DENSITY</span><span>ATTAINED AGE →</span></div>
+                  </div>
+                  <label class="field-label timing-age-label" for="timing-age">Selected age <b id="timing-age-value">67
+                      years</b></label>
+                  <input id="timing-age" class="timing-age-slider" type="range" min="67" max="100" step="1" value="67">
+                  <p id="timing-explanation" class="timing-explanation">Forecast: the shaded tail represents
+                    impoverishment after the selected age and before death, assessed at retirement.</p>
+                  <p class="chart-disclaimer">Illustrative shapes only. Switching views demonstrates the layout; no risk
+                    or conditional density is calculated.</p>
+                </article>
+                <article class="chart-card borrowing-card" id="borrowing-card" aria-labelledby="borrowing-title">
+                  <div class="card-top">
+                    <div><span class="tiny-label">UNPROJECTED POLICY</span>
+                      <h3 id="borrowing-title">Borrowing exposure</h3>
+                      <p class="timing-intro">Borrowing is possible when the risky allocation requires a negative
+                        risk-free position.</p>
+                    </div><span class="chip">NOT CALCULATED</span>
+                  </div>
+                  <div class="borrowing-metrics">
+                    <div><span>Probability of ever borrowing</span><strong>—</strong><small>While alive and before
+                        impoverishment</small></div>
+                    <div><span>Expected time borrowing</span><strong>—</strong><small>Total time alive while
+                        borrowing</small></div>
+                  </div>
+                  <details class="borrowing-details">
+                    <summary>View borrowing diagnostics</summary>
+                    <dl>
+                      <div>
+                        <dt>Global no-borrowing feasibility</dt>
+                        <dd>Not evaluated</dd>
+                      </div>
+                      <div>
+                        <dt>Relative bandwidth multiplier ζ</dt>
+                        <dd>—</dd>
+                      </div>
+                      <div>
+                        <dt>Borrowing at retirement</dt>
+                        <dd>Not evaluated</dd>
+                      </div>
+                      <div>
+                        <dt>Last possible borrowing time</dt>
+                        <dd>—</dd>
+                      </div>
+                    </dl>
+                    <p>Where the model assumptions apply, ζ &gt; 1 indicates that the relative bandwidth exceeds the
+                      global no-borrowing threshold. Possibility does not imply that borrowing will occur on a
+                      particular path.</p>
+                    <p>Simulation uncertainty and numerical approximations will be reported with calculated results.
+                      Some diagnostics require additional assumptions.</p>
+                  </details>
+                  <p class="chart-disclaimer">Placeholders only · no exposure has been calculated.</p>
+                </article>
+              </div>
+            </section>
+          </div>
+          <aside class="settings-panel" id="settings-panel">
+            <div class="settings-heading">
+              <div><span class="tiny-label">MAKE IT YOURS</span>
+                <h2>Simulation settings</h2>
+              </div><button class="close-settings" id="close-settings" aria-label="Close simulation settings">×</button>
+            </div>
+            <p class="settings-lead">Adjust the details behind your view.</p>
+            <div class="settings-group">
+              <div class="group-title"><span>01</span> Withdrawal approach</div>
+              <div class="segmented"><button class="selected" data-mode="target">Target risk</button><button
+                  data-mode="custom">Custom amount</button></div><label class="field-label" for="risk-slider"
+                id="slider-label">Target lifetime risk <b id="slider-value">5.0%</b></label><input id="risk-slider"
+                type="range" min="1" max="20" step="0.5" value="5">
+              <div class="range-ends"><span id="withdrawal-range-low">Lower risk</span><span id="withdrawal-range-high">Higher risk</span></div>
+              <div class="setting-callout withdrawal-callout"><span aria-hidden="true">✳</span>
+                <div><strong id="withdrawal-output-title">Model-derived withdrawal</strong>
+                  <div class="withdrawal-value">— <small id="withdrawal-output-unit">/ year</small></div>
+                  <span class="withdrawal-status">○ &nbsp; Not calculated yet</span>
+                </div>
+              </div>
+            </div>
+            <div class="settings-group">
+              <div class="group-title"><span>02</span> Portfolio policy</div><label class="check-card"><input
+                  type="checkbox" id="projection-check"><span><strong>Apply projected policy</strong><small>Keep
+                    allocations long-only and avoid borrowing.</small></span></label>
+              <div class="info-line">ⓘ &nbsp; <button class="term-link" data-term="projection">Projection</button> is a
+                feasible comparison policy.</div>
+              <div class="feasibility-status" role="status">
+                <strong>Global feasibility <span>Not evaluated</span></strong>
+                <p>When the model's sufficient condition holds, this will confirm that the unconstrained strategy
+                  satisfies the no-short-selling and no-borrowing constraints throughout its relevant state space.</p>
+                <small>If the condition cannot be verified or does not hold, the message will explain what is
+                  known.</small>
+              </div>
+            </div>
+            <div class="settings-group">
+              <div class="group-title"><span>03</span> Simulation detail</div><label class="field-label"
+                for="paths">Number of paths</label><select id="paths">
+                <option>10,000 paths</option>
+                <option>5,000 paths</option>
+                <option>50,000 paths</option>
+                <option>100,000 paths</option>
+              </select><label class="field-label" for="step">Time step</label><select id="step">
+                <option>Monthly</option>
+                <option>Fortnightly</option>
+                <option>Weekly</option>
+              </select>
+            </div>
+            <div class="settings-footer"><span>◷</span> Results appear here after a run.<br><small>Settings are
+                placeholders in this draft.</small></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-setup" aria-labelledby="setup-title">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow"><span></span> BUILD YOUR SCENARIO</div>
+            <h1 id="setup-title">The foundations<span class="heading-dot">.</span></h1>
+            <p>Set the market and investor assumptions behind your analysis.</p>
+          </div><button class="button button-light"
+            data-demo-action="Scenario import and export are not connected in this draft.">↥ &nbsp; Import
+            scenario</button>
+        </div>
+        <div class="preview-banner"><span class="preview-icon">✳</span>
+          <div><strong>Design preview.</strong> Inputs can be explored, but values are not saved or calibrated.</div>
+          <span class="preview-tag">PREVIEW MODE</span>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Setup sections"><button class="tab active" data-tab="market"
+            role="tab" aria-selected="true">01 &nbsp; Market</button><button class="tab" data-tab="investor" role="tab"
+            aria-selected="false">02 &nbsp; Investor & mortality</button></div>
+        <div class="setup-tab active" id="tab-market">
+          <div class="setup-layout">
+            <div>
+              <div class="section-title">
+                <div>
+                  <div class="eyebrow muted">THE INVESTMENT UNIVERSE</div>
+                  <h2>Market assumptions</h2>
+                  <p>Define up to 10 assets and how they move together.</p>
+                </div>
+              </div>
+              <div class="form-card">
+                <div class="card-heading">
+                  <div><span class="tiny-label">INPUT METHOD</span>
+                    <h3>Choose your starting point</h3>
+                  </div>
+                </div>
+                <div class="method-grid"><button class="method active"><span>✳</span><strong>Preset</strong><small>Start
+                      with an example market</small></button><button
+                    class="method"><span>≡</span><strong>Manual</strong><small>Enter assumptions
+                      yourself</small></button><button class="method"><span>↥</span><strong>Import
+                      file</strong><small>CSV, YAML, or JSON</small></button></div>
+                <div class="input-grid"><label>Base currency<select>
+                      <option>EUR — Euro</option>
+                      <option>USD — US Dollar</option>
+                    </select></label><label>Real risk-free rate<div class="input-suffix"><input value="0.50"
+                        inputmode="decimal"><span>% / year</span></div></label><label>Inflation assumption<div
+                      class="input-suffix"><input value="2.00" inputmode="decimal"><span>% / year</span></div></label>
+                </div>
+              </div>
+              <div class="form-card">
+                <div class="card-heading">
+                  <div><span class="tiny-label">2 OF 10 ASSETS</span>
+                    <h3>Asset universe</h3>
+                  </div><button class="text-link" data-demo-action="Adding assets is a placeholder in this draft.">+ Add
+                    asset</button>
+                </div>
+                <div class="asset-table">
+                  <div class="asset-row asset-head"><span>ASSET</span><span>ANNUAL RETURN</span><span>VOLATILITY</span>
+                  </div>
+                  <div class="asset-row"><span><i class="asset-dot"></i><b>Global equities</b><small>Example
+                        asset</small></span><span>6.75%</span><span>14.50%</span></div>
+                  <div class="asset-row"><span><i class="asset-dot gold"></i><b>Government bonds</b><small>Example
+                        asset</small></span><span>3.30%</span><span>4.00%</span></div>
+                </div><button class="inline-link" data-demo-action="The correlation matrix is a placeholder.">View
+                  correlation matrix &nbsp; ↗</button>
+              </div>
+              <div class="form-card diagnostic-card" aria-labelledby="market-uncertainty-title">
+                <div class="card-heading">
+                  <div><span class="tiny-label">HISTORICAL CALIBRATION</span>
+                    <h3 id="market-uncertainty-title">Estimation uncertainty</h3>
+                    <p>Available after calibration from historical API or uploaded data.</p>
+                  </div><span class="chip">NOT CALCULATED</span>
+                </div>
+                <div class="diagnostic-meta"><span>Period <b>—</b></span><span>Frequency <b>—</b></span><span>Currency
+                    <b>—</b></span><span>Observations <b>—</b></span><span>Method <b>—</b></span></div>
+                <div class="capital-table-wrap">
+                  <table class="capital-table" aria-label="Historical return estimate uncertainty">
+                    <thead>
+                      <tr>
+                        <th>Asset</th>
+                        <th>Annual return</th>
+                        <th>95% confidence interval</th>
+                        <th>Volatility</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Global equities</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                      </tr>
+                      <tr>
+                        <td>Government bonds</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <details class="borrowing-details diagnostic-details">
+                  <summary>Covariance &amp; correlation details</summary>
+                  <dl>
+                    <div>
+                      <dt>Widest individual covariance interval</dt>
+                      <dd>—</dd>
+                    </div>
+                    <div>
+                      <dt>Asset pair</dt>
+                      <dd>—</dd>
+                    </div>
+                    <div>
+                      <dt>Matrix conditioning</dt>
+                      <dd>Not evaluated</dd>
+                    </div>
+                  </dl>
+                  <p>The widest individual interval is not a confidence bound for the whole matrix. A near-singular
+                    covariance warning will appear when applicable.</p>
+                </details>
+                <p class="chart-disclaimer">Intervals describe historical-parameter estimation uncertainty, not
+                  guaranteed future return ranges.</p>
+              </div>
+              <div class="form-card diagnostic-card" aria-labelledby="stress-title">
+                <div class="card-heading">
+                  <div><span class="tiny-label">SCENARIO COMPARISON</span>
+                    <h3 id="stress-title">Recalibrated market scenarios</h3>
+                    <p>Compare estimated return assumptions with covariance held fixed.</p>
+                  </div><span class="chip">NOT CALCULATED</span>
+                </div>
+                <label class="check-card scenario-toggle"><input type="checkbox"
+                    id="stress-preview-toggle"><span><strong>Explore return scenarios</strong><small>Recalculate the
+                      policy and compatible mortality calibration for each scenario.</small></span></label>
+                <div id="stress-preview" class="hidden">
+                  <div class="capital-table-wrap">
+                    <table class="capital-table" aria-label="Recalibrated return scenarios">
+                      <thead>
+                        <tr>
+                          <th>Scenario</th>
+                          <th>Return assumptions</th>
+                          <th>Diagnostics</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>Baseline</td>
+                          <td>Historical estimates</td>
+                          <td>Not evaluated</td>
+                        </tr>
+                        <tr>
+                          <td>Lower returns</td>
+                          <td>Individual lower bounds</td>
+                          <td>Not evaluated</td>
+                        </tr>
+                        <tr>
+                          <td>Higher returns</td>
+                          <td>Individual upper bounds</td>
+                          <td>Not evaluated</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <p class="chart-disclaimer">Individual interval endpoints are not a joint confidence region or
+                    guaranteed worst- and best-case outcomes.</p>
+                </div>
+              </div>
+              <div class="feasibility-status market-assumptions" role="status"><strong>Assumption checks <span>Not
+                    evaluated</span></strong>
+                <p>Each result will be checked separately. Negative Merton-direction components can restrict feasibility
+                  and borrowing diagnostics without disabling every calculation.</p>
+                <small>Affected assets and unavailable results will be identified when evaluated.</small>
+              </div>
+            </div>
+            <aside class="insight-card">
+              <div class="insight-art"><span>✳</span>
+                <div class="orbit one"></div>
+                <div class="orbit two"></div>
+              </div><span class="tiny-label">A NOTE ON CALIBRATION</span>
+              <h3>Good inputs make better questions.</h3>
+              <p>Historical estimates are a starting point. Review the period, currency, and assumptions before using
+                them.</p>
+              <div class="insight-divider"></div><span class="insight-link">Market data sources &nbsp; ↗</span>
+            </aside>
+          </div>
+        </div>
+        <div class="setup-tab" id="tab-investor">
+          <div class="setup-layout">
+            <div>
+              <div class="section-title">
+                <div>
+                  <div class="eyebrow muted">YOUR RETIREMENT PROFILE</div>
+                  <h2>Investor & mortality</h2>
+                  <p>Set the person and retirement context for your scenario.</p>
+                </div>
+              </div>
+              <div class="form-card">
+                <div class="card-heading">
+                  <div><span class="tiny-label">RETIREMENT PROFILE</span>
+                    <h3>A few details about you</h3>
+                  </div>
+                </div>
+                <div class="input-grid"><label>Birth year<input type="number" value="1965"></label><label>Expected
+                    retirement year<input type="number" value="2032"></label><label>Mortality table<select
+                      id="mortality-mix-type">
+                      <option value="female">Female</option>
+                      <option value="male">Male</option>
+                      <option value="custom">Custom mixture</option>
+                    </select></label><label>Longevity scenario<select>
+                      <option>Medium</option>
+                      <option>Low</option>
+                      <option>High</option>
+                    </select></label><label>Initial capital<div class="input-suffix"><input
+                        value="500,000"><span>EUR</span></div></label>
+                  <div class="input-with-help"><label for="impoverishment-input">Impoverishment level</label><button
+                      class="term-link" type="button" data-term="impoverishment"
+                      aria-label="Explain impoverishment level">?</button>
+                    <div class="input-suffix"><input id="impoverishment-input" value="100,000"><span>EUR</span></div>
+                  </div>
+                </div>
+                <div class="mortality-mixture hidden" id="mortality-mixture">
+                  <label class="field-label" for="mortality-mix">Male weight <b
+                      id="mortality-mix-value">0.50</b></label>
+                  <input id="mortality-mix" type="range" min="0" max="1" step="0.01" value="0.50"
+                    aria-describedby="mortality-mix-description">
+                  <div class="range-ends"><span>0 · Female</span><span>1 · Male</span></div>
+                  <p id="mortality-mix-description">Weights the female and male survival curves; 0.50 gives an equal
+                    mixture. Preview only.</p>
+                </div>
+              </div>
+              <div class="form-card mortality-card">
+                <div class="card-heading">
+                  <div><span class="tiny-label">MORTALITY CALIBRATION</span>
+                    <h3>Survival curve & model fit</h3>
+                  </div><span class="chip">NOT CALCULATED</span>
+                </div>
+                <p>Compare the cohort data with fitted mortality models.</p><svg viewBox="0 0 650 150" role="img"
+                  aria-label="Illustrative survival curves">
+                  <path d="M20 25H635 M20 65H635 M20 105H635" stroke="#e5ece8" />
+                  <path d="M20 23 C160 23 240 31 330 58 S500 120 635 130" fill="none" stroke="#347d70"
+                    stroke-width="3" />
+                  <path d="M20 24 C160 22 255 37 345 64 S510 118 635 131" fill="none" stroke="#c49c61" stroke-width="2"
+                    stroke-dasharray="6 5" />
+                </svg>
+                <div class="legend"><span><i class="teal"></i> Cohort data</span><span><i class="gold-bg"></i> Model
+                    fit</span></div>
+                <div class="fit-status">
+                  <div><strong>Fit not evaluated</strong><span>Classification thresholds have not been
+                      established.</span></div>
+                </div>
+                <details class="borrowing-details diagnostic-details">
+                  <summary>Fit details</summary>
+                  <dl>
+                    <div>
+                      <dt>KL divergence · optimization criterion</dt>
+                      <dd>—</dd>
+                    </div>
+                    <div>
+                      <dt>Largest survival-curve difference</dt>
+                      <dd>— percentage points</dd>
+                    </div>
+                    <div>
+                      <dt>Fitting horizon</dt>
+                      <dd>—</dd>
+                    </div>
+                  </dl>
+                  <p>Compares the selected fitted model with the cohort survival target on the fitting grid. It is not a
+                    measure of individual life expectancy.</p>
+                </details>
+              </div>
+            </div>
+            <aside class="insight-card">
+              <div class="insight-art mortality-art"><span>✳</span>
+                <div class="orbit one"></div>
+                <div class="orbit two"></div>
+              </div><span class="tiny-label">MORTALITY DATA</span>
+              <h3>Built around your cohort.</h3>
+              <p>The intended design uses birth year, retirement age, and a selected longevity scenario to calibrate
+                mortality.</p>
+              <div class="insight-divider"></div><span class="insight-link">About the data &nbsp; ↗</span>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-data" aria-labelledby="data-title">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow"><span></span> EXPLORE THE DETAILS</div>
+            <h1 id="data-title">Make room for questions<span class="heading-dot">.</span></h1>
+            <p>Build a table of scenarios and compare the details side by side.</p>
+          </div><button class="button button-light" data-demo-action="Export is not connected in this design draft.">↓
+            &nbsp; Export table</button>
+        </div>
+        <div class="preview-banner"><span class="preview-icon">✳</span>
+          <div><strong>Design preview.</strong> Add and edit example rows below. No calculations are performed.</div>
+          <span class="preview-tag">PREVIEW MODE</span>
+        </div>
+        <div class="section-title">
+          <div>
+            <div class="eyebrow muted">YOUR COMPARISON</div>
+            <h2>Scenario table</h2>
+            <p>Choose what you want to explore, then add your own rows.</p>
+          </div>
+        </div>
+        <div class="form-card table-card">
+          <div class="table-toolbar"><label>TABLE TYPE<select id="table-type">
+                <option>Withdrawal & risk</option>
+                <option>Policy comparison</option>
+                <option>Feasibility sensitivity</option>
+              </select></label><button class="button button-primary" id="add-row">+ &nbsp; Add row</button></div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>SCENARIO</th>
+                  <th>INPUT TYPE</th>
+                  <th>INPUT VALUE</th>
+                  <th>WITHDRAWAL / YEAR</th>
+                  <th>MODEL RISK</th>
+                  <th>STATUS</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="scenario-rows">
+                <tr>
+                  <td><b>Scenario 01</b></td>
+                  <td><select aria-label="Input type">
+                      <option>Target risk</option>
+                      <option>Withdrawal</option>
+                    </select></td>
+                  <td><input aria-label="Input value" value="5.0%"></td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td><span class="table-status">○ &nbsp; Not calculated</span></td>
+                  <td><button class="row-remove" aria-label="Remove row">×</button></td>
+                </tr>
+                <tr>
+                  <td><b>Scenario 02</b></td>
+                  <td><select aria-label="Input type">
+                      <option>Target risk</option>
+                      <option>Withdrawal</option>
+                    </select></td>
+                  <td><input aria-label="Input value" value="10.0%"></td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td><span class="table-status">○ &nbsp; Not calculated</span></td>
+                  <td><button class="row-remove" aria-label="Remove row">×</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer"><span>ⓘ &nbsp; Analytical and simulation outputs will appear here.</span><button
+              class="button button-primary"
+              data-demo-action="Table calculations are not connected in this design draft.">▶ &nbsp; Compute
+              rows</button></div>
+        </div>
+        <div class="data-cards">
+          <div class="small-card"><span class="tiny-label">RECREATE YOUR SETUP</span>
+            <h3>Export scenario</h3>
+            <p>Save the inputs, calibration and run settings used to define your scenario.</p>
+            <button class="inline-link" data-demo-action="Scenario export is not connected in this draft.">Export
+              scenario
+              &nbsp; ↗</button>
+          </div>
+          <div class="small-card"><span class="tiny-label">KEEP YOUR OUTPUTS</span>
+            <h3>Export results</h3>
+            <p>Save the computed tables and diagnostics, linked to the scenario and run that produced them.</p><button
+              class="inline-link" data-demo-action="Results export is not connected in this draft.">Export results
+              &nbsp; ↗</button>
+          </div>
+        </div>
+      </section>
+      <section class="view" id="view-help" aria-labelledby="help-title">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow"><span></span> HERE WHEN YOU NEED IT</div>
+            <h1 id="help-title">A little more clarity<span class="heading-dot">.</span></h1>
+            <p>Plain-language explanations, with technical detail when you want it.</p>
+          </div>
+        </div>
+        <div class="preview-banner"><span class="preview-icon">✳</span>
+          <div><strong>Dictionary preview.</strong> These sample entries illustrate how help could work.</div><span
+            class="preview-tag">PREVIEW MODE</span>
+        </div>
+        <div class="status-guide form-card"><span class="tiny-label">DESIGN PREVIEW</span><h2>Result status examples</h2>
+          <p>These examples show how calculation states could look; they do not reflect an actual run.</p>
+          <div class="status-examples"><span class="chip status-idle">○ &nbsp; NOT CALCULATED</span><span class="chip status-running">◌ &nbsp; CALCULATING</span><span class="chip status-stale">↻ &nbsp; NEEDS UPDATE</span><span class="chip status-error">! &nbsp; UNABLE TO CALCULATE</span></div>
+        </div>
+        <div class="dictionary-layout">
+          <div>
+            <label class="dictionary-search">Search the dictionary<input id="dictionary-search" type="search"
+                placeholder="Try ‘risk’ or ‘withdrawal’" autocomplete="off"></label>
+            <p class="dictionary-count" id="dictionary-count" role="status">Showing 5 example terms</p>
+            <p class="math-status" id="math-status" role="status">Mathematical notation loads when the equation renderer
+              is available.</p>
+            <div class="dictionary-list" id="dictionary-list">
+              <article class="form-card dictionary-entry" id="term-impoverishment"
+                data-search="impoverishment threshold wealth level" tabindex="-1"><span class="tiny-label">RETIREMENT
+                  &amp; WEALTH</span>
+                <h2>Impoverishment level</h2>
+                <p>The wealth level you choose as the point at which your retirement funding has fallen below an
+                  acceptable threshold.</p>
+                <p>This does not have to mean that your wealth has reached zero.</p>
+                <details>
+                  <summary>Technical details</summary>
+                  <p>The model studies the first time wealth reaches or falls below the selected threshold.</p>
+                </details>
+              </article>
+              <article class="form-card dictionary-entry" id="term-safe-boundary"
+                data-search="safe boundary risk free capital withdrawal" tabindex="-1"><span
+                  class="tiny-label">RETIREMENT &amp; WEALTH</span>
+                <h2>Safe boundary</h2>
+                <p>The model's risk-free wealth threshold for funding the chosen withdrawal over the relevant horizon.
+                </p>
+                <p>It provides a benchmark for comparing the capital needed when investment risk is allowed.</p>
+                <details>
+                  <summary>Technical details</summary>
+                  <p>For a finite remaining-lifetime endpoint T and a positive risk-free rate r, the boundary at time t
+                    is:</p>
+                  <div class="math-formula" data-math>
+                    x_{\mathrm{safe}}(t)=\frac{C}{r}-\left(\frac{C}{r}-x_{\mathrm{imp}}\right)\mathrm{e}^{-r(T-t)}</div>
+                  <p>Here C is the annual withdrawal and x<sub>imp</sub> is the impoverishment threshold. The time t is
+                    measured from retirement.</p>
+                </details>
+              </article>
+              <article class="form-card dictionary-entry" id="term-projection"
+                data-search="projection projected policy borrowing short constraint" tabindex="-1"><span
+                  class="tiny-label">PORTFOLIO POLICY</span>
+                <h2>Projection</h2>
+                <p>A way of adjusting a model's portfolio weights so they satisfy the selected investment constraints.
+                </p>
+                <p>Here it provides a feasible comparison strategy; it is not claimed to be the optimal constrained
+                  strategy.</p>
+                <details>
+                  <summary>Technical details</summary>
+                  <p>The covariance-weighted projection of the unconstrained risky allocation π is:</p>
+                  <div class="math-formula" data-math>\widehat{\pi}=\operatorname*{arg\,min}_{p\geq
+                    0,\;\mathbf{1}^{\mathsf T}p\leq 1}(p-\pi)^{\mathsf T}\Sigma(p-\pi)</div>
+                  <p>The vector p contains risky-asset weights and Σ is their covariance matrix. The constraints
+                    prohibit short positions and borrowing.</p>
+                </details>
+              </article>
+              <article class="form-card dictionary-entry" id="term-target-risk"
+                data-search="risk target alpha probability lifetime" tabindex="-1"><span class="tiny-label">RISK &amp;
+                  RESULTS</span>
+                <h2>Target risk</h2>
+                <p>The chance of impoverishment before death that you choose when calculating a withdrawal under the
+                  model.</p>
+                <p>A result evaluated under a different mortality model or a projected policy can differ from this
+                  target.</p>
+                <details>
+                  <summary>Technical details</summary>
+                  <p>In the calibrated unconstrained model, the target α is the probability of reaching the
+                    impoverishment threshold before death:</p>
+                  <div class="math-formula" data-math>\mathbb{P}(\tau_{\mathrm{imp}}&lt;\mathcal{T})=\alpha</div>
+                  <p>Here τ<sub>imp</sub> is the time of impoverishment and 𝒯 is the random time of death. This
+                    equality refers to the policy's own mortality model and the conditions of the calibration.</p>
+                </details>
+              </article>
+              <article class="form-card dictionary-entry" id="term-gm-risk"
+                data-search="gompertz makeham gm mortality risk simulation" tabindex="-1"><span class="tiny-label">RISK
+                  &amp; RESULTS</span>
+                <h2>GM risk</h2>
+                <p>An estimate of impoverishment risk when the strategy is evaluated using a fitted Gompertz–Makeham
+                  mortality model.</p>
+                <p>It is a model-based estimate, not a known future outcome.</p>
+                <details>
+                  <summary>Technical details</summary>
+                  <p>Simulation uncertainty and numerical approximation error are distinct from differences between
+                    mortality models.</p>
+                </details>
+              </article>
+            </div>
+            <p class="dictionary-empty hidden" id="dictionary-empty">No matching example terms. Try another search.</p>
+          </div>
+          <aside class="insight-card dictionary-aside"><span class="tiny-label">LEARN AS YOU GO</span>
+            <h3>As much detail as you need.</h3>
+            <p>Choose an underlined term in the workspace to open its explanation here. Card help offers a shorter guide
+              without leaving your current view.</p>
+          </aside>
+        </div>
+      </section>
+      <footer class="page-footer"><span>STILLWELL <b>✳</b> PENSION LAB</span><span>DESIGN DRAFT · ALL VALUES
+          ILLUSTRATIVE</span></footer>
+    </main>
+  </div>
+  <dialog id="gm-help-dialog" class="help-dialog" aria-labelledby="gm-help-title">
+    <div class="help-dialog-heading">
+      <div><span class="tiny-label">UNDERSTANDING THIS CARD</span>
+        <h2 id="gm-help-title">Risk under GM mortality</h2>
+      </div><button class="close-settings" id="gm-help-close" aria-label="Close help">×</button>
+    </div>
+    <p>This card compares the chosen risk target with an estimate using the fitted Gompertz–Makeham mortality model. The
+      estimate may differ from the target.</p>
+    <p>If projection is selected, the comparison also shows how projected and unprojected policies differ. Results are
+      model-based estimates, not guaranteed outcomes.</p><button class="term-link" data-term="gm-risk">Read the GM risk
+      dictionary entry ↗</button>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+
+</html>

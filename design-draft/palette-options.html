@@ -1,0 +1,84 @@
+<div id="palette-options">
+  <style>
+    #palette-options { display:grid; gap:22px; color:var(--foreground); }
+    #palette-options .palette-title { display:flex; gap:10px; align-items:baseline; margin-bottom:8px; }
+    #palette-options .palette-title strong { font-weight:500; }
+    #palette-options .palette-title span { color:var(--muted-foreground); font-size:12px; }
+    #palette-options .swatches { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:5px; }
+    #palette-options .swatch { min-width:0; }
+    #palette-options .color { height:50px; border-radius:5px; }
+    #palette-options .label { margin-top:5px; font-size:12px; line-height:1.4; overflow-wrap:anywhere; }
+    #palette-options .label span { color:var(--muted-foreground); display:block; }
+    @media(max-width:460px) { #palette-options .swatches { grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; } #palette-options .color { height:42px; } }
+  </style>
+  <section aria-label="Graphite and ember palette">
+    <div class="palette-title"><strong>Graphite &amp; ember</strong><span>Balanced · close to the reference</span></div>
+    <div class="swatches">
+      <div class="swatch"><div class="color" style="background:#161b22"></div><div class="label">Graphite<span>#161B22</span></div></div>
+      <div class="swatch"><div class="color" style="background:#344454"></div><div class="label">Blue-gray<span>#344454</span></div></div>
+      <div class="swatch"><div class="color" style="background:#f0f3f5"></div><div class="label">Canvas<span>#F0F3F5</span></div></div>
+      <div class="swatch"><div class="color" style="background:#ffffff;box-shadow:inset 0 0 0 1px #cdd4db"></div><div class="label">Surface<span>#FFFFFF</span></div></div>
+      <div class="swatch"><div class="color" style="background:#e56a24"></div><div class="label">Orange<span>#E56A24</span></div></div>
+    </div>
+  </section>
+  <section aria-label="Midnight and copper palette">
+    <div class="palette-title"><strong>Midnight &amp; copper</strong><span>Quieter · more academic</span></div>
+    <div class="swatches">
+      <div class="swatch"><div class="color" style="background:#18232d"></div><div class="label">Midnight<span>#18232D</span></div></div>
+      <div class="swatch"><div class="color" style="background:#425b6b"></div><div class="label">Slate<span>#425B6B</span></div></div>
+      <div class="swatch"><div class="color" style="background:#eef1f2"></div><div class="label">Canvas<span>#EEF1F2</span></div></div>
+      <div class="swatch"><div class="color" style="background:#fafbf9;box-shadow:inset 0 0 0 1px #cdd4db"></div><div class="label">Surface<span>#FAFBF9</span></div></div>
+      <div class="swatch"><div class="color" style="background:#bb5a2d"></div><div class="label">Copper<span>#BB5A2D</span></div></div>
+    </div>
+  </section>
+  <section aria-label="Charcoal and signal palette">
+    <div class="palette-title"><strong>Charcoal &amp; signal</strong><span>Brighter · more technical</span></div>
+    <div class="swatches">
+      <div class="swatch"><div class="color" style="background:#111820"></div><div class="label">Charcoal<span>#111820</span></div></div>
+      <div class="swatch"><div class="color" style="background:#536a7a"></div><div class="label">Steel<span>#536A7A</span></div></div>
+      <div class="swatch"><div class="color" style="background:#e9eef2"></div><div class="label">Canvas<span>#E9EEF2</span></div></div>
+      <div class="swatch"><div class="color" style="background:#ffffff;box-shadow:inset 0 0 0 1px #cdd4db"></div><div class="label">Surface<span>#FFFFFF</span></div></div>
+      <div class="swatch"><div class="color" style="background:#f47721"></div><div class="label">Signal<span>#F47721</span></div></div>
+    </div>
+  </section>
+  <section aria-label="Navy and sea glass palette">
+    <div class="palette-title"><strong>Navy &amp; sea glass</strong><span>Calm · contemporary</span></div>
+    <div class="swatches">
+      <div class="swatch"><div class="color" style="background:#172c42"></div><div class="label">Navy<span>#172C42</span></div></div>
+      <div class="swatch"><div class="color" style="background:#496a80"></div><div class="label">Ocean slate<span>#496A80</span></div></div>
+      <div class="swatch"><div class="color" style="background:#edf3f5"></div><div class="label">Canvas<span>#EDF3F5</span></div></div>
+      <div class="swatch"><div class="color" style="background:#ffffff;box-shadow:inset 0 0 0 1px #cdd4db"></div><div class="label">Surface<span>#FFFFFF</span></div></div>
+      <div class="swatch"><div class="color" style="background:#237d80"></div><div class="label">Sea glass<span>#237D80</span></div></div>
+    </div>
+  </section>
+  <section aria-label="Ink and iris palette">
+    <div class="palette-title"><strong>Ink &amp; iris</strong><span>Thoughtful · distinctive</span></div>
+    <div class="swatches">
+      <div class="swatch"><div class="color" style="background:#24243d"></div><div class="label">Ink<span>#24243D</span></div></div>
+      <div class="swatch"><div class="color" style="background:#65657f"></div><div class="label">Dusk<span>#65657F</span></div></div>
+      <div class="swatch"><div class="color" style="background:#f1f0f7"></div><div class="label">Canvas<span>#F1F0F7</span></div></div>
+      <div class="swatch"><div class="color" style="background:#ffffff;box-shadow:inset 0 0 0 1px #cdd4db"></div><div class="label">Surface<span>#FFFFFF</span></div></div>
+      <div class="swatch"><div class="color" style="background:#7162b6"></div><div class="label">Iris<span>#7162B6</span></div></div>
+    </div>
+  </section>
+  <section aria-label="Forest and brass palette">
+    <div class="palette-title"><strong>Forest &amp; brass</strong><span>Grounded · quietly refined</span></div>
+    <div class="swatches">
+      <div class="swatch"><div class="color" style="background:#1e3532"></div><div class="label">Forest<span>#1E3532</span></div></div>
+      <div class="swatch"><div class="color" style="background:#60766a"></div><div class="label">Sage<span>#60766A</span></div></div>
+      <div class="swatch"><div class="color" style="background:#f1f2ea"></div><div class="label">Canvas<span>#F1F2EA</span></div></div>
+      <div class="swatch"><div class="color" style="background:#fffefa;box-shadow:inset 0 0 0 1px #cdd4db"></div><div class="label">Surface<span>#FFFEFA</span></div></div>
+      <div class="swatch"><div class="color" style="background:#ae7830"></div><div class="label">Brass<span>#AE7830</span></div></div>
+    </div>
+  </section>
+  <section aria-label="Deep blue and coral palette">
+    <div class="palette-title"><strong>Deep blue &amp; coral</strong><span>Warm · inviting</span></div>
+    <div class="swatches">
+      <div class="swatch"><div class="color" style="background:#222e49"></div><div class="label">Deep blue<span>#222E49</span></div></div>
+      <div class="swatch"><div class="color" style="background:#62738a"></div><div class="label">Blue-gray<span>#62738A</span></div></div>
+      <div class="swatch"><div class="color" style="background:#f5f1ee"></div><div class="label">Canvas<span>#F5F1EE</span></div></div>
+      <div class="swatch"><div class="color" style="background:#ffffff;box-shadow:inset 0 0 0 1px #cdd4db"></div><div class="label">Surface<span>#FFFFFF</span></div></div>
+      <div class="swatch"><div class="color" style="background:#d96050"></div><div class="label">Coral<span>#D96050</span></div></div>
+    </div>
+  </section>
+</div>

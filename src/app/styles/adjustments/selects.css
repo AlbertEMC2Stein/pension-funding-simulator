@@ -1,0 +1,37 @@
+/* Keep the native select control and menu, but inset its visual indicator. */
+:root {
+  --select-indicator: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='m3 5 4 4 4-4' stroke='%23526176' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+:root[data-theme="dark"] {
+  --select-indicator: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='m3 5 4 4 4-4' stroke='%23d1d2da' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+select {
+  appearance: none;
+  padding-right: 34px;
+  background-image: var(--select-indicator);
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.settings-panel select {
+  padding-right: 34px;
+}
+
+/* The compact table cells have a pre-existing !important padding rule. */
+td select {
+  padding-right: 34px !important;
+}
+
+.language-control::after {
+  content: none;
+}
+
+.language-control select {
+  padding-right: 34px;
+  background-image: var(--select-indicator);
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+

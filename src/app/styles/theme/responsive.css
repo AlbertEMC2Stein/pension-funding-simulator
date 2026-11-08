@@ -1,0 +1,30 @@
+@media (max-width:550px) {
+  .capital-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width:550px) {
+  .diagnostic-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width:850px) {
+  .dictionary-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width:550px) {
+  .visual-picker-groups {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width:550px) {
+  .theme-toggle span {
+    display: none;
+  }
+}
+

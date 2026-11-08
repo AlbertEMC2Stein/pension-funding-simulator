@@ -1,0 +1,39 @@
+.page-footer {
+    max-width: 1500px;
+    margin: 38px auto 0;
+    padding: 17px 0 22px;
+    border-top: 1px solid #e4ebe5;
+    display: flex;
+    justify-content: space-between;
+    color: #b0bdb3;
+    letter-spacing: 1px;
+    font-size: 8px;
+    font-weight: 700
+}
+
+.page-footer b {
+    color: #aebc9b
+}
+
+.toast {
+    position: fixed;
+    right: 25px;
+    bottom: 25px;
+    background: #244e45;
+    color: #fff;
+    padding: 13px 17px;
+    border-radius: 7px;
+    font-size: 11px;
+    box-shadow: 0 8px 25px #18372b30;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: .2s;
+    pointer-events: none;
+    z-index: 5
+}
+
+.toast.visible {
+    opacity: 1;
+    transform: translateY(0)
+}
+

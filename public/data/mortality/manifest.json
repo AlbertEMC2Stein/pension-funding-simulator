@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "source": "Destatis cohort life tables, local 1926–2026 source snapshot",
+  "sourcePage": "https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Bevoelkerung/Sterbefaelle-Lebenserwartung/kohortensterbetafeln.html",
+  "firstBirthYear": 1926,
+  "lastBirthYear": 2026,
+  "firstAge": 0,
+  "lastAge": 99,
+  "files": [
+    {
+      "sourceName": "csv-12621-b01-Table 1.csv",
+      "sourceSha256": "676cf5e7801a6e41e2ce40017792782d55c6655f1e7cd58e588902f5a423abfc",
+      "outputName": "cohort_table_1926_2026_male_low.csv",
+      "outputSha256": "db963b014f21bd9e9f4228c56a6712c27413287fcc8148ef3c6b6e765bce6ff0",
+      "sex": "male",
+      "scenario": "low",
+      "variant": "V1 (niedrig)"
+    },
+    {
+      "sourceName": "csv-12621-b02-Table 1.csv",
+      "sourceSha256": "b2e280ed1e74e1ca26efe31302a2ab1a1029c4ea3189b316e9e270a4899c178a",
+      "outputName": "cohort_table_1926_2026_female_low.csv",
+      "outputSha256": "45771bb8b6a69a34fe6a6859f42dffc9b76b6989257d69253254fa4bca38a029",
+      "sex": "female",
+      "scenario": "low",
+      "variant": "V1 (niedrig)"
+    },
+    {
+      "sourceName": "csv-12621-b03-Table 1.csv",
+      "sourceSha256": "26995462f4847ecf9924033b2231ff8a1c4161cc08adb7a395b11ee176154abc",
+      "outputName": "cohort_table_1926_2026_male_medium.csv",
+      "outputSha256": "cebe459ae6aa146845a3140b3067bf5daebc6c4d2fe8b3ecc6d1c75c91f6bb38",
+      "sex": "male",
+      "scenario": "medium",
+      "variant": "V2 (mittel)"
+    },
+    {
+      "sourceName": "csv-12621-b04-Table 1.csv",
+      "sourceSha256": "94bde89c1489e03e3c6bd7fbdbf6768eac06a361c00217d68e1f649c4a0bb3e7",
+      "outputName": "cohort_table_1926_2026_female_medium.csv",
+      "outputSha256": "358f8aeffd57bdc02607fd7e5cae158fda81ab12b093ac1cabe6ee053004abd3",
+      "sex": "female",
+      "scenario": "medium",
+      "variant": "V2 (mittel)"
+    },
+    {
+      "sourceName": "csv-12621-b05-Table 1.csv",
+      "sourceSha256": "3ceac7c651b0252347ac7b28cb9946f4541f2f847c4d01aacd1714a141838149",
+      "outputName": "cohort_table_1926_2026_male_high.csv",
+      "outputSha256": "8778bd53860bfc72515a2b407366b4698835661dfcd28d5f2a3117e4fd5b5b53",
+      "sex": "male",
+      "scenario": "high",
+      "variant": "V3 (hoch)"
+    },
+    {
+      "sourceName": "csv-12621-b06-Table 1.csv",
+      "sourceSha256": "4012ef5027196bcb60a0eb4ea80d6c31cf2894c88aa4d9521de1ba40aefa656e",
+      "outputName": "cohort_table_1926_2026_female_high.csv",
+      "outputSha256": "ab80d4070d13eecb413c0c282684acc564b1a87d917273c21c9a9b6d42e84316",
+      "sex": "female",
+      "scenario": "high",
+      "variant": "V3 (hoch)"
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+/* Optional impoverishment-timing visualization */
+.timing-card {
+  margin-top: 15px;
+}
+
+.timing-card h3 {
+  color: var(--text-strong);
+  font: 700 16px Manrope, sans-serif;
+  margin: 7px 0;
+}
+
+.timing-intro,
+.timing-explanation {
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.timing-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.timing-controls fieldset {
+  padding: 0;
+  border: 0;
+  margin: 0;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.timing-controls legend {
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.timing-switch {
+  margin-bottom: 0;
+}
+
+.timing-chart {
+  margin-top: 15px;
+}
+
+.timing-chart svg {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+}
+
+.timing-grid path {
+  fill: none;
+  stroke: var(--chart-grid);
+}
+
+.timing-curve {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.timing-tail {
+  fill: var(--accent-soft);
+  opacity: .32;
+}
+
+.timing-age-line {
+  stroke: var(--text-secondary);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 5;
+}
+
+.timing-axis {
+  fill: var(--text-secondary);
+  font: 11px var(--font);
+}
+
+.timing-age-label {
+  margin-top: 18px;
+}
+
+.timing-age-slider {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.timing-explanation {
+  margin-bottom: 0;
+}
+

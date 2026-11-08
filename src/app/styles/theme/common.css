@@ -1,0 +1,265 @@
+body {
+  background: var(--page);
+  color: var(--text);
+}
+
+.rail,
+.icon-button,
+.button-light,
+.scenario-strip,
+.chart-card,
+.small-card,
+.form-card,
+.settings-panel,
+.method,
+.segmented button.selected,
+.settings-panel select,
+select,
+input:not([type=range]):not([type=checkbox]) {
+  background-color: var(--surface);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+.topbar,
+.page-footer,
+.tabs,
+.settings-group,
+.settings-footer,
+.asset-row,
+th,
+td,
+.table-footer,
+.scenario-item {
+  border-color: var(--border);
+}
+
+.brand,
+.page-heading h1,
+.section-title h2,
+.settings-heading h2,
+.small-card h3,
+.form-card h3,
+.insight-card h3,
+.big-value,
+.scenario-intro strong,
+.scenario-item strong {
+  color: var(--text-strong);
+}
+
+.page-heading p,
+.section-title p,
+.small-card p,
+.form-card p,
+.settings-lead,
+.chart-disclaimer,
+.small-note,
+.input-grid label,
+.field-label,
+.group-title,
+.asset-row,
+.bar-row,
+.legend,
+.check-card strong,
+.check-card small,
+.insight-card p {
+  color: var(--text-muted);
+}
+
+.rail-note,
+.segmented,
+.card-icon,
+.bar-row div {
+  background: var(--surface-soft);
+}
+
+.nav-item.active,
+.draft-pill,
+.setting-callout,
+.visual-options,
+.method.active,
+.insight-card {
+  background: var(--surface-accent);
+  border-color: var(--border);
+}
+
+.nav-item.active,
+.text-link,
+.inline-link,
+.tab.active,
+.field-label b,
+.setting-callout b,
+.segmented button.selected,
+.nav-icon,
+.insight-link {
+  color: var(--accent);
+}
+
+.heading-dot,
+.brand-dot,
+.mobile-brand span,
+.sparkle {
+  color: var(--highlight);
+}
+
+.button-primary {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: var(--accent-text);
+}
+
+.preview-banner {
+  background: var(--notice-bg);
+  border-color: var(--notice-border);
+  color: var(--notice-text);
+}
+
+.preview-banner strong,
+.preview-tag,
+.preview-icon {
+  color: var(--notice-text);
+}
+
+.axis-text {
+  fill: var(--text-muted);
+}
+
+.plot-axis-title {
+  fill: var(--text-secondary);
+  font: 700 8px var(--font);
+  letter-spacing: .8px;
+}
+
+.grid-lines path,
+.mini-chart>path:first-child,
+.mortality-card svg>path:first-child {
+  stroke: var(--chart-grid);
+}
+
+.chart-wrap path[stroke="#347d70"],
+.mortality-card path[stroke="#347d70"] {
+  stroke: var(--accent);
+}
+
+.chart-wrap circle[stroke="#347d70"] {
+  stroke: var(--accent);
+  fill: var(--surface);
+}
+
+.chart-wrap circle[fill="#347d70"] {
+  fill: var(--accent);
+}
+
+.mini-chart path[fill="#82b8aa"] {
+  fill: var(--chart-bond);
+}
+
+.mini-chart path[fill="#275e59"] {
+  fill: var(--chart-equity);
+}
+
+.teal,
+.bar-row i,
+.status-dot,
+.draft-pill span,
+.mini-dot {
+  background: var(--accent);
+}
+
+.sage,
+.bar-row i.alt {
+  background: var(--chart-bond);
+}
+
+.pale {
+  background: var(--chart-risk-free);
+}
+
+.check-card,
+.input-suffix,
+.subtle-button {
+  border-color: var(--border);
+}
+
+.settings-panel input[type=range],
+.visual-options input,
+.check-card input {
+  accent-color: var(--accent);
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 9px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.theme-toggle:hover {
+  color: var(--accent);
+}
+
+.language-control {
+  position: relative;
+}
+
+.language-control::after {
+  content: '▾';
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-size: 17px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.language-control select {
+  appearance: none;
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 25px 7px 9px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.brand-mark i {
+  background: var(--accent);
+}
+
+.brand-mark i:nth-child(2) {
+  background: var(--accent-soft);
+}
+
+.brand-mark i:nth-child(3) {
+  background: var(--chart-equity);
+}
+
+.chart-wrap stop:first-child {
+  stop-color: var(--accent-soft);
+}
+
+.chart-wrap stop:last-child {
+  stop-color: var(--accent-soft);
+}
+

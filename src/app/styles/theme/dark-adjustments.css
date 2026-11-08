@@ -1,0 +1,93 @@
+/* The original draft uses green text in several components. Give those
+   elements explicit dark-theme colors rather than inheriting light-theme ink. */
+:root[data-theme="dark"] .setting-callout {
+  background: #352d38;
+  color: #f2b4a6;
+}
+
+:root[data-theme="dark"] .setting-callout strong,
+:root[data-theme="dark"] .setting-callout>span {
+  color: #f5c5b9;
+}
+
+:root[data-theme="dark"] .setting-callout p,
+:root[data-theme="dark"] .setting-callout small {
+  color: #d8cbd1;
+}
+
+:root[data-theme="dark"] .setting-callout b {
+  color: #ffad9e;
+}
+
+:root[data-theme="dark"] .rail-note,
+:root[data-theme="dark"] .rail-note strong,
+:root[data-theme="dark"] .method strong,
+:root[data-theme="dark"] .visual-options strong,
+:root[data-theme="dark"] td b {
+  color: var(--text-strong);
+}
+
+:root[data-theme="dark"] .rail-note p,
+:root[data-theme="dark"] .method small,
+:root[data-theme="dark"] .visual-options p,
+:root[data-theme="dark"] .range-ends,
+:root[data-theme="dark"] .info-line,
+:root[data-theme="dark"] .settings-footer,
+:root[data-theme="dark"] .settings-footer small,
+:root[data-theme="dark"] .scenario-item span,
+:root[data-theme="dark"] .scenario-item small,
+:root[data-theme="dark"] .value-note,
+:root[data-theme="dark"] .big-value span,
+:root[data-theme="dark"] .table-status,
+:root[data-theme="dark"] .table-footer {
+  color: var(--text-secondary);
+}
+
+:root[data-theme="dark"] .chip {
+  background: var(--surface-soft);
+  color: #ffd0c4;
+}
+
+:root[data-theme="dark"] .segmented button:not(.selected),
+:root[data-theme="dark"] .nav-item:not(.active),
+:root[data-theme="dark"] .tab:not(.active) {
+  color: var(--text-secondary);
+}
+
+:root[data-theme="dark"] .tab.active {
+  border-bottom-color: var(--accent);
+}
+
+.withdrawal-callout,
+:root[data-theme="dark"] .withdrawal-callout {
+  background: var(--surface-accent);
+  color: var(--text-strong);
+}
+
+.withdrawal-callout>span,
+:root[data-theme="dark"] .withdrawal-callout>span {
+  color: var(--accent);
+}
+
+.withdrawal-callout strong,
+:root[data-theme="dark"] .withdrawal-callout strong {
+  color: var(--text-strong);
+}
+
+.withdrawal-value {
+  color: var(--text-strong);
+  font: 700 18px Manrope, sans-serif;
+  margin-top: 8px;
+}
+
+.withdrawal-value small,
+.withdrawal-status,
+:root[data-theme="dark"] .withdrawal-value small {
+  color: var(--text-secondary);
+  font: 400 10px var(--font);
+}
+
+.withdrawal-status {
+  display: block;
+  margin-top: 5px;
+}

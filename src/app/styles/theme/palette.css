@@ -1,0 +1,55 @@
+/*
+ * Draft theme palette. Edit these values to experiment with the look.
+ * Other files in this directory apply these colors to the interface.
+ * The production implementation should use semantic tokens throughout.
+ */
+:root {
+  color-scheme: light;
+  --page: #f5f1ee;
+  --surface: #fcf9f7;
+  --surface-soft: #f2eeec;
+  --surface-accent: #f5e8e4;
+  --text: #29364d;
+  --text-strong: #222e49;
+  --text-secondary: #526176;
+  --text-muted: #647287;
+  --border: #e3dddc;
+  --accent: #b9473a;
+  --accent-strong: #a83c31;
+  --accent-soft: #df9388;
+  --accent-text: #ffffff;
+  --highlight: #d96050;
+  --notice-bg: #f8ece7;
+  --notice-border: #efd9d2;
+  --notice-text: #83544c;
+  --chart-grid: #e6e1e1;
+  --chart-equity: #526c8b;
+  --chart-bond: #de968a;
+  --chart-risk-free: #d9dce3;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #171e2c;
+  --surface: #222a3a;
+  --surface-soft: #2c3444;
+  --surface-accent: #42343d;
+  --text: #f0e9e7;
+  --text-strong: #fff6f2;
+  --text-secondary: #d1d2da;
+  --text-muted: #b4bac6;
+  --border: #424a59;
+  --accent: #f39b8c;
+  --accent-strong: #e68072;
+  --accent-soft: #c77c75;
+  --accent-text: #291c20;
+  --highlight: #f1a497;
+  --notice-bg: #49383b;
+  --notice-border: #67494a;
+  --notice-text: #f2c7b9;
+  --chart-grid: #424a59;
+  --chart-equity: #96b1d0;
+  --chart-bond: #e5988a;
+  --chart-risk-free: #566275;
+}
+

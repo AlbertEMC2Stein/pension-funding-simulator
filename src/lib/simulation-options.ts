@@ -1,0 +1,193 @@
+import {
+  initialMarketCalibration,
+  marketValidationErrors,
+  type MarketCalibrationDraft,
+} from "./market-calibration";
+
+/** Editable values remain strings until a snapshot is prepared. Rates are percentages. */
+export interface SimulationDraft {
+  market: MarketCalibrationDraft;
+  investor: {
+    birthYear: string;
+    retirementYear: string;
+    mortality: "female" | "male" | "custom";
+    maleWeight: number;
+    longevity: "low" | "medium" | "high";
+    initialCapital: string;
+    impoverishmentLevel: string;
+  };
+  simulation: {
+    withdrawalMode: "targetRisk" | "customAmount";
+    targetRiskPercent: number;
+    withdrawalEuros: number;
+    projected: boolean;
+    paths: number;
+    timeStep: "monthly" | "fortnightly" | "weekly";
+  };
+}
+
+/** A validated snapshot; annual rates are decimal fractions and amounts are EUR. */
+export interface SimulationOptions {
+  market: {
+    currency: "EUR";
+    realRiskFreeRate: number;
+    inflationRate: number;
+    assets: { name: string; nominalReturn: number; volatility: number }[];
+    correlation: number[][];
+  };
+  investor: {
+    birthYear: number;
+    retirementYear: number;
+    mortality: {
+      table: "female" | "male" | "custom";
+      maleWeight: number;
+      longevity: "low" | "medium" | "high";
+    };
+    initialCapital: number;
+    impoverishmentLevel: number;
+  };
+  policy: {
+    projected: boolean;
+    withdrawal:
+      | { mode: "targetRisk"; targetRisk: number }
+      | { mode: "customAmount"; annualAmount: number };
+  };
+  numerical: { paths: number; timeStep: "monthly" | "fortnightly" | "weekly" };
+}
+
+export function initialSimulationDraft(): SimulationDraft {
+  return {
+    market: initialMarketCalibration(),
+    investor: {
+      birthYear: "1965",
+      retirementYear: "2032",
+      mortality: "female",
+      maleWeight: 0.5,
+      longevity: "medium",
+      initialCapital: "500,000",
+      impoverishmentLevel: "100,000",
+    },
+    simulation: {
+      withdrawalMode: "targetRisk",
+      targetRiskPercent: 5,
+      withdrawalEuros: 25000,
+      projected: false,
+      paths: 10000,
+      timeStep: "monthly",
+    },
+  };
+}
+
+/** Parse plain decimals or English-style grouped EUR amounts, rejecting partial text. */
+export function parseAmount(text: string): number | null {
+  const trimmed = text.trim();
+  if (!/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/.test(trimmed)) return null;
+  const value = Number(trimmed.replaceAll(",", ""));
+  return Number.isFinite(value) ? value : null;
+}
+
+/** Validate before conversion; no model-specific calculations are performed. */
+export function buildSimulationOptions(
+  draft: SimulationDraft,
+): { ok: true; options: SimulationOptions } | { ok: false; errors: string[] } {
+  const errors = marketValidationErrors(draft.market);
+  const { investor, simulation, market } = draft;
+  const year = (value: string) =>
+    /^\d{4}$/.test(value.trim()) ? Number(value) : NaN;
+  const birthYear = year(investor.birthYear);
+  const retirementYear = year(investor.retirementYear);
+  if (!Number.isInteger(birthYear) || birthYear < 1926 || birthYear > 2026)
+    errors.push(
+      "Birth year must be between 1926 and 2026, the available cohort range.",
+    );
+  if (
+    !Number.isInteger(retirementYear) ||
+    !Number.isInteger(birthYear) ||
+    retirementYear < birthYear ||
+    retirementYear - birthYear > 99
+  )
+    errors.push(
+      "Enter a retirement year corresponding to an age from 0 to 99.",
+    );
+  const initialCapital = parseAmount(investor.initialCapital);
+  const impoverishmentLevel = parseAmount(investor.impoverishmentLevel);
+  if (initialCapital === null || initialCapital <= 0)
+    errors.push("Enter a positive initial capital in euros.");
+  if (impoverishmentLevel === null || impoverishmentLevel < 1)
+    errors.push("Enter an impoverishment level of at least €1.");
+  if (
+    initialCapital !== null &&
+    impoverishmentLevel !== null &&
+    impoverishmentLevel >= initialCapital
+  )
+    errors.push("Initial capital must exceed the impoverishment level.");
+  if (
+    !Number.isFinite(investor.maleWeight) ||
+    investor.maleWeight < 0 ||
+    investor.maleWeight > 1
+  )
+    errors.push("Mortality mixture weight must be between 0 and 1.");
+  if (
+    simulation.withdrawalMode === "targetRisk" &&
+    (!Number.isFinite(simulation.targetRiskPercent) ||
+      simulation.targetRiskPercent <= 0 ||
+      simulation.targetRiskPercent >= 100)
+  )
+    errors.push("Target risk must be between 0% and 100%.");
+  if (
+    simulation.withdrawalMode === "customAmount" &&
+    (!Number.isFinite(simulation.withdrawalEuros) ||
+      simulation.withdrawalEuros < 0)
+  )
+    errors.push("Annual withdrawal must be non-negative.");
+  if (!Number.isSafeInteger(simulation.paths) || simulation.paths <= 0)
+    errors.push("Number of paths must be a positive integer.");
+  if (errors.length) return { ok: false, errors };
+  const maleWeight =
+    investor.mortality === "male"
+      ? 1
+      : investor.mortality === "female"
+        ? 0
+        : investor.maleWeight;
+  return {
+    ok: true,
+    options: {
+      market: {
+        currency: "EUR",
+        realRiskFreeRate: Number(market.realRiskFreePercent) / 100,
+        inflationRate: Number(market.inflationPercent) / 100,
+        assets: market.assets.map((asset) => ({
+          name: asset.name.trim(),
+          nominalReturn: Number(asset.nominalReturnPercent) / 100,
+          volatility: Number(asset.volatilityPercent) / 100,
+        })),
+        correlation: market.correlations.map((row) => row.map(Number)),
+      },
+      investor: {
+        birthYear,
+        retirementYear,
+        mortality: {
+          table: investor.mortality,
+          maleWeight,
+          longevity: investor.longevity,
+        },
+        initialCapital: initialCapital!,
+        impoverishmentLevel: impoverishmentLevel!,
+      },
+      policy: {
+        projected: simulation.projected,
+        withdrawal:
+          simulation.withdrawalMode === "targetRisk"
+            ? {
+                mode: "targetRisk",
+                targetRisk: simulation.targetRiskPercent / 100,
+              }
+            : {
+                mode: "customAmount",
+                annualAmount: simulation.withdrawalEuros,
+              },
+      },
+      numerical: { paths: simulation.paths, timeStep: simulation.timeStep },
+    },
+  };
+}
