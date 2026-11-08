@@ -5,6 +5,7 @@ import { useSimulationDraft } from "../SimulationDraftContext";
 import { buildMarketOptions } from "../../lib/simulation-options";
 import { calibrateMarket } from "../../lib/calibrate-market";
 import type { CeFit, GmFit } from "../../lib/mortality-fitting";
+import { ceFitStatus, type CeFitStatus } from "../../lib/fit-status";
 import {
   cohortSurvival,
   loadCohort,
@@ -114,7 +115,12 @@ function Plot({
           showlegend: !!(gm || ce),
           legend: { orientation: "h", y: 1.12 },
         },
-        { responsive: true, displaylogo: false },
+        {
+          responsive: true,
+          staticPlot: true,
+          displaylogo: false,
+          displayModeBar: false,
+        },
       );
       if (disposed) {
         plotly.purge(node);
@@ -155,6 +161,7 @@ export function CohortChart({
   longevity,
   maleWeight,
   active,
+  onCeFitStatusChange,
 }: {
   birthYear: string;
   retirementYear: string;
@@ -162,6 +169,7 @@ export function CohortChart({
   longevity: LongevityScenario;
   maleWeight: number;
   active: boolean;
+  onCeFitStatusChange: (status: CeFitStatus) => void;
 }) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const { draft } = useSimulationDraft();
@@ -199,6 +207,11 @@ export function CohortChart({
   const ceKey = market
     ? `${gmKey}/${market.realRiskFreeRate}/${market.rho}`
     : null;
+  // A completed CE fit is current only for the exact cohort and market inputs
+  // it used. In particular, an older run finishing cannot clear a stale badge.
+  useEffect(() => {
+    onCeFitStatusChange(ceFitStatus(ceResult?.key ?? null, ceKey));
+  }, [ceKey, ceResult, onCeFitStatusChange]);
   useEffect(
     () => () => {
       workerRef.current?.terminate();
@@ -353,19 +366,22 @@ export function CohortChart({
   }
   return (
     <>
+      <div className="mortality-fit-toolbar">
+        <strong>Survival by age</strong>
+        <button
+          type="button"
+          className="button button-primary"
+          onClick={startFit}
+        >
+          {running ? "Update fits" : "Fit mortality models"}
+        </button>
+      </div>
       <Plot key={`${gmKey}/${!!gm}/${!!ce}`} curve={curve} gm={gm} ce={ce} />
       <p className="chart-disclaimer">
         Cohort survival conditional on reaching age {age}. Annual points are
         connected by straight lines. Data end at age 100; the remaining survival
         probability is not forced to zero.
       </p>
-      <button
-        type="button"
-        className="button button-primary"
-        onClick={startFit}
-      >
-        {running ? "Update fits" : "Fit mortality models"}
-      </button>
       {!running && !gm && !ce && !fitErrors.gm && !fitErrors.ce && (
         <p>Mortality models have not been fitted for these inputs.</p>
       )}
@@ -436,16 +452,16 @@ export function CohortChart({
             {gm && (
               <>
                 <div>
-                  <dt>GM α, β, λ · per year</dt>
-                  <dd>
-                    {[
-                      gm.parameters.alpha,
-                      gm.parameters.beta,
-                      gm.parameters.lambda,
-                    ]
-                      .map((value) => value.toPrecision(5))
-                      .join(", ")}
-                  </dd>
+                  <dt>GM α</dt>
+                  <dd>{gm.parameters.alpha.toPrecision(5)} yr⁻¹</dd>
+                </div>
+                <div>
+                  <dt>GM β</dt>
+                  <dd>{gm.parameters.beta.toPrecision(5)} yr⁻¹</dd>
+                </div>
+                <div>
+                  <dt>GM λ</dt>
+                  <dd>{gm.parameters.lambda.toPrecision(5)} yr⁻¹</dd>
                 </div>
                 <div>
                   <dt>GM starts converged</dt>
@@ -458,15 +474,18 @@ export function CohortChart({
             {ce && (
               <>
                 <div>
-                  <dt>CE remaining endpoint · years</dt>
-                  <dd>{ce.parameters.tau.toFixed(3)}</dd>
+                  <dt>CE T · remaining lifetime endpoint</dt>
+                  <dd>{ce.parameters.tau.toFixed(3)} years</dd>
                 </div>
                 <div>
-                  <dt>CE δ and λ∞</dt>
-                  <dd>
-                    {ce.parameters.p.toPrecision(5)},{" "}
-                    {ce.parameters.lambda.toPrecision(5)}
-                  </dd>
+                  <dt>CE δ</dt>
+                  <dd>{ce.parameters.p.toPrecision(5)}</dd>
+                </div>
+                <div>
+                  <dt>
+                    CE λ<sub>∞</sub> · derived
+                  </dt>
+                  <dd>{ce.parameters.lambda.toPrecision(5)} yr⁻¹</dd>
                 </div>
                 <div>
                   <dt>CE starts converged</dt>

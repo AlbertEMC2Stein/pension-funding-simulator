@@ -14,6 +14,7 @@ import { useSimulationDraft } from "../SimulationDraftContext";
 import { MarketEditor } from "./MarketEditor";
 import { parseAmount } from "../../lib/simulation-options";
 import { CohortChart } from "./CohortChart";
+import type { CeFitStatus } from "../../lib/fit-status";
 import {
   FIRST_COHORT_YEAR,
   LAST_COHORT_YEAR,
@@ -25,7 +26,7 @@ import {
  * Market tab: owns the temporary editable market and shows calibration and
  * stress-test placeholders. Importing data and restoring presets are not wired.
  */
-function MarketSetup({ onMarketEdit }: { onMarketEdit: () => void }) {
+function MarketSetup() {
   const [method, setMethod] = useState("Preset");
   const [stress, setStress] = useState(false);
   const { draft, setDraft } = useSimulationDraft();
@@ -38,7 +39,6 @@ function MarketSetup({ onMarketEdit }: { onMarketEdit: () => void }) {
   function editMarket(next: MarketCalibrationDraft) {
     setDraft((current) => ({ ...current, market: next }));
     setMethod("Manual");
-    onMarketEdit();
   }
   const methods = [
     { name: "Preset", symbol: "✳", text: "Start with an example market" },
@@ -317,10 +317,12 @@ function MarketSetup({ onMarketEdit }: { onMarketEdit: () => void }) {
  * survival-curve weight in [0, 1] when the custom mixture is selected.
  */
 function InvestorSetup({
-  marketEdited,
+  ceFitStatus,
+  onCeFitStatusChange,
   active,
 }: {
-  marketEdited: boolean;
+  ceFitStatus: CeFitStatus;
+  onCeFitStatusChange: (status: CeFitStatus) => void;
   active: boolean;
 }) {
   const { draft, setDraft } = useSimulationDraft();
@@ -529,8 +531,8 @@ function InvestorSetup({
             mortality models.
           </p>
           <p className="mortality-market-note" role="status">
-            {marketEdited
-              ? "Market inputs have been edited. The compatible CE fit may need updating."
+            {ceFitStatus === "needs-update"
+              ? "The compatible CE fit needs updating after an input change."
               : "The compatible CE fit depends on market assumptions. Check the fit again after changing them."}{" "}
             The cohort data themselves do not change.
           </p>
@@ -541,6 +543,7 @@ function InvestorSetup({
             longevity={investor.longevity}
             maleWeight={mix}
             active={active}
+            onCeFitStatusChange={onCeFitStatusChange}
           />
         </div>
       </div>
@@ -554,8 +557,7 @@ function InvestorSetup({
  */
 export function Setup() {
   const [tab, setTab] = useState<"market" | "investor">("market");
-  // This preview has no fitted result to invalidate; remember only that edits occurred.
-  const [marketEdited, setMarketEdited] = useState(false);
+  const [ceFitStatus, setCeFitStatus] = useState<CeFitStatus>("not-fitted");
   return (
     <section className="view active">
       <PageHeading
@@ -588,15 +590,17 @@ export function Setup() {
           aria-selected={tab === "investor"}
           onClick={() => setTab("investor")}
         >
-          02 &nbsp; Investor & mortality{marketEdited && " · Review fit"}
+          02 &nbsp; Investor & mortality
+          {ceFitStatus === "needs-update" && " · Review fit"}
         </button>
       </div>
       <div hidden={tab !== "market"}>
-        <MarketSetup onMarketEdit={() => setMarketEdited(true)} />
+        <MarketSetup />
       </div>
       <div hidden={tab !== "investor"}>
         <InvestorSetup
-          marketEdited={marketEdited}
+          ceFitStatus={ceFitStatus}
+          onCeFitStatusChange={setCeFitStatus}
           active={tab === "investor"}
         />
       </div>

@@ -53,3 +53,16 @@
 input[aria-invalid="true"] {
   border-color: var(--accent);
 }
+.mortality-fit-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 20px 0 12px;
+}
+
+.mortality-fit-toolbar strong {
+  color: var(--text-strong);
+  font-size: 12px;
+}
