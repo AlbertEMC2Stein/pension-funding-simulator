@@ -3,6 +3,7 @@ import {
   marketValidationErrors,
   type MarketCalibrationDraft,
 } from "./market-calibration";
+import { validateCohortYears } from "./cohort-survival";
 
 /** Editable values remain strings until a snapshot is prepared. Rates are percentages. */
 export interface SimulationDraft {
@@ -49,8 +50,8 @@ export interface SimulationOptions {
   policy: {
     projected: boolean;
     withdrawal:
-    | { mode: "targetRisk"; targetRisk: number }
-    | { mode: "customAmount"; annualAmount: number };
+      | { mode: "targetRisk"; targetRisk: number }
+      | { mode: "customAmount"; annualAmount: number };
   };
   numerical: { paths: number; timeStep: "monthly" | "fortnightly" | "weekly" };
 }
@@ -117,23 +118,10 @@ export function buildSimulationOptions(
   const marketResult = buildMarketOptions(draft.market);
   const errors = marketResult.ok ? [] : [...marketResult.errors];
   const { investor, simulation } = draft;
-  const year = (value: string) =>
-    /^\d{4}$/.test(value.trim()) ? Number(value) : NaN;
-  const birthYear = year(investor.birthYear);
-  const retirementYear = year(investor.retirementYear);
-  if (!Number.isInteger(birthYear) || birthYear < 1926 || birthYear > 2026)
-    errors.push(
-      "Birth year must be between 1926 and 2026, the available cohort range.",
-    );
-  if (
-    !Number.isInteger(retirementYear) ||
-    !Number.isInteger(birthYear) ||
-    retirementYear < birthYear ||
-    retirementYear - birthYear > 99
-  )
-    errors.push(
-      "Enter a retirement year corresponding to an age from 0 to 99.",
-    );
+  const { birthYear, retirementYear, birthError, retirementError } =
+    validateCohortYears(investor.birthYear, investor.retirementYear);
+  if (birthError) errors.push(birthError);
+  if (retirementError) errors.push(retirementError);
   const initialCapital = parseAmount(investor.initialCapital);
   const impoverishmentLevel = parseAmount(investor.impoverishmentLevel);
   if (initialCapital === null || initialCapital <= 0)
@@ -194,13 +182,13 @@ export function buildSimulationOptions(
         withdrawal:
           simulation.withdrawalMode === "targetRisk"
             ? {
-              mode: "targetRisk",
-              targetRisk: simulation.targetRiskPercent / 100,
-            }
+                mode: "targetRisk",
+                targetRisk: simulation.targetRiskPercent / 100,
+              }
             : {
-              mode: "customAmount",
-              annualAmount: simulation.withdrawalEuros,
-            },
+                mode: "customAmount",
+                annualAmount: simulation.withdrawalEuros,
+              },
       },
       numerical: { paths: simulation.paths, timeStep: simulation.timeStep },
     },

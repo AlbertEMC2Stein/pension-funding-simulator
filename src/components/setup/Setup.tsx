@@ -13,6 +13,13 @@ import { type MarketCalibrationDraft } from "../../lib/market-calibration";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import { MarketEditor } from "./MarketEditor";
 import { parseAmount } from "../../lib/simulation-options";
+import { CohortChart } from "./CohortChart";
+import {
+  FIRST_COHORT_YEAR,
+  LAST_COHORT_YEAR,
+  LAST_SUPPORTED_RETIREMENT_AGE,
+  validateCohortYears,
+} from "../../lib/cohort-survival";
 
 /**
  * Market tab: owns the temporary editable market and shows calibration and
@@ -309,11 +316,21 @@ function MarketSetup({ onMarketEdit }: { onMarketEdit: () => void }) {
  * Investor tab with preview-only inputs and mortality fit. `mix` is the male
  * survival-curve weight in [0, 1] when the custom mixture is selected.
  */
-function InvestorSetup({ marketEdited }: { marketEdited: boolean }) {
+function InvestorSetup({
+  marketEdited,
+  active,
+}: {
+  marketEdited: boolean;
+  active: boolean;
+}) {
   const { draft, setDraft } = useSimulationDraft();
   const { investor } = draft;
   const mortality = investor.mortality;
   const mix = investor.maleWeight;
+  const cohortYears = validateCohortYears(
+    investor.birthYear,
+    investor.retirementYear,
+  );
   const initialCapital = parseAmount(investor.initialCapital);
   const threshold = parseAmount(investor.impoverishmentLevel);
   const thresholdPercent =
@@ -367,21 +384,43 @@ function InvestorSetup({ marketEdited }: { marketEdited: boolean }) {
               Birth year
               <input
                 type="number"
+                min={FIRST_COHORT_YEAR}
+                max={LAST_COHORT_YEAR}
+                step={1}
+                aria-invalid={!!cohortYears.birthError}
+                aria-describedby="birth-year-hint"
                 value={investor.birthYear}
                 onChange={(event) =>
                   updateInvestor({ birthYear: event.target.value })
                 }
               />
+              <small id="birth-year-hint" className="cohort-input-hint">
+                {cohortYears.birthError ??
+                  `Available cohorts: ${FIRST_COHORT_YEAR}–${LAST_COHORT_YEAR}.`}
+              </small>
             </label>
             <label>
               Expected retirement year
               <input
                 type="number"
+                min={cohortYears.birthError ? undefined : cohortYears.birthYear}
+                max={
+                  cohortYears.birthError
+                    ? undefined
+                    : cohortYears.birthYear + LAST_SUPPORTED_RETIREMENT_AGE
+                }
+                step={1}
+                aria-invalid={!!cohortYears.retirementError}
+                aria-describedby="retirement-year-hint"
                 value={investor.retirementYear}
                 onChange={(event) =>
                   updateInvestor({ retirementYear: event.target.value })
                 }
               />
+              <small id="retirement-year-hint" className="cohort-input-hint">
+                {cohortYears.retirementError ??
+                  "Supported retirement ages: 0–99."}
+              </small>
             </label>
             <label>
               Mortality table
@@ -427,7 +466,9 @@ function InvestorSetup({ marketEdited }: { marketEdited: boolean }) {
             </label>
             <div className="input-with-help">
               <div className="input-label-row">
-                <label htmlFor="impoverishment-input">Impoverishment level</label>
+                <label htmlFor="impoverishment-input">
+                  Impoverishment level
+                </label>
                 <TermLink term="impoverishment">?</TermLink>
               </div>
               <div className="input-suffix">
@@ -484,7 +525,10 @@ function InvestorSetup({ marketEdited }: { marketEdited: boolean }) {
             </div>
             <span className="chip">NOT CALCULATED</span>
           </div>
-          <p>Compare the cohort data with fitted mortality models.</p>
+          <p>
+            Explore cohort survival from your expected retirement age. Model
+            fitting is not yet available.
+          </p>
           <p className="mortality-market-note" role="status">
             {marketEdited
               ? "Market inputs have been edited. When mortality calibration is available, check the fit again: market assumptions may affect the fitted model."
@@ -492,34 +536,14 @@ function InvestorSetup({ marketEdited }: { marketEdited: boolean }) {
             The cohort data themselves do not change. No fit has been calculated
             in this preview.
           </p>
-          <svg
-            viewBox="0 0 650 150"
-            role="img"
-            aria-label="Illustrative survival curves"
-          >
-            <path d="M20 25H635 M20 65H635 M20 105H635" stroke="#e5ece8" />
-            <path
-              d="M20 23 C160 23 240 31 330 58 S500 120 635 130"
-              fill="none"
-              stroke="#347d70"
-              strokeWidth="3"
-            />
-            <path
-              d="M20 24 C160 22 255 37 345 64 S510 118 635 131"
-              fill="none"
-              stroke="#c49c61"
-              strokeWidth="2"
-              strokeDasharray="6 5"
-            />
-          </svg>
-          <div className="legend">
-            <span>
-              <i className="teal" /> Cohort data
-            </span>
-            <span>
-              <i className="gold-bg" /> Model fit
-            </span>
-          </div>
+          <CohortChart
+            birthYear={investor.birthYear}
+            retirementYear={investor.retirementYear}
+            mortality={mortality}
+            longevity={investor.longevity}
+            maleWeight={mix}
+            active={active}
+          />
           <div className="fit-status">
             <div>
               <strong>Fit not evaluated</strong>
@@ -601,7 +625,10 @@ export function Setup() {
         <MarketSetup onMarketEdit={() => setMarketEdited(true)} />
       </div>
       <div hidden={tab !== "investor"}>
-        <InvestorSetup marketEdited={marketEdited} />
+        <InvestorSetup
+          marketEdited={marketEdited}
+          active={tab === "investor"}
+        />
       </div>
     </section>
   );

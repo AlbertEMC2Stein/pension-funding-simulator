@@ -4,7 +4,7 @@ These six files are derived from the local copy of the Destatis cohort life tabl
 
 Each row describes one birth cohort. The first column is `birth_year`; the remaining columns `age_0` through `age_99` contain annual death probabilities. For example, `age_65` is the probability of dying before age 66 conditional on reaching age 65. Values are decimal fractions, not percentages. The original decimal digits are preserved, with decimal commas changed to decimal points; no fitting or rounding is performed.
 
-The source also has an open-ended `100 und mehr` row with value 1 for each cohort. It is not an annual probability at age 100 and is excluded, as in the research project's mortality reader. These tables therefore do not describe mortality beyond age 100. A mixture of male and female tables, fitting a model, and application integration are future work.
+The source also has an open-ended `100 und mehr` row with value 1 for each cohort. It is not an annual probability at age 100 and is excluded, as in the research project's mortality reader. These tables therefore do not describe mortality beyond age 100. The mortality panel plots annual survival conditional on reaching retirement age, including a custom mixture of the sex-specific conditional survival curves. Model fitting remains future work.
 
 ## Provenance and regeneration
 

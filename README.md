@@ -1,6 +1,6 @@
 # Stillwell interface draft
 
-This project contains a Next.js static-export version of the interface draft. All chart data and figures are illustrative. The application can collect and validate simulation inputs, but does not yet simulate, save settings, or import data.
+This project contains a Next.js static-export version of the interface draft. Evaluation charts remain illustrative; the mortality panel displays cohort survival data. The application can collect and validate simulation inputs, but does not yet simulate, save settings, or import data.
 
 The market panel supports local editing of asset names, expected annual nominal growth (an annualized compounded rate), volatilities, the real risk-free rate, inflation, and a symmetric correlation matrix. Edit the lower triangle; the upper triangle mirrors it and the diagonal remains fixed at one. The initial two-asset example uses the paper's 0.08 correlation; adding an asset assumes zero correlation until changed. Inputs are validated but are not yet connected to simulation results or saved across reloads. The current analytical model requires a positive real risk-free rate and positive asset volatilities. The matrix check rejects matrices that are not positive definite or are numerically near-singular.
 
@@ -25,7 +25,7 @@ The existing `AlbertEMC2Stein/albertemc2stein.github.io` repository is the accou
 
 The original standalone prototype is preserved in `design-draft/`; open `design-draft/index.html` to view it. The Next.js application is in `src/` and has its own styles in `src/app/styles/`, so it does not depend on the archived files. The interface is divided into a shell, evaluation, setup, data, and help components. Future model calculations should live in framework-independent modules rather than UI components.
 
-The preprocessed cohort mortality tables live in `public/data/mortality/`. Their [format and provenance](public/data/mortality/README.md) are documented alongside them. They are not yet connected to the application.
+The preprocessed cohort mortality tables live in `public/data/mortality/`. Their [format and provenance](public/data/mortality/README.md) are documented alongside them. The mortality panel loads the selected cohort and plots annual survival probabilities conditional on retirement; the optional mixture combines the two conditional survival curves. No mortality model is fitted yet.
 
 The Next.js dictionary uses the locally installed KaTeX package for its sample equations. The original standalone `design-draft/index.html` still loads KaTeX from jsDelivr and needs an internet connection for rendered equations; otherwise it shows their source.
 

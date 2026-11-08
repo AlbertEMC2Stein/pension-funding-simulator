@@ -132,7 +132,7 @@ td,
 
 .grid-lines path,
 .mini-chart>path:first-child,
-.mortality-card svg>path:first-child {
+.mortality-card > svg>path:first-child {
   stroke: var(--chart-grid);
 }
 
