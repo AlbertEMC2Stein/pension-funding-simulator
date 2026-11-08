@@ -39,10 +39,7 @@ test("setup and data views retain the requested design elements", () => {
   );
   assert.doesNotMatch(setup, /Estimation uncertainty/);
   assert.match(setup, /Custom mixture/);
-  assert.match(
-    setup,
-    /fitted mortality model can depend on market assumptions/,
-  );
+  assert.match(setup, /compatible CE fit depends on market assumptions/);
   assert.match(
     setup,
     /Market assumptions can affect the fitted mortality model/,

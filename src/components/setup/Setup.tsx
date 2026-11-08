@@ -512,7 +512,7 @@ function InvestorSetup({
               </div>
               <p id="mix-description">
                 Weights the female and male survival curves; 0.50 gives an equal
-                mixture. Preview only.
+                mixture.
               </p>
             </div>
           )}
@@ -523,18 +523,16 @@ function InvestorSetup({
               <span className="tiny-label">MORTALITY CALIBRATION</span>
               <h3>Survival curve & model fit</h3>
             </div>
-            <span className="chip">NOT CALCULATED</span>
           </div>
           <p>
-            Explore cohort survival from your expected retirement age. Model
-            fitting is not yet available.
+            Explore cohort survival from your expected retirement age and fit
+            mortality models.
           </p>
           <p className="mortality-market-note" role="status">
             {marketEdited
-              ? "Market inputs have been edited. When mortality calibration is available, check the fit again: market assumptions may affect the fitted model."
-              : "The fitted mortality model can depend on market assumptions. Check the fit again after changing them."}{" "}
-            The cohort data themselves do not change. No fit has been calculated
-            in this preview.
+              ? "Market inputs have been edited. The compatible CE fit may need updating."
+              : "The compatible CE fit depends on market assumptions. Check the fit again after changing them."}{" "}
+            The cohort data themselves do not change.
           </p>
           <CohortChart
             birthYear={investor.birthYear}
@@ -544,34 +542,6 @@ function InvestorSetup({
             maleWeight={mix}
             active={active}
           />
-          <div className="fit-status">
-            <div>
-              <strong>Fit not evaluated</strong>
-              <span>Classification thresholds have not been established.</span>
-            </div>
-          </div>
-          <details className="borrowing-details diagnostic-details">
-            <summary>Fit details</summary>
-            <dl>
-              <div>
-                <dt>KL divergence · optimization criterion</dt>
-                <dd>—</dd>
-              </div>
-              <div>
-                <dt>Largest survival-curve difference</dt>
-                <dd>— percentage points</dd>
-              </div>
-              <div>
-                <dt>Fitting horizon</dt>
-                <dd>—</dd>
-              </div>
-            </dl>
-            <p>
-              Compares the selected fitted model with the cohort survival target
-              on the fitting grid. It is not a measure of individual life
-              expectancy.
-            </p>
-          </details>
         </div>
       </div>
     </div>
@@ -598,8 +568,8 @@ export function Setup() {
         </DemoAction>
       </PageHeading>
       <PreviewBanner>
-        <strong>Design preview.</strong> Inputs can be explored, but values are
-        not saved or calibrated.
+        <strong>Design preview.</strong> Cohort data and mortality fits can be
+        explored. Settings are not saved, and simulations are not connected yet.
       </PreviewBanner>
       <div className="tabs" role="tablist" aria-label="Setup sections">
         <button

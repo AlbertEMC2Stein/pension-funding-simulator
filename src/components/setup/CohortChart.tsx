@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSimulationDraft } from "../SimulationDraftContext";
+import { buildMarketOptions } from "../../lib/simulation-options";
+import { calibrateMarket } from "../../lib/calibrate-market";
+import type { CeFit, GmFit } from "../../lib/mortality-fitting";
 import {
   cohortSurvival,
   loadCohort,
@@ -16,7 +20,15 @@ type Loaded =
   | { key: string; error: string };
 
 /** Client-only Plotly lifecycle, theme updates and responsive resizing. */
-function Plot({ curve }: { curve: Curve }) {
+function Plot({
+  curve,
+  gm,
+  ce,
+}: {
+  curve: Curve;
+  gm: GmFit | null;
+  ce: CeFit | null;
+}) {
   const element = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState("light");
   const [plotError, setPlotError] = useState(false);
@@ -44,20 +56,43 @@ function Plot({ curve }: { curve: Curve }) {
       const text = colors.getPropertyValue("--text-secondary").trim();
       const grid = colors.getPropertyValue("--chart-grid").trim();
       const accent = colors.getPropertyValue("--accent").trim();
+      const blue = colors.getPropertyValue("--chart-equity").trim();
+      const coral = colors.getPropertyValue("--chart-bond").trim();
+      const traces: object[] = [
+        {
+          x: curve.map((point) => point.age),
+          y: curve.map((point) => point.survival),
+          type: "scatter",
+          mode: "lines+markers",
+          name: "Cohort",
+          line: { color: accent, width: 3 },
+          marker: { size: 4 },
+          hovertemplate: "Age %{x}<br>Survival %{y:.1%}<extra>Cohort</extra>",
+        },
+      ];
+      if (gm)
+        traces.push({
+          x: curve.map((point) => point.age),
+          y: gm.fittedSurvival,
+          type: "scatter",
+          mode: "lines",
+          name: "GM fit",
+          line: { color: blue, width: 2, dash: "dash" },
+          hovertemplate: "Age %{x}<br>Survival %{y:.1%}<extra>GM fit</extra>",
+        });
+      if (ce)
+        traces.push({
+          x: curve.map((point) => point.age),
+          y: ce.fittedSurvival,
+          type: "scatter",
+          mode: "lines",
+          name: "CE fit",
+          line: { color: coral, width: 2, dash: "dot" },
+          hovertemplate: "Age %{x}<br>Survival %{y:.1%}<extra>CE fit</extra>",
+        });
       await plotly.react(
         node,
-        [
-          {
-            x: curve.map((point) => point.age),
-            y: curve.map((point) => point.survival),
-            type: "scatter",
-            mode: "lines+markers",
-            name: "Cohort survival",
-            line: { color: accent, width: 3 },
-            marker: { size: 4 },
-            hovertemplate: "Age %{x}<br>Survival %{y:.1%}<extra></extra>",
-          },
-        ],
+        traces,
         {
           autosize: true,
           height: 300,
@@ -76,7 +111,8 @@ function Plot({ curve }: { curve: Curve }) {
             range: [0, 1.05],
             gridcolor: grid,
           },
-          showlegend: false,
+          showlegend: !!(gm || ce),
+          legend: { orientation: "h", y: 1.12 },
         },
         { responsive: true, displaylogo: false },
       );
@@ -99,7 +135,7 @@ function Plot({ curve }: { curve: Curve }) {
       disposed = true;
       cleanup?.();
     };
-  }, [curve, theme]);
+  }, [curve, gm, ce, theme]);
   return (
     <>
       {plotError && <p role="alert">The chart could not be displayed.</p>}
@@ -128,6 +164,22 @@ export function CohortChart({
   active: boolean;
 }) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const { draft } = useSimulationDraft();
+  const workerRef = useRef<Worker | null>(null);
+  const [gmResult, setGmResult] = useState<{ key: string; fit: GmFit } | null>(
+    null,
+  );
+  const [ceResult, setCeResult] = useState<{ key: string; fit: CeFit } | null>(
+    null,
+  );
+  const [fitErrors, setFitErrors] = useState<{ gm?: string; ce?: string }>({});
+  const [running, setRunning] = useState<{
+    gmKey: string;
+    ceKey: string | null;
+    stage: string;
+    completed: number;
+    total: number;
+  } | null>(null);
   const years = validateCohortYears(birthYear, retirementYear);
   const birth = years.birthYear;
   const retirement = years.retirementYear;
@@ -135,6 +187,25 @@ export function CohortChart({
   const valid = years.valid;
   // A changed key immediately hides old data, even before the next effect runs.
   const key = `${birthYear}/${mortality}/${longevity}`;
+  const gmKey = `${key}/${retirementYear}/${mortality === "custom" ? maleWeight : "single"}`;
+  const marketInput = buildMarketOptions(draft.market);
+  const marketResult = marketInput.ok
+    ? calibrateMarket(marketInput.market)
+    : null;
+  const market =
+    marketResult?.ok && marketResult.market.paperAssumptions.positiveRho
+      ? marketResult.market
+      : null;
+  const ceKey = market
+    ? `${gmKey}/${market.realRiskFreeRate}/${market.rho}`
+    : null;
+  useEffect(
+    () => () => {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+    },
+    [],
+  );
   useEffect(() => {
     if (!active || !Number.isInteger(birth) || birth < 1926 || birth > 2026)
       return;
@@ -172,34 +243,250 @@ export function CohortChart({
     return () => controller.abort();
   }, [active, birth, key, longevity, mortality]);
 
-  if (!valid)
-    return (
-      <p role="status">
-        Enter a birth year from 1926 to 2026 and a retirement year giving an age
-        from 0 to 99.
-      </p>
-    );
-  if (!active || !loaded || loaded.key !== key)
-    return <p role="status">Loading cohort data…</p>;
-  if ("error" in loaded) return <p role="alert">{loaded.error}</p>;
-  const curve =
-    mortality === "custom"
+  const curve = useMemo(() => {
+    if (!valid || !loaded || loaded.key !== key || "error" in loaded)
+      return null;
+    return mortality === "custom"
       ? mixCohortSurvival(loaded.female!, loaded.male!, age, maleWeight)
       : cohortSurvival(
           (mortality === "female" ? loaded.female : loaded.male)!,
           age,
         );
+  }, [valid, loaded, key, mortality, age, maleWeight]);
+
+  if (!valid)
+    return (
+      <p role="status">
+        Enter a birth year from 1926 to 2026 and a retirement year giving an age
+        from 0 to 99.{" "}
+        {running && "The current fit continues with its original settings."}
+      </p>
+    );
+  if (!active || !loaded || loaded.key !== key)
+    return (
+      <p role="status">
+        Loading cohort data…{" "}
+        {running && "The current fit continues with its original settings."}
+      </p>
+    );
+  if ("error" in loaded) return <p role="alert">{loaded.error}</p>;
+  if (!curve) return null;
+  const currentCurve = curve;
+  const gm = gmResult?.key === gmKey ? gmResult.fit : null;
+  const ce = ceKey && ceResult?.key === ceKey ? ceResult.fit : null;
+  const oldRun =
+    running && (running.gmKey !== gmKey || running.ceKey !== ceKey);
+
+  function startFit() {
+    if (
+      workerRef.current &&
+      !window.confirm(
+        "A mortality fit is still running. Interrupt it and start a new fit with the current settings?",
+      )
+    )
+      return;
+    workerRef.current?.terminate();
+    setFitErrors({});
+    setGmResult(null);
+    setCeResult(null);
+    let worker: Worker;
+    try {
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+      worker = new Worker(`${basePath}/workers/mortality-fit.worker.js`);
+    } catch {
+      workerRef.current = null;
+      setRunning(null);
+      setFitErrors({ gm: "Could not start the fitting worker." });
+      return;
+    }
+    workerRef.current = worker;
+    const capturedGmKey = gmKey;
+    const capturedCeKey = ceKey;
+    setRunning({
+      gmKey: capturedGmKey,
+      ceKey: capturedCeKey,
+      stage: "GM",
+      completed: 0,
+      total: 48,
+    });
+    worker.onmessage = (event) => {
+      if (workerRef.current !== worker) return;
+      const message = event.data;
+      if (message.type === "progress")
+        setRunning({
+          gmKey: capturedGmKey,
+          ceKey: capturedCeKey,
+          stage: message.model.toUpperCase(),
+          completed: message.completed,
+          total: message.total,
+        });
+      else if (message.type === "gm")
+        setGmResult({ key: capturedGmKey, fit: message.fit });
+      else if (message.type === "ce" && capturedCeKey)
+        setCeResult({ key: capturedCeKey, fit: message.fit });
+      else if (message.type === "error")
+        setFitErrors((previous) => ({
+          ...previous,
+          [message.model]: message.message,
+        }));
+      else if (message.type === "done") {
+        worker.terminate();
+        workerRef.current = null;
+        setRunning(null);
+      }
+    };
+    worker.onerror = () => {
+      if (workerRef.current !== worker) return;
+      worker.terminate();
+      workerRef.current = null;
+      setRunning(null);
+      setFitErrors((previous) => ({
+        ...previous,
+        gm: "The fitting worker failed.",
+      }));
+    };
+    worker.postMessage({
+      times: currentCurve.map((point) => point.age - age),
+      target: currentCurve.map((point) => point.survival),
+      market: market ? { r: market.realRiskFreeRate, rho: market.rho } : null,
+    });
+  }
   return (
     <>
-      <Plot
-        key={`${key}/${age}/${mortality === "custom" ? maleWeight : "single"}`}
-        curve={curve}
-      />
+      <Plot key={`${gmKey}/${!!gm}/${!!ce}`} curve={curve} gm={gm} ce={ce} />
       <p className="chart-disclaimer">
         Cohort survival conditional on reaching age {age}. Annual points are
         connected by straight lines. Data end at age 100; the remaining survival
-        probability is not forced to zero. No mortality model has been fitted.
+        probability is not forced to zero.
       </p>
+      <button
+        type="button"
+        className="button button-primary"
+        onClick={startFit}
+      >
+        {running ? "Update fits" : "Fit mortality models"}
+      </button>
+      {!running && !gm && !ce && !fitErrors.gm && !fitErrors.ce && (
+        <p>Mortality models have not been fitted for these inputs.</p>
+      )}
+      {running && (
+        <p role="status">
+          Fitting {running.stage}: {running.completed} / {running.total} starts.{" "}
+          {oldRun
+            ? "This run uses earlier settings; update fits to use your current inputs."
+            : ""}
+        </p>
+      )}
+      {!market && (
+        <p>
+          CE fitting requires valid market assumptions and positive rho. The GM
+          fit remains available.
+        </p>
+      )}
+      {((gmResult && !gm) || (ceResult && !ce)) && (
+        <p role="status">
+          Some previous fits need updating after input changes.
+        </p>
+      )}
+      {fitErrors.gm && <p role="alert">GM fit: {fitErrors.gm}</p>}
+      {fitErrors.ce && <p role="alert">CE fit: {fitErrors.ce}</p>}
+      {(gm || ce) && (
+        <div className="capital-table-wrap">
+          <table className="capital-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>KL divergence</th>
+                <th>Largest difference</th>
+                <th>Optimizer</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(
+                [
+                  ["GM", gm],
+                  ["CE", ce],
+                ] as const
+              ).map(
+                ([label, fit]) =>
+                  fit && (
+                    <tr key={label}>
+                      <td>{label}</td>
+                      <td>{fit.klDivergence.toPrecision(4)}</td>
+                      <td>{(fit.maxSurvivalDifference * 100).toFixed(2)} pp</td>
+                      <td>{fit.converged ? "Converged" : "Iteration limit"}</td>
+                    </tr>
+                  ),
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {(gm || ce) && (
+        <p className="chart-disclaimer">
+          KL divergence compares annual death bins and the final survival tail.
+          Largest difference is measured on the annual grid. Fits are numerical
+          estimates; a convergence status is not a quality grade.
+        </p>
+      )}
+      {(gm || ce) && (
+        <details className="borrowing-details diagnostic-details">
+          <summary>Fit parameters and optimization</summary>
+          <dl>
+            {gm && (
+              <>
+                <div>
+                  <dt>GM α, β, λ · per year</dt>
+                  <dd>
+                    {[
+                      gm.parameters.alpha,
+                      gm.parameters.beta,
+                      gm.parameters.lambda,
+                    ]
+                      .map((value) => value.toPrecision(5))
+                      .join(", ")}
+                  </dd>
+                </div>
+                <div>
+                  <dt>GM starts converged</dt>
+                  <dd>
+                    {gm.convergedStarts} / {gm.starts}
+                  </dd>
+                </div>
+              </>
+            )}
+            {ce && (
+              <>
+                <div>
+                  <dt>CE remaining endpoint · years</dt>
+                  <dd>{ce.parameters.tau.toFixed(3)}</dd>
+                </div>
+                <div>
+                  <dt>CE δ and λ∞</dt>
+                  <dd>
+                    {ce.parameters.p.toPrecision(5)},{" "}
+                    {ce.parameters.lambda.toPrecision(5)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>CE starts converged</dt>
+                  <dd>
+                    {ce.convergedStarts} / {ce.starts}
+                  </dd>
+                </div>
+              </>
+            )}
+            <div>
+              <dt>Fitting horizon · years after retirement</dt>
+              <dd>{100 - age}</dd>
+            </div>
+          </dl>
+          <p>
+            The CE fit uses the current real risk-free rate and rho. A low KL
+            value is not a guarantee of predictive accuracy.
+          </p>
+        </details>
+      )}
     </>
   );
 }

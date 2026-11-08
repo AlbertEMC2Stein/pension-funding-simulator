@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/build-workers.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/build-workers.mjs",
     "build": "next build",
     "typecheck": "tsc --noEmit",
+    "pretest": "node scripts/build-workers.mjs",
     "test": "node --import tsx --test tests/*.test.tsx tests/*.test.mjs",
     "data:prepare": "node scripts/preprocess-cohort-tables.mjs",
     "data:check": "node scripts/preprocess-cohort-tables.mjs --check"
@@ -22,6 +25,7 @@
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "esbuild": "^0.28.2",
     "prettier": "^3.9.10",
     "tsx": "^4.23.15",
     "typescript": "^5.9.0"

@@ -25,7 +25,7 @@ The existing `AlbertEMC2Stein/albertemc2stein.github.io` repository is the accou
 
 The original standalone prototype is preserved in `design-draft/`; open `design-draft/index.html` to view it. The Next.js application is in `src/` and has its own styles in `src/app/styles/`, so it does not depend on the archived files. The interface is divided into a shell, evaluation, setup, data, and help components. Future model calculations should live in framework-independent modules rather than UI components.
 
-The preprocessed cohort mortality tables live in `public/data/mortality/`. Their [format and provenance](public/data/mortality/README.md) are documented alongside them. The mortality panel loads the selected cohort and plots annual survival probabilities conditional on retirement; the optional mixture combines the two conditional survival curves. No mortality model is fitted yet.
+The preprocessed cohort mortality tables live in `public/data/mortality/`. Their [format and provenance](public/data/mortality/README.md) are documented alongside them. The mortality panel loads the selected cohort and plots annual survival probabilities conditional on retirement; the optional mixture combines the two conditional survival curves. A worker fits GM and compatible CE models to the annual death bins and survival tail using KL divergence. These fits are not yet connected to the pension simulation.
 
 The Next.js dictionary uses the locally installed KaTeX package for its sample equations. The original standalone `design-draft/index.html` still loads KaTeX from jsDelivr and needs an internet connection for rendered equations; otherwise it shows their source.
 
@@ -38,11 +38,12 @@ Mathematical notation conventions: write the exponential base upright as `\mathr
 - `src/components/evaluation/` contains the illustrative evaluation cards and their display controls. The displayed charts and results are not calculations.
 - `src/components/setup/Setup.tsx` owns the market and investor tab state. `MarketEditor.tsx` presents the asset and correlation inputs and passes edits back to its parent.
 - `src/lib/market-calibration.ts` contains market draft types and update and validation helpers. `src/lib/simulation-options.ts` validates the complete draft and creates an independent numerical snapshot: annual percentages become decimal fractions, euro amounts become numbers, and the correlation matrix follows asset order. `src/lib/calibrate-market.ts` converts manual inputs to real market parameters for inspection in Developer tools; these are not yet connected to mortality fitting or simulation. Clicking Run simulation prepares a reviewable snapshot but does not start a calculation.
-- `src/lib/mortality-models.ts` contains standalone GM and compactified-exponential survival functions and a GM lifetime quantile. Their parameters are not yet fitted to cohort data or connected to the interface.
+- `src/lib/mortality-models.ts` contains standalone GM and compactified-exponential survival functions and a GM lifetime quantile. `survival-fit-loss.ts` and `mortality-fitting.ts` contain the KL objective and multistart fitting logic; `nelder-mead.ts` contains the optimizer.
+- `src/workers/mortality-fit.worker.ts` runs mortality fits away from the UI. `npm run dev`, `npm run build` and `npm test` bundle it into `public/workers/` first; this generated directory is ignored. Restart the development server after changing worker source or its imports.
 - `src/components/DataView.tsx` and `HelpView.tsx` implement the example tables and searchable dictionary. `common.tsx` provides shared presentation components and shell actions.
 - `tests/` covers rendered draft content and market-draft updates and validation. It does not yet test a simulation or verify the visual layout in a browser.
 
-Current state is held in memory and is lost on reload. Import/export, translation, mortality calibration, simulations, and automatic result-state updates are still future work. The snapshot does not yet contain a random seed, fitted parameters, or provenance; these will be needed for reproducible runs.
+Current state is held in memory and is lost on reload. Import/export, translation, simulations, and comprehensive result-state updates are still future work. The snapshot does not yet contain a random seed, fitted parameters, or provenance; these will be needed for reproducible runs.
 
 In `npm run dev`, the workspace navigation also contains Developer tools. It shows the current input draft, validation, the last prepared options snapshot, and a local event log capped at 100 entries. It does not capture browser console output; future calibration and worker events can be added explicitly. The panel is excluded from production builds.
 
