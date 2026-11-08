@@ -38,6 +38,7 @@ Mathematical notation conventions: write the exponential base upright as `\mathr
 - `src/components/evaluation/` contains the illustrative evaluation cards and their display controls. The displayed charts and results are not calculations.
 - `src/components/setup/Setup.tsx` owns the market and investor tab state. `MarketEditor.tsx` presents the asset and correlation inputs and passes edits back to its parent.
 - `src/lib/market-calibration.ts` contains market draft types and update and validation helpers. `src/lib/simulation-options.ts` validates the complete draft and creates an independent numerical snapshot: annual percentages become decimal fractions, euro amounts become numbers, and the correlation matrix follows asset order. `src/lib/calibrate-market.ts` converts manual inputs to real market parameters for inspection in Developer tools; these are not yet connected to mortality fitting or simulation. Clicking Run simulation prepares a reviewable snapshot but does not start a calculation.
+- `src/lib/mortality-models.ts` contains standalone GM and compactified-exponential survival functions and a GM lifetime quantile. Their parameters are not yet fitted to cohort data or connected to the interface.
 - `src/components/DataView.tsx` and `HelpView.tsx` implement the example tables and searchable dictionary. `common.tsx` provides shared presentation components and shell actions.
 - `tests/` covers rendered draft content and market-draft updates and validation. It does not yet test a simulation or verify the visual layout in a browser.
 

@@ -41,6 +41,8 @@ Load the appropriate packaged cohort tables and construct remaining-lifetime sur
 
 Implement and verify the model survival functions and annual-grid fit objective first, then the Gompertz–Makeham and market-compatible compactified-exponential fits in separate small changes. Specify optimizer tolerances, initializations, convergence failures and the treatment of the final survival bin. The compatible fit must be invalidated when relevant market or mortality inputs change.
 
+The website will implement GM and CE only. The constant-hazard exponential model is a benchmark in the paper and is not planned as a user-facing mortality model.
+
 **Check:** Compare survival curves, fit losses and fitted parameters against matched reference cases; distinguish optimizer failure from a poor fit. Connect the real curves and quantitative diagnostics to the mortality panel. Do not assign qualitative fit grades until defensible thresholds have been agreed.
 
 ### 5. Unconstrained policy and analytic quantities
