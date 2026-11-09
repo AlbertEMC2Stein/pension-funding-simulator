@@ -114,3 +114,48 @@ input[aria-invalid="true"] {
     grid-template-columns: 1fr;
   }
 }
+.market-import-diagnostics {
+  margin-top: 20px;
+}
+
+.market-import-diagnostics > summary {
+  display: flex;
+  list-style: none;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.market-import-diagnostics > summary::-webkit-details-marker {
+  display: none;
+}
+
+.market-import-diagnostics > summary::before {
+  content: "▸";
+  transition: transform 0.15s ease;
+}
+
+.market-import-diagnostics[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.market-import-diagnostics > summary > span:first-child {
+  flex: 1 1 auto;
+}
+
+.market-import-status {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.market-import-subheading {
+  margin: 16px 0 0;
+  color: var(--text-strong);
+  font-size: 11px;
+}
+
+.market-pair-details {
+  margin: 14px 0;
+}

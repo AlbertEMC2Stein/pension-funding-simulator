@@ -97,6 +97,10 @@ Define each table's independent inputs, applicable outputs and calculation depen
 
 Implement date/price parsing and validation for EUR adjusted-close time series, then historical estimation as a separate change. Define return conventions, annualization, missing dates, sample window and uncertainty method before coding. Enable historical diagnostics only after successful CSV calibration; define stress scenarios as recalibrations with their assumptions rechecked.
 
+Agreed direction: measure each return interval in calendar time, including weekends and holidays, with elapsed calendar days divided by 365.25 as the year convention. Estimate each asset from its available observations and each pair's correlation from matching observed interval endpoints. Construct the covariance matrix from the separately estimated volatilities and pairwise correlations. Reject indefinite and singular matrices and flag numerical near-singularity; never silently repair them. Report gaps and pairwise coverage. The uncertainty method, minimum coverage, and handling of long gaps remain to be specified. The example CSV was generated on a weekday-based clock, so its generating parameters are not an exact calendar-time calibration target.
+
+Use direct historical estimates for expected growth and report their uncertainty under the explicitly stated statistical assumptions. Do not shrink them toward a prior or present historical estimation intervals as forecasts of future returns. Specify and validate the interval method before implementation, including how volatility uncertainty is handled when reporting the arithmetic drift.
+
 **Check:** Test with the packaged synthetic CSV and small hand-checkable data, including malformed and missing values. Compare estimates with independently computed references and identify that sample estimates need not equal the generating parameters.
 
 ### 14. Persistence, export and finishing work

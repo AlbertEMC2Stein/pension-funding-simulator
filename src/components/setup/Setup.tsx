@@ -108,19 +108,16 @@ function MarketSetup() {
                   className="button button-light"
                   onClick={() => applyMarketAction({ type: "undo" })}
                 >
-                  Undo reset
+                  Undo market change
                 </button>
               )}
-              <DemoAction message="Price data import is not connected yet.">
-                ↥ &nbsp; Import price data
-              </DemoAction>
             </div>
           </div>
           <p>Enter your own assumptions or restore the two-asset example.</p>
           {undo && (
             <p role="status">
-              Example restored. You can undo the reset until you edit another
-              input.
+              Previous market saved. You can undo the change until you edit
+              another input.
             </p>
           )}
           <p className="mortality-market-note">
@@ -198,7 +195,13 @@ function MarketSetup() {
             </label>
           </div>
         </div>
-        <MarketEditor market={market} onChange={editMarket} />
+        <MarketEditor
+          market={market}
+          onChange={editMarket}
+          onImport={(next) =>
+            applyMarketAction({ type: "replace", market: next })
+          }
+        />
         {hasHistoricalCsvCalibration && (
           <div className="form-card diagnostic-card">
             <div className="card-heading">

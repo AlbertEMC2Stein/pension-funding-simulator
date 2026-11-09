@@ -63,16 +63,18 @@ export function initialMarketCalibration(): MarketCalibrationDraft {
 
 export type MarketEditAction =
   | { type: "edit"; market: MarketCalibrationDraft }
+  | { type: "replace"; market: MarketCalibrationDraft }
   | { type: "reset" }
   | { type: "undo" };
 
-/** A reset has one undo; later edits discard it rather than replace newer work. */
+/** Reset and import have one undo; later edits discard it to protect newer work. */
 export function updateMarketWithUndo(
   market: MarketCalibrationDraft,
   undo: MarketCalibrationDraft | null,
   action: MarketEditAction,
 ): { market: MarketCalibrationDraft; undo: MarketCalibrationDraft | null } {
   if (action.type === "edit") return { market: action.market, undo: null };
+  if (action.type === "replace") return { market: action.market, undo: market };
   if (action.type === "reset")
     return { market: initialMarketCalibration(), undo: market };
   return undo ? { market: undo, undo: null } : { market, undo: null };

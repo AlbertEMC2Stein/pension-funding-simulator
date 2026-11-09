@@ -1,6 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import {
+  estimateHistoricalMarket,
+  historicalMarketToDraft,
+  type HistoricalMarketEstimate,
+} from "../../lib/historical-market";
+import { ImportedMarketDiagnostics } from "./ImportedMarketDiagnostics";
 import {
   addAsset,
   MAX_ASSETS,
@@ -16,6 +22,7 @@ import {
 interface MarketEditorProps {
   market: MarketCalibrationDraft;
   onChange: (market: MarketCalibrationDraft) => void;
+  onImport: (market: MarketCalibrationDraft) => void;
 }
 
 /**
@@ -23,7 +30,10 @@ interface MarketEditorProps {
  * Only the lower triangle is editable; the upper triangle reflects it and the
  * diagonal remains one. Validation is reported by the enclosing editor.
  */
-export function CorrelationMatrix({ market, onChange }: MarketEditorProps) {
+export function CorrelationMatrix({
+  market,
+  onChange,
+}: Omit<MarketEditorProps, "onImport">) {
   return (
     <div className="correlation-scroll">
       <table
@@ -89,10 +99,58 @@ export function CorrelationMatrix({ market, onChange }: MarketEditorProps) {
  * `market`; edits are returned through `onChange`. Validation runs locally,
  * and none of these values are connected to simulations yet.
  */
-export function MarketEditor({ market, onChange }: MarketEditorProps) {
+export function MarketEditor({
+  market,
+  onChange,
+  onImport,
+}: MarketEditorProps) {
   // Expansion is a display preference; closing the matrix preserves its data.
   const [matrixOpen, setMatrixOpen] = useState(false);
   const errors = marketValidationErrors(market);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const latestMarket = useRef(market);
+  const latestOnImport = useRef(onImport);
+  const importSequence = useRef(0);
+  latestMarket.current = market;
+  latestOnImport.current = onImport;
+  const [importError, setImportError] = useState<string | null>(null);
+  const [imported, setImported] = useState<{
+    name: string;
+    estimate: HistoricalMarketEstimate;
+    signature: string;
+  } | null>(null);
+
+  /** Imported price diagnostics are current only while asset inputs match. */
+  function signature(value: MarketCalibrationDraft) {
+    return JSON.stringify({
+      assets: value.assets.map(
+        ({ name, nominalReturnPercent, volatilityPercent }) => ({
+          name,
+          nominalReturnPercent,
+          volatilityPercent,
+        }),
+      ),
+      correlations: value.correlations,
+    });
+  }
+  async function importFile(file: File) {
+    const sequence = ++importSequence.current;
+    setImportError(null);
+    try {
+      const estimate = estimateHistoricalMarket(await file.text());
+      const next = historicalMarketToDraft(estimate, latestMarket.current);
+      if (sequence !== importSequence.current) return;
+      latestOnImport.current(next);
+      setImported({ name: file.name, estimate, signature: signature(next) });
+    } catch (error) {
+      if (sequence === importSequence.current)
+        setImportError(
+          error instanceof Error
+            ? error.message
+            : "Could not import price data.",
+        );
+    }
+  }
 
   /** Replace only the edited asset while preserving its stable ID and peers. */
   function updateAsset(index: number, changes: Partial<MarketAsset>) {
@@ -113,20 +171,48 @@ export function MarketEditor({ market, onChange }: MarketEditorProps) {
           </span>
           <h3>Asset universe</h3>
         </div>
-        <button
-          type="button"
-          className="button button-primary"
-          onClick={() => onChange(addAsset(market))}
-          disabled={market.assets.length >= MAX_ASSETS}
-        >
-          + &nbsp; Add asset
-        </button>
+        <div className="market-actions">
+          <input
+            ref={fileInput}
+            type="file"
+            accept=".csv,text/csv"
+            className="visually-hidden"
+            tabIndex={-1}
+            aria-label="Choose a price CSV"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (file) void importFile(file);
+            }}
+          />
+          <button
+            type="button"
+            className="button button-light"
+            onClick={() => fileInput.current?.click()}
+          >
+            ↥ &nbsp; Import price data
+          </button>
+          <button
+            type="button"
+            className="button button-primary"
+            onClick={() => onChange(addAsset(market))}
+            disabled={market.assets.length >= MAX_ASSETS}
+          >
+            + &nbsp; Add asset
+          </button>
+        </div>
       </div>
       <p>
         Enter expected annual nominal growth and volatility as percentages.
-        Growth is an annualized compounded rate. Values are editable examples,
-        not historical estimates.
+        Growth is an annualized compounded rate. Import adjusted EUR closing
+        prices or edit assumptions directly; enter the risk-free rate and
+        inflation separately above.
       </p>
+      {importError && (
+        <div className="market-validation market-validation-error" role="alert">
+          Import failed: {importError} Your current inputs have been kept.
+        </div>
+      )}
       <div className="market-asset-list">
         {market.assets.map((asset, index) => (
           <div className="market-asset-row" key={asset.id}>
@@ -232,6 +318,13 @@ export function MarketEditor({ market, onChange }: MarketEditorProps) {
           to pension results.
         </small>
       </div>
+      {imported && (
+        <ImportedMarketDiagnostics
+          name={imported.name}
+          estimate={imported.estimate}
+          current={signature(market) === imported.signature}
+        />
+      )}
     </div>
   );
 }

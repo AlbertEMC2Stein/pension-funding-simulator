@@ -4,7 +4,9 @@ This project contains a Next.js static-export version of the interface draft. Ev
 
 The market panel supports local editing of asset names, expected annual nominal growth (an annualized compounded rate), volatilities, the effective nominal risk-free rate, inflation, and a symmetric correlation matrix. Edit the lower triangle; the upper triangle mirrors it and the diagonal remains fixed at one. The initial two-asset example uses the paper's 0.08 correlation; adding an asset assumes zero correlation until changed. The default 2.5% nominal risk-free rate and 2% inflation imply approximately 0.489% real continuously compounded; changing either input updates the real rate. Inputs are validated but are not yet connected to simulation results or saved across reloads. The current analytical model requires a positive real risk-free rate and positive asset volatilities. The matrix check rejects matrices that are not positive definite or are numerically near-singular.
 
-Reset to example restores the example market, with an undo available until another market input is edited. CSV import is not connected yet.
+Reset to example restores the example market, with an undo available until another market input is edited. A local CSV import estimates growth, volatility and pairwise correlations from adjusted EUR prices using calendar-time intervals; importing replaces the asset assumptions and can also be undone. The import reports coverage but does not yet calculate confidence intervals.
+
+The accepted CSV format and estimator are documented in [historical-market-import.md](docs/historical-market-import.md).
 
 ## Run locally
 

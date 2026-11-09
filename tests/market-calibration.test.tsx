@@ -44,6 +44,15 @@ test("reset and undo preserve the complete prior market draft", () => {
   assert.equal(restored.market.assets.length, 3);
   assert.equal(restored.market.correlations[1][0], "0.42");
   assert.equal(restored.undo, null);
+  const imported = updateMarketWithUndo(manual, null, {
+    type: "replace",
+    market: initialMarketCalibration(),
+  });
+  assert.equal(
+    updateMarketWithUndo(imported.market, imported.undo, { type: "undo" })
+      .market,
+    manual,
+  );
   const edited = updateMarketWithUndo(reset.market, reset.undo, {
     type: "edit",
     market: addAsset(reset.market),

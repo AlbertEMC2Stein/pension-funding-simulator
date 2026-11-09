@@ -1,0 +1,13 @@
+# Historical price CSV import
+
+The asset-universe import runs locally in the browser. The CSV must have a first column named `date` (case-insensitive) or left blank for an unnamed index, with ascending, unique `YYYY-MM-DD` dates, followed by one to ten uniquely named asset columns. Values are adjusted EUR closing prices; blank cells denote missing prices, and nonblank prices must be finite and positive. Quoted CSV fields and escaped quotes are supported. The importer does not convert currencies, adjust prices for distributions, or fill missing observations. The separately entered nominal risk-free rate and inflation are retained.
+
+## Estimation
+
+For each asset, form log returns between consecutive available observations. For each pair of assets, select dates with prices for both, then form returns between consecutive dates in that pair's shared sequence; both returns therefore cover identical endpoints. An interval spans the elapsed calendar days divided by 365.25, including weekends and holidays. Long gaps are currently included and reported rather than capped.
+
+For an asset or pair on its own intervals, define `dt[k]`, annual log-drift estimate `a = sum(y[k]) / sum(dt[k])`, and normalized residuals `z[k] = (y[k] - a * dt[k]) / sqrt(dt[k])`. The individual variance estimate is `sum(z[k]^2)/(n-1)`; annual volatility is its square root. Each pair's correlation uses the normalized residuals and separately fitted drifts from that pair's matching intervals. At least three intervals and nonzero return variation are required for each individual asset and each pair.
+
+The annual nominal growth is `exp(a) - 1`, consistent with the manual input convention. Imported growth and volatility percentages and correlations are rounded to two decimal places in the editable inputs, and downstream calculations use those displayed values. Covariance is constructed as `diag(volatility) * correlation * diag(volatility)`. Both the original and rounded correlation matrices must pass the same positive-definiteness and near-singularity checks as manual inputs; rounding a volatility to zero is also rejected. Invalid files and unusable matrices leave the current market unchanged; import and reset can be undone until the next manual market edit.
+
+The panel reports asset and pairwise interval counts, their total elapsed years and longest gaps. These are coverage diagnostics, not confidence intervals. Confidence intervals and a precision warning are not implemented; different pairs can use different periods, and these historical estimates do not guarantee future returns. A real-world CSV's date-only closes can also represent different market closing times.
