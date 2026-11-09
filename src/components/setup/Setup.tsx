@@ -418,7 +418,7 @@ function InvestorSetup({
         <SectionHeading
           eyebrow="YOUR RETIREMENT PROFILE"
           title="Investor & mortality"
-          description="Set the person and retirement context for your scenario."
+          description="Set the person and retirement context for your setup."
         />
         <div className="form-card">
           <div className="card-heading">
@@ -607,13 +607,18 @@ export function Setup() {
   return (
     <section className="view active">
       <PageHeading
-        eyebrow="BUILD YOUR SCENARIO"
+        eyebrow="BUILD YOUR SETUP"
         title="The foundations"
         description="Set the market and investor assumptions behind your analysis."
       >
-        <DemoAction message="Scenario import is not connected in this draft.">
-          ↥ &nbsp; Import scenario
-        </DemoAction>
+        <div className="heading-actions">
+          <DemoAction message="Setup import is not connected in this draft.">
+            ↥ &nbsp; Import setup
+          </DemoAction>
+          <DemoAction message="Setup export is not connected in this draft.">
+            ↓ &nbsp; Export setup
+          </DemoAction>
+        </div>
       </PageHeading>
       <PreviewBanner>
         <strong>Design preview.</strong> Cohort data and mortality fits can be

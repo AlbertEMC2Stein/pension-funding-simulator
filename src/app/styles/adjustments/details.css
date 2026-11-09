@@ -156,6 +156,7 @@ input[aria-invalid="true"] {
   font-size: 11px;
 }
 
-.market-pair-details {
-  margin: 14px 0;
+/* Scroll on narrow screens instead of squeezing the diagnostic columns. */
+.market-import-diagnostics table.capital-table {
+  min-width: 850px;
 }

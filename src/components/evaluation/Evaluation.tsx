@@ -295,7 +295,7 @@ function CapitalCard() {
           <h3>What does accepting risk change?</h3>
           <p className="timing-intro">
             Compare your starting capital with the risk-free capital needed for
-            your scenario&apos;s annual withdrawal.
+            your setup&apos;s annual withdrawal.
           </p>
         </div>
         <span className="chip">NOT CALCULATED</span>
@@ -312,7 +312,7 @@ function CapitalCard() {
         />
         <Metric
           label="Starting capital"
-          note="The initial capital in your scenario"
+          note="The initial capital in your setup"
         />
         <Metric label="Capital relief" note="Difference in euros and percent" />
       </div>
@@ -341,7 +341,7 @@ function CapitalCard() {
         </table>
       </div>
       <p className="chart-disclaimer">
-        Illustrative layout · sensitivity holds the scenario&apos;s withdrawal
+        Illustrative layout · sensitivity holds the setup&apos;s withdrawal
         fixed and compares nearby target or implied risk levels.
       </p>
     </article>
@@ -716,7 +716,7 @@ export function Evaluation() {
         <div className="evaluation-content">
           <div className="scenario-strip">
             <div className="scenario-intro">
-              <span className="tiny-label">YOUR SCENARIO</span>
+              <span className="tiny-label">YOUR SETUP</span>
               <strong>
                 A thoughtful start <span>✳</span>
               </strong>
@@ -749,7 +749,7 @@ export function Evaluation() {
               type="button"
               onClick={() => navigate("setup")}
             >
-              Edit scenario
+              Edit setup
             </button>
           </div>
           <SectionHeading

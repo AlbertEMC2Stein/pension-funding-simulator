@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { ImportedMarketDiagnostics } from "../src/components/setup/ImportedMarketDiagnostics";
 import { estimateHistoricalMarket } from "../src/lib/historical-market";
 
-test("imported diagnostics show estimates, coverage and explicitly uncalculated intervals", () => {
+test("imported diagnostics show coverage and confidence intervals without nested disclosures", () => {
   const csv = readFileSync(
     new URL(
       "../examples/market-data/three-asset-calendar-missing.csv",
@@ -18,13 +18,28 @@ test("imported diagnostics show estimates, coverage and explicitly uncalculated 
     <ImportedMarketDiagnostics name="sample.csv" estimate={estimate} current />,
   );
   assert.match(current, /Imported data &amp; estimation uncertainty/);
-  assert.match(current, /Current/);
-  assert.match(current, /16\.89%/);
-  assert.match(
-    current,
-    /Confidence intervals and half-widths are not calculated yet/,
+  assert.match(current, /Matches inputs/);
+  assert.equal((current.match(/<details\b/g) ?? []).length, 1);
+  assert.equal((current.match(/<table\b/g) ?? []).length, 2);
+  assert.match(current, /95% interval for annual growth/);
+  assert.match(current, /95% interval for volatility/);
+  assert.match(current, /95% interval for correlation/);
+  assert.equal((current.match(/Lower bound/g) ?? []).length, 3);
+  assert.equal((current.match(/Upper bound/g) ?? []).length, 3);
+  assert.ok(
+    current.includes(
+      (estimate.assets[0].growthInterval.lower * 100).toFixed(2),
+    ),
   );
-  assert.match(current, /Pairwise coverage &amp; covariance uncertainty/);
+  assert.ok(
+    current.includes(
+      (estimate.assets[0].volatilityInterval.upper * 100).toFixed(2),
+    ),
+  );
+  assert.ok(
+    current.includes(estimate.pairs[0].correlationInterval!.lower.toFixed(2)),
+  );
+  assert.match(current, /Longest gap/);
   const stale = renderToStaticMarkup(
     <ImportedMarketDiagnostics
       name="sample.csv"
@@ -32,6 +47,6 @@ test("imported diagnostics show estimates, coverage and explicitly uncalculated 
       current={false}
     />,
   );
-  assert.match(stale, /Needs updating/);
-  assert.match(stale, /previous import/);
+  assert.match(stale, /Inputs changed/);
+  assert.match(stale, /diagnostics describe the original CSV import/);
 });

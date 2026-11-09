@@ -6,6 +6,15 @@ import {
   historicalMarketToDraft,
 } from "../src/lib/historical-market";
 import { initialMarketCalibration } from "../src/lib/market-calibration";
+import { chiSquare95, studentT95 } from "../src/lib/confidence-quantiles";
+
+test("confidence distribution quantiles match reference values", () => {
+  assert.ok(Math.abs(studentT95(2) - 4.3026527299) < 1e-8);
+  assert.ok(Math.abs(studentT95(30) - 2.0422724563) < 1e-8);
+  const [lower, upper] = chiSquare95(2);
+  assert.ok(Math.abs(lower - 0.05063561597) < 1e-8);
+  assert.ok(Math.abs(upper - 7.37775890823) < 1e-8);
+});
 
 test("calendar-time estimates agree with an independently calculated irregular example", () => {
   const dates = [
@@ -40,6 +49,36 @@ test("calendar-time estimates agree with an independently calculated irregular e
   assert.ok(Math.abs(result.assets[1].annualLogGrowth - 1.09575) < 1e-12);
   assert.ok(Math.abs(result.correlation[0][1] - -0.16944447756631048) < 1e-12);
   assert.equal(result.pairs[0].maxGapDays, 4);
+  const asset = result.assets[0];
+  const margin = 3.1824463053 * Math.sqrt(0.037539583333333335 / (10 / 365.25));
+  assert.ok(
+    Math.abs(asset.growthInterval.lower - Math.expm1(1.82625 - margin)) < 1e-8,
+  );
+  assert.ok(
+    Math.abs(asset.growthInterval.upper - Math.expm1(1.82625 + margin)) < 1e-8,
+  );
+  assert.ok(
+    Math.abs(
+      asset.volatilityInterval.lower -
+        Math.sqrt((3 * 0.037539583333333335) / 9.3484036045),
+    ) < 1e-9,
+  );
+  assert.ok(
+    Math.abs(
+      asset.volatilityInterval.upper -
+        Math.sqrt((3 * 0.037539583333333335) / 0.2157952826),
+    ) < 1e-9,
+  );
+  assert.ok(asset.growthInterval.lower < asset.compoundedGrowth);
+  assert.ok(asset.growthInterval.upper > asset.compoundedGrowth);
+  assert.ok(asset.volatilityInterval.lower < asset.volatility);
+  assert.ok(asset.volatilityInterval.upper > asset.volatility);
+  assert.ok(
+    result.pairs[0].correlationInterval!.lower < result.correlation[0][1],
+  );
+  assert.ok(
+    result.pairs[0].correlationInterval!.upper > result.correlation[0][1],
+  );
 });
 
 test("synthetic incomplete data retains endpoints and reports pairwise coverage", () => {

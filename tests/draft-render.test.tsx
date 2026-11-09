@@ -22,6 +22,8 @@ test("evaluation renders illustrative results and the main controls", () => {
   assert.match(html, /Gompertz–Makeham/);
   assert.match(html, /Borrowing exposure/);
   assert.match(html, /NOT CALCULATED/);
+  assert.match(html, /YOUR SETUP/);
+  assert.match(html, /Edit setup/);
 });
 
 test("setup and data views retain the requested design elements", () => {
@@ -46,7 +48,12 @@ test("setup and data views retain the requested design elements", () => {
     /Market assumptions can affect the fitted mortality model/,
   );
   assert.match(setup, /cohort data themselves do not change/i);
-  assert.match(data, /Export scenario/);
+  assert.match(setup, /Import setup/);
+  assert.match(setup, /Export setup/);
+  assert.match(data, /Comparison table/);
+  assert.match(data, /Export table/);
+  assert.match(data, /Import setup/);
+  assert.match(data, /Export setup/);
   assert.match(data, /Export results/);
 });
 

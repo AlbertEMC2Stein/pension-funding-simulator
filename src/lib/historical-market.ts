@@ -3,6 +3,7 @@ import {
   MAX_ASSETS,
   type MarketCalibrationDraft,
 } from "./market-calibration";
+import { chiSquare95, studentT95 } from "./confidence-quantiles";
 
 type Observation = { day: number; price: number };
 type Interval = { dt: number; logReturn: number };
@@ -15,6 +16,8 @@ export interface HistoricalMarketEstimate {
     name: string;
     annualLogGrowth: number;
     compoundedGrowth: number;
+    growthInterval: { lower: number; upper: number };
+    volatilityInterval: { lower: number; upper: number };
     volatility: number;
     intervals: number;
     years: number;
@@ -27,6 +30,7 @@ export interface HistoricalMarketEstimate {
     intervals: number;
     years: number;
     maxGapDays: number;
+    correlationInterval: { lower: number; upper: number } | null;
   }[];
 }
 
@@ -170,6 +174,20 @@ export function estimateHistoricalMarket(
     const values = intervals(observations);
     const fit = fitIntervals(values, names[i]);
     const compoundedGrowth = Math.expm1(fit.drift);
+    // Under independent Gaussian log increments, the log-drift estimate has
+    // standard error σ / √total time; its estimated scale gives a t interval.
+    const margin =
+      studentT95(values.length - 1) * Math.sqrt(fit.variance / fit.years);
+    const growthInterval = {
+      lower: Math.expm1(fit.drift - margin),
+      upper: Math.expm1(fit.drift + margin),
+    };
+    const [chiLower, chiUpper] = chiSquare95(values.length - 1);
+    const sumSquares = (values.length - 1) * fit.variance;
+    const volatilityInterval = {
+      lower: Math.sqrt(sumSquares / chiUpper),
+      upper: Math.sqrt(sumSquares / chiLower),
+    };
     if (!Number.isFinite(compoundedGrowth) || compoundedGrowth <= -1)
       throw new Error(
         `${names[i]} has a growth estimate outside the supported range.`,
@@ -178,6 +196,8 @@ export function estimateHistoricalMarket(
       name: names[i],
       annualLogGrowth: fit.drift,
       compoundedGrowth,
+      growthInterval,
+      volatilityInterval,
       volatility: Math.sqrt(fit.variance),
       intervals: values.length,
       years: fit.years,
@@ -215,12 +235,27 @@ export function estimateHistoricalMarket(
       const value = Math.max(-1, Math.min(1, raw));
       correlation[i][j] = value;
       correlation[j][i] = value;
+      // Fisher's z interval is approximate and needs more than three paired
+      // intervals. Perfect sample correlations have no finite z transform.
+      const correlationInterval =
+        leftIntervals.length > 3 && Math.abs(value) < 1
+          ? (() => {
+              const z = Math.atanh(value);
+              const margin =
+                1.959963984540054 / Math.sqrt(leftIntervals.length - 3);
+              return {
+                lower: Math.tanh(z - margin),
+                upper: Math.tanh(z + margin),
+              };
+            })()
+          : null;
       pairs.push({
         first: names[i],
         second: names[j],
         intervals: leftIntervals.length,
         years: left.years,
         maxGapDays: left.maxGapDays,
+        correlationInterval,
       });
     }
   const matrixError = correlationMatrixError(

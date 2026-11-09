@@ -33,7 +33,7 @@ const tableDescriptions: Record<TableType, string> = {
     "Explore how the unprojected policy's feasibility diagnostics change with the inputs.",
 };
 
-/** Design-only scenario table and separate scenario/result export controls. */
+/** Design-only comparison table and separate setup/result export controls. */
 export function DataView() {
   const [tableType, setTableType] = useState<TableType>("withdrawal");
   const [tables, setTables] = useState<Record<TableType, ExampleRow[]>>({
@@ -58,21 +58,21 @@ export function DataView() {
       <PageHeading
         eyebrow="EXPLORE THE DETAILS"
         title="Make room for questions"
-        description="Build a table of scenarios and compare the details side by side."
-      >
-        <DemoAction message="Export is not connected in this design draft.">
-          ↓ &nbsp; Export table
-        </DemoAction>
-      </PageHeading>
+        description="Compare variations of your setup and save your work."
+      />
       <PreviewBanner>
         <strong>Design preview.</strong> Add and edit example rows below. No
         calculations are performed.
       </PreviewBanner>
       <SectionHeading
         eyebrow="YOUR COMPARISON"
-        title="Scenario table"
-        description="Compare variations using the same market and investor settings."
-      />
+        title="Comparison table"
+        description="Compare variations using the same market and investor settings. Export only the current table."
+      >
+        <DemoAction message="Table export is not connected in this design draft.">
+          ↓ &nbsp; Export table
+        </DemoAction>
+      </SectionHeading>
       <div className="form-card table-card">
         <div className="table-toolbar">
           <label>
@@ -130,7 +130,7 @@ export function DataView() {
           <table>
             <thead>
               <tr>
-                <th>SCENARIO</th>
+                <th>VARIATION</th>
                 <th>INPUT TYPE</th>
                 <th>INPUT VALUE</th>
                 {tableType === "policy" && <th>POLICY</th>}
@@ -162,11 +162,11 @@ export function DataView() {
               {rows.map((row) => (
                 <tr key={row.id}>
                   <td>
-                    <b>Scenario {String(row.id).padStart(2, "0")}</b>
+                    <b>Variation {String(row.id).padStart(2, "0")}</b>
                   </td>
                   <td>
                     <select
-                      aria-label={`Input type for scenario ${row.id}`}
+                      aria-label={`Input type for variation ${row.id}`}
                       value={row.type}
                       onChange={(event) =>
                         changeRow(row.id, {
@@ -184,7 +184,7 @@ export function DataView() {
                   </td>
                   <td>
                     <input
-                      aria-label={`Input value for scenario ${row.id}`}
+                      aria-label={`Input value for variation ${row.id}`}
                       value={row.value}
                       onChange={(event) =>
                         changeRow(row.id, { value: event.target.value })
@@ -198,7 +198,7 @@ export function DataView() {
                   {tableType === "policy" && (
                     <td>
                       <select
-                        aria-label={`Policy for scenario ${row.id}`}
+                        aria-label={`Policy for variation ${row.id}`}
                         value={row.policy}
                         onChange={(event) =>
                           changeRow(row.id, { policy: event.target.value })
@@ -221,7 +221,7 @@ export function DataView() {
                     <button
                       className="row-remove"
                       type="button"
-                      aria-label={`Remove scenario ${row.id}`}
+                      aria-label={`Remove variation ${row.id}`}
                       onClick={() =>
                         setTables((current) => ({
                           ...current,
@@ -251,23 +251,30 @@ export function DataView() {
           </DemoAction>
         </div>
       </div>
+      <SectionHeading
+        eyebrow="SAVE AND RESTORE"
+        title="Import & export"
+        description="Keep your setup and your results separately."
+      />
       <div className="data-cards">
         <div className="small-card">
           <span className="tiny-label">RECREATE YOUR SETUP</span>
-          <h3>Export scenario</h3>
-          <p>
-            Save the inputs, calibration and run settings used to define your
-            scenario.
-          </p>
-          <DemoAction message="Scenario export is not connected in this draft.">
-            ↓ &nbsp; Export scenario
-          </DemoAction>
+          <h3>Import or export setup</h3>
+          <p>Save or restore your inputs, calibration and run settings.</p>
+          <div className="heading-actions">
+            <DemoAction message="Setup import is not connected in this draft.">
+              ↥ &nbsp; Import setup
+            </DemoAction>
+            <DemoAction message="Setup export is not connected in this draft.">
+              ↓ &nbsp; Export setup
+            </DemoAction>
+          </div>
         </div>
         <div className="small-card">
           <span className="tiny-label">KEEP YOUR OUTPUTS</span>
           <h3>Export results</h3>
           <p>
-            Save the computed tables and diagnostics, linked to the scenario and
+            Save the computed tables and diagnostics, linked to the setup and
             run that produced them.
           </p>
           <DemoAction message="Results export is not connected in this draft.">
