@@ -1,4 +1,4 @@
-import type { HistoricalMarketEstimate } from "../../lib/historical-market";
+import type { HistoricalMarketEstimate } from "../../lib/market/historical-market";
 
 /** Imported-price coverage and model-based estimation uncertainty. */
 export function ImportedMarketDiagnostics({

@@ -7,7 +7,7 @@ import {
   mixCohortSurvival,
   parseCohortCsv,
   validateCohortYears,
-} from "../src/lib/cohort-survival";
+} from "../src/lib/mortality/cohort-survival";
 
 test("cohort year limits include future retirement years within supported ages", () => {
   assert.equal(validateCohortYears("1926", "1926").valid, true);

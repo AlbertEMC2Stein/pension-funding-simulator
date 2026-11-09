@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ImportedMarketDiagnostics } from "../src/components/setup/ImportedMarketDiagnostics";
-import { estimateHistoricalMarket } from "../src/lib/historical-market";
+import { estimateHistoricalMarket } from "../src/lib/market/historical-market";
 
 test("imported diagnostics show coverage and confidence intervals without nested disclosures", () => {
   const csv = readFileSync(

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { ceFitStatus } from "../src/lib/fit-status";
+import { ceFitStatus } from "../src/lib/mortality/fit-status";
 
 test("CE fit status follows the captured inputs and current usable settings", () => {
   assert.equal(ceFitStatus(null, "current"), "not-fitted");

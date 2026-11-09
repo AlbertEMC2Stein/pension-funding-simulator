@@ -1,4 +1,4 @@
-import type { SimulationOptions } from "./simulation-options";
+import type { SimulationOptions } from "../options/simulation-options";
 
 type MarketInput = Omit<SimulationOptions["market"], "nominalRiskFreeRate">;
 

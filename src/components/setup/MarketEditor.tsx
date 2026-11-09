@@ -5,7 +5,7 @@ import {
   estimateHistoricalMarket,
   historicalMarketToDraft,
   type HistoricalMarketEstimate,
-} from "../../lib/historical-market";
+} from "../../lib/market/historical-market";
 import { ImportedMarketDiagnostics } from "./ImportedMarketDiagnostics";
 import {
   addAsset,
@@ -16,7 +16,7 @@ import {
   type MarketCalibrationDraft,
   marketValidationErrors,
   isEditableDecimal,
-} from "../../lib/market-calibration";
+} from "../../lib/market/market-calibration";
 
 /** Controlled editor contract: the parent owns the draft and replaces it on edits. */
 interface MarketEditorProps {

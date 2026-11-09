@@ -15,7 +15,7 @@ import {
   realRateFromNominal,
   updateMarketWithUndo,
   setCorrelation,
-} from "../src/lib/market-calibration";
+} from "../src/lib/market/market-calibration";
 
 test("market fields accept decimal editing and reject letters and commas", () => {
   for (const value of ["", "-", ".", "-.", "1.2", "0.34", "-0.075", "12."])

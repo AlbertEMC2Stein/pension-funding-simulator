@@ -1,4 +1,4 @@
-import { fitCompatibleCe, fitGompertzMakeham } from "../lib/mortality-fitting";
+import { fitCompatibleCe, fitGompertzMakeham } from "../lib/mortality/mortality-fitting";
 
 type Request = {
   times: number[];

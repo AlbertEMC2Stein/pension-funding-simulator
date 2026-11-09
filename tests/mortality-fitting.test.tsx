@@ -1,16 +1,16 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
-import { survivalKlDivergence } from "../src/lib/survival-fit-loss";
+import { survivalKlDivergence } from "../src/lib/mortality/survival-fit-loss";
 import {
   fitCompatibleCe,
   fitGompertzMakeham,
-} from "../src/lib/mortality-fitting";
+} from "../src/lib/mortality/mortality-fitting";
 import {
   compactifiedExponentialSurvival,
   gompertzMakehamSurvival,
-} from "../src/lib/mortality-models";
-import { mixCohortSurvival, parseCohortCsv } from "../src/lib/cohort-survival";
+} from "../src/lib/mortality/mortality-models";
+import { mixCohortSurvival, parseCohortCsv } from "../src/lib/mortality/cohort-survival";
 
 test("KL uses the last survival value as the final tail bin", () => {
   const loss = survivalKlDivergence([0, 1, 2], [1, 0.7, 0.2], [1, 0.6, 0.1]);

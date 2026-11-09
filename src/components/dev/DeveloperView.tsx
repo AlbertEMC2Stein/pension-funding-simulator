@@ -6,8 +6,8 @@ import { useSimulationDraft } from "../SimulationDraftContext";
 import {
   buildMarketOptions,
   buildSimulationOptions,
-} from "../../lib/simulation-options";
-import { calibrateMarket } from "../../lib/calibrate-market";
+} from "../../lib/options/simulation-options";
+import { calibrateMarket } from "../../lib/market/calibrate-market";
 import styles from "./developer.module.css";
 
 interface Activity {

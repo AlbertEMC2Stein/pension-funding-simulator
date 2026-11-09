@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useSimulationDraft } from "../SimulationDraftContext";
-import { buildSimulationOptions } from "../../lib/simulation-options";
+import { buildSimulationOptions } from "../../lib/options/simulation-options";
 import {
   Metric,
   PageHeading,

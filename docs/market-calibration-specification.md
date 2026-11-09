@@ -1,6 +1,6 @@
 # Manual market calibration: conventions and reference cases
 
-Status: **proposed specification for review**. The website does not yet perform this calibration. This document covers manual market inputs only; historical CSV estimation and the simulation engine require separate specifications.
+Status: **implemented for manual inputs**. This document covers manual market inputs only; historical CSV estimation and the simulation engine use separate specifications.
 
 ## Sources and scope
 
@@ -90,7 +90,7 @@ For two assets with positive volatilities, `R = [[1, 1], [1, 1]]` is singular an
 
 Test an identity correlation matrix with three positive-volatility assets. Each covariance diagonal must equal its squared volatility, all off-diagonal covariances must be zero, and `m[i] = theta[i] / vol[i]^2`. Reordering assets and both matrix axes must reorder `mu`, `theta` and `m` consistently while leaving `rho` unchanged. Use explicit test inputs and record expected values when implementing the test.
 
-## Review points before implementation
+## Continuing review points
 
 1. Confirm this interpretation of manual annual growth and inflation for the website's initial calibration.
 2. Decide whether the current `1e-12` correlation residual guard is acceptable as an initial conservative rule; it is not a full covariance-conditioning assessment.

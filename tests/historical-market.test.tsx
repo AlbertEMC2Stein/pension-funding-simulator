@@ -4,9 +4,9 @@ import { test } from "node:test";
 import {
   estimateHistoricalMarket,
   historicalMarketToDraft,
-} from "../src/lib/historical-market";
-import { initialMarketCalibration } from "../src/lib/market-calibration";
-import { chiSquare95, studentT95 } from "../src/lib/confidence-quantiles";
+} from "../src/lib/market/historical-market";
+import { initialMarketCalibration } from "../src/lib/market/market-calibration";
+import { chiSquare95, studentT95 } from "../src/lib/numerics/confidence-quantiles";
 
 test("confidence distribution quantiles match reference values", () => {
   assert.ok(Math.abs(studentT95(2) - 4.3026527299) < 1e-8);

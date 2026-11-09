@@ -4,7 +4,7 @@ import {
   type CompactifiedExponentialParameters,
   type GompertzMakehamParameters,
 } from "./mortality-models";
-import { nelderMead } from "./nelder-mead";
+import { nelderMead } from "../numerics/nelder-mead";
 import { survivalKlDivergence } from "./survival-fit-loss";
 
 export interface MortalityFit<P> {

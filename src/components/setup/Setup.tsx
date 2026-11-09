@@ -17,18 +17,18 @@ import {
   updateMarketWithUndo,
   type MarketEditAction,
   type MarketCalibrationDraft,
-} from "../../lib/market-calibration";
+} from "../../lib/market/market-calibration";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import { MarketEditor } from "./MarketEditor";
-import { parseAmount } from "../../lib/simulation-options";
+import { parseAmount } from "../../lib/options/simulation-options";
 import { CohortChart } from "./CohortChart";
-import type { CeFitStatus } from "../../lib/fit-status";
+import type { CeFitStatus } from "../../lib/mortality/fit-status";
 import {
   FIRST_COHORT_YEAR,
   LAST_COHORT_YEAR,
   LAST_SUPPORTED_RETIREMENT_AGE,
   validateCohortYears,
-} from "../../lib/cohort-survival";
+} from "../../lib/mortality/cohort-survival";
 
 /**
  * Market tab: owns the temporary editable market and shows calibration and

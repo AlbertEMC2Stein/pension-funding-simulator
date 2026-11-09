@@ -4,7 +4,7 @@ import {
   compactifiedExponentialSurvival,
   gompertzMakehamQuantile,
   gompertzMakehamSurvival,
-} from "../src/lib/mortality-models";
+} from "../src/lib/mortality/mortality-models";
 
 const gm = { alpha: 0.00570616, beta: 0.130797, lambda: 0.00766238 };
 

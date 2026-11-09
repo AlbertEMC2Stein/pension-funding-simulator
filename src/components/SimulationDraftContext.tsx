@@ -5,7 +5,7 @@ import {
   initialSimulationDraft,
   type SimulationDraft,
   type SimulationOptions,
-} from "../lib/simulation-options";
+} from "../lib/options/simulation-options";
 
 /** Shared editable inputs; the eventual worker receives a separate validated snapshot. */
 const Context = createContext<{

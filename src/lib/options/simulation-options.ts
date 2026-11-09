@@ -3,8 +3,8 @@ import {
   marketValidationErrors,
   realRateFromNominal,
   type MarketCalibrationDraft,
-} from "./market-calibration";
-import { validateCohortYears } from "./cohort-survival";
+} from "../market/market-calibration";
+import { validateCohortYears } from "../mortality/cohort-survival";
 
 /** Editable values remain strings until a snapshot is prepared. Rates are percentages. */
 export interface SimulationDraft {

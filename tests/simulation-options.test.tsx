@@ -3,8 +3,8 @@ import { test } from "node:test";
 import {
   buildSimulationOptions,
   initialSimulationDraft,
-} from "../src/lib/simulation-options";
-import { setCorrelation } from "../src/lib/market-calibration";
+} from "../src/lib/options/simulation-options";
+import { setCorrelation } from "../src/lib/market/market-calibration";
 
 test("builds a numerical, independent snapshot from current inputs", () => {
   const draft = initialSimulationDraft();

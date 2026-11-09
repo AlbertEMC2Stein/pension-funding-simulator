@@ -4,7 +4,9 @@ This plan is a working roadmap, not a specification of unverified mathematical r
 
 ## Starting point
 
-The website has editable market and investor inputs, validated simulation options, six preprocessed cohort tables, and a development panel. It does not yet fit mortality, calculate policies, run simulations, import market data, or persist settings. Existing plots are illustrative. A snapshot is currently prepared when Run simulation is clicked, but no simulation is started.
+The website has editable market and investor inputs, validated simulation options, manual market calibration, and CSV price import with historical estimates and uncertainty diagnostics. Six preprocessed cohort tables support cohort survival and GM and market-compatible CE mortality fits, which can be inspected in the mortality panel. A development panel exposes intermediate information.
+
+The evaluation and comparison-table results are still illustrative: policies and financial-path simulations are not implemented. Preparing options when Run simulation is clicked does not start a financial simulation. Editable settings are not yet persisted across reloads, and setup/result import and export controls are placeholders. Mortality fitting has its own worker; the planned financial simulation worker and its cancellation flow are separate work.
 
 The research project is a reference, not a runtime dependency. Before porting any formula or algorithm, read the current relevant paper passage and MATLAB implementation, check definitions and conditions, and record where the website implementation came from. Use existing reference outputs when suitable; running or changing research code requires whatever authorization its project instructions specify. Research work remains separate from the website.
 
@@ -17,7 +19,7 @@ The research project is a reference, not a runtime dependency. Before porting an
 
 ## Milestones
 
-### 1. Numerical conventions and reference cases
+### 1. Numerical conventions and reference cases — initial work complete
 
 Document the meaning of nominal return, inflation, real drift and rate, covariance, market price of risk and the paper's convention for rho. Separate input validation from assumptions that restrict only specific results. Identify small, versioned reference cases and their provenance; do not invent expected outputs.
 
@@ -25,19 +27,19 @@ Draft for review: [manual market-calibration specification](market-calibration-s
 
 **Check:** Compare the website's interpretation of input units and asset order with the research implementation. Agree on edge cases, including zero and negative Merton-direction components, before translating dependent formulas.
 
-### 2. Market calibration from manual inputs
+### 2. Market calibration from manual inputs — implemented
 
 Derive the real market quantities, covariance matrix and Merton direction from validated inputs. Use a stable linear solve rather than explicitly inverting the covariance matrix. Report numerical failures and assumption diagnostics without disabling unrelated results.
 
 **Check:** Compare a two-asset case against the corresponding research calibration and check a higher-dimensional case and invalid or ill-conditioned matrices. Show the derived values in the developer panel first.
 
-### 3. Cohort loading and survival targets
+### 3. Cohort loading and survival targets — implemented
 
 Load the appropriate packaged cohort tables and construct remaining-lifetime survival from retirement age. Support male, female and custom mixtures. A custom mixture combines the sex-specific survival curves, not annual death probabilities; the source's open-ended 100+ row is not a one-year mortality probability.
 
 **Check:** Verify survival starts at one, stays within bounds and is non-increasing; compare selected cohorts and mixture endpoints with source data and suitable reference values. Make loading, missing data and unsupported ages visible in the mortality panel.
 
-### 4. Mortality models and fit diagnostics
+### 4. Mortality models and fit diagnostics — implemented
 
 Implement and verify the model survival functions and annual-grid fit objective first, then the Gompertz–Makeham and market-compatible compactified-exponential fits in separate small changes. Specify optimizer tolerances, initializations, convergence failures and the treatment of the final survival bin. The compatible fit must be invalidated when relevant market or mortality inputs change.
 
@@ -45,9 +47,11 @@ The website will implement GM and CE only. The constant-hazard exponential model
 
 **Check:** Compare survival curves, fit losses and fitted parameters against matched reference cases; distinguish optimizer failure from a poor fit. Connect the real curves and quantitative diagnostics to the mortality panel. Do not assign qualitative fit grades until defensible thresholds have been agreed.
 
-### 5. Unconstrained policy and analytic quantities
+### 5. Unconstrained policy and analytic quantities — next
 
 Port the safe boundary, compatible policy and withdrawal/risk relationship in independently tested pieces. Respect which of target risk and withdrawal is the input; do not present a quantity as available when the necessary inputs or assumptions are missing. Implement result-specific assumption checks, including the conditions behind global simplex feasibility.
+
+Start by checking the safe boundary's precise definition, units and applicability against the current research sources, then implement and test it independently before connecting it to the evaluation panel. The initial code organization is documented in [`src/lib/model`](../src/lib/model/README.md); it does not implement a formula or establish a complete simulation snapshot yet.
 
 **Check:** Compare boundary values, limiting cases and selected results with reference cases. Connect one verified result at a time, with the correct applicability message and status.
 
@@ -87,25 +91,25 @@ Add borrowing exposure and feasible-strategy diagnostics, then the impoverishmen
 
 **Check:** Compare small cases and boundary events to reference results; distinguish statistical uncertainty from discretization and modeling error. Keep impoverishment and borrowing visuals adjacent as designed.
 
-### 12. Scenario tables
+### 12. Comparison tables
 
 Define each table's independent inputs, applicable outputs and calculation dependencies. All rows share the market and investor baseline; row edits affect their own outputs, while shared changes invalidate dependent rows. Compute rows asynchronously with individual statuses and the same interruption rules.
 
 **Check:** Exercise mixed completed, pending, invalid and outdated rows; verify policy-specific unavailable cells and compare individual rows with the corresponding single-scenario results.
 
-### 13. Market CSV calibration
+### 13. Market CSV calibration — initial implementation complete
 
-Implement date/price parsing and validation for EUR adjusted-close time series, then historical estimation as a separate change. Define return conventions, annualization, missing dates, sample window and uncertainty method before coding. Enable historical diagnostics only after successful CSV calibration; define stress scenarios as recalibrations with their assumptions rechecked.
+EUR adjusted-close CSV parsing, calendar-time historical estimation, positive-definiteness checks and import diagnostics are implemented. Growth and volatility intervals use the Gaussian log-return model; correlation intervals use an approximate Fisher transformation. See [historical market import](historical-market-import.md) and the source for the precise currently implemented conventions. Stress scenarios remain placeholders and will require recalibration with assumptions rechecked.
 
-Agreed direction: measure each return interval in calendar time, including weekends and holidays, with elapsed calendar days divided by 365.25 as the year convention. Estimate each asset from its available observations and each pair's correlation from matching observed interval endpoints. Construct the covariance matrix from the separately estimated volatilities and pairwise correlations. Reject indefinite and singular matrices and flag numerical near-singularity; never silently repair them. Report gaps and pairwise coverage. The uncertainty method, minimum coverage, and handling of long gaps remain to be specified. The example CSV was generated on a weekday-based clock, so its generating parameters are not an exact calendar-time calibration target.
+Measure each return interval in calendar time, including weekends and holidays, with elapsed calendar days divided by 365.25 as the year convention. Estimate each asset from its available observations and each pair's correlation from matching observed interval endpoints. Construct the covariance matrix from separately estimated volatilities and pairwise correlations. Reject indefinite, singular and numerically near-singular matrices; never silently repair them. Report gaps and pairwise coverage. The example CSV was generated on a weekday-based clock, so its generating parameters are not an exact calendar-time calibration target.
 
-Use direct historical estimates for expected growth and report their uncertainty under the explicitly stated statistical assumptions. Do not shrink them toward a prior or present historical estimation intervals as forecasts of future returns. Specify and validate the interval method before implementation, including how volatility uncertainty is handled when reporting the arithmetic drift.
+Historical annualized compounded log growth is the quantity currently placed in the market editor; it is distinct from expected one-year GBM price growth or the SDE's arithmetic drift. Do not present historical estimation intervals as forecasts. Intervals for arithmetic drift and their treatment of volatility uncertainty would require separate specification and validation.
 
 **Check:** Test with the packaged synthetic CSV and small hand-checkable data, including malformed and missing values. Compare estimates with independently computed references and identify that sample estimates need not equal the generating parameters.
 
-### 14. Persistence, export and finishing work
+### 14. Persistence, export and finishing work — pending
 
-Save editable settings locally with schema versioning and recovery from invalid or old data. Provide distinct scenario and result exports, with the metadata necessary to reproduce and interpret runs. Add translations and accessible explanations incrementally.
+Save editable settings locally with schema versioning and recovery from invalid or old data. Provide distinct setup, comparison-table and result exports, with the metadata necessary to reproduce and interpret runs. Add translations and accessible explanations incrementally.
 
 **Check:** Reload and restore settings; round-trip exported scenarios and results, verify version handling and ensure the seed and provenance identify the run. Test static GitHub Pages deployment, accessibility, responsive layouts and both themes.
 

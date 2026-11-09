@@ -3,7 +3,7 @@ import {
   MAX_ASSETS,
   type MarketCalibrationDraft,
 } from "./market-calibration";
-import { chiSquare95, studentT95 } from "./confidence-quantiles";
+import { chiSquare95, studentT95 } from "../numerics/confidence-quantiles";
 
 type Observation = { day: number; price: number };
 type Interval = { dt: number; logReturn: number };

@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSimulationDraft } from "../SimulationDraftContext";
-import { buildMarketOptions } from "../../lib/simulation-options";
-import { calibrateMarket } from "../../lib/calibrate-market";
-import type { CeFit, GmFit } from "../../lib/mortality-fitting";
-import { ceFitStatus, type CeFitStatus } from "../../lib/fit-status";
+import { buildMarketOptions } from "../../lib/options/simulation-options";
+import { calibrateMarket } from "../../lib/market/calibrate-market";
+import type { CeFit, GmFit } from "../../lib/mortality/mortality-fitting";
+import { ceFitStatus, type CeFitStatus } from "../../lib/mortality/fit-status";
 import {
   cohortSurvival,
   loadCohort,
@@ -13,7 +13,7 @@ import {
   validateCohortYears,
   type CohortSex,
   type LongevityScenario,
-} from "../../lib/cohort-survival";
+} from "../../lib/mortality/cohort-survival";
 
 type Curve = { age: number; survival: number }[];
 type Loaded =

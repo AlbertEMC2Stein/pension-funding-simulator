@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { calibrateMarket } from "../src/lib/calibrate-market";
+import { calibrateMarket } from "../src/lib/market/calibrate-market";
 import {
   buildMarketOptions,
   initialSimulationDraft,
-} from "../src/lib/simulation-options";
+} from "../src/lib/options/simulation-options";
 
 function baseline() {
   const built = buildMarketOptions(initialSimulationDraft().market);
