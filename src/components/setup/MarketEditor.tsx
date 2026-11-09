@@ -9,6 +9,7 @@ import {
   type MarketAsset,
   type MarketCalibrationDraft,
   marketValidationErrors,
+  isEditableDecimal,
 } from "../../lib/market-calibration";
 
 /** Controlled editor contract: the parent owns the draft and replaces it on edits. */
@@ -58,11 +59,12 @@ export function CorrelationMatrix({ market, onChange }: MarketEditorProps) {
                       inputMode="decimal"
                       aria-label={`Correlation of asset ${i + 1} with asset ${j + 1}`}
                       value={market.correlations[i][j]}
-                      onChange={(event) =>
-                        onChange(
-                          setCorrelation(market, i, j, event.target.value),
-                        )
-                      }
+                      onChange={(event) => {
+                        if (isEditableDecimal(event.target.value))
+                          onChange(
+                            setCorrelation(market, i, j, event.target.value),
+                          );
+                      }}
                     />
                   ) : (
                     <span
@@ -146,11 +148,12 @@ export function MarketEditor({ market, onChange }: MarketEditorProps) {
                   type="text"
                   inputMode="decimal"
                   value={asset.nominalReturnPercent}
-                  onChange={(event) =>
-                    updateAsset(index, {
-                      nominalReturnPercent: event.target.value,
-                    })
-                  }
+                  onChange={(event) => {
+                    if (isEditableDecimal(event.target.value))
+                      updateAsset(index, {
+                        nominalReturnPercent: event.target.value,
+                      });
+                  }}
                 />
                 <span aria-hidden="true">% / year</span>
               </span>
@@ -163,11 +166,12 @@ export function MarketEditor({ market, onChange }: MarketEditorProps) {
                   type="text"
                   inputMode="decimal"
                   value={asset.volatilityPercent}
-                  onChange={(event) =>
-                    updateAsset(index, {
-                      volatilityPercent: event.target.value,
-                    })
-                  }
+                  onChange={(event) => {
+                    if (isEditableDecimal(event.target.value))
+                      updateAsset(index, {
+                        volatilityPercent: event.target.value,
+                      });
+                  }}
                 />
                 <span aria-hidden="true">% / year</span>
               </span>

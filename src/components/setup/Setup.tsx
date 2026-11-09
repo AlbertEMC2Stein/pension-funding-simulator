@@ -7,11 +7,15 @@ import {
   PreviewBanner,
   SectionHeading,
   TermLink,
-  useDraft,
 } from "../common";
 import {
   nominalRiskFreeRateError,
+  inflationRateError,
   realRateFromNominal,
+  isEditableDecimal,
+  initialMarketCalibration,
+  updateMarketWithUndo,
+  type MarketEditAction,
   type MarketCalibrationDraft,
 } from "../../lib/market-calibration";
 import { useSimulationDraft } from "../SimulationDraftContext";
@@ -28,10 +32,10 @@ import {
 
 /**
  * Market tab: owns the temporary editable market and shows calibration and
- * stress-test placeholders. Importing data and restoring presets are not wired.
+ * stress-test placeholders. Importing market data is not wired yet.
  */
 function MarketSetup() {
-  const [method, setMethod] = useState("Preset");
+  const [undo, setUndo] = useState<MarketCalibrationDraft | null>(null);
   const [stress, setStress] = useState(false);
   const { draft, setDraft } = useSimulationDraft();
   const market = draft.market;
@@ -43,20 +47,21 @@ function MarketSetup() {
     market.nominalRiskFreePercent,
     market.inflationPercent,
   );
+  const inflationError = inflationRateError(market.inflationPercent);
   // Enable only after a CSV time-series import has successfully been calibrated.
-  // Selecting the draft import option alone does not create a calibration.
+  // The import placeholder alone does not create a calibration.
   const hasHistoricalCsvCalibration = false;
-  const { notice } = useDraft();
-  /** A change to an example assumption makes the current input mode manual. */
-  function editMarket(next: MarketCalibrationDraft) {
-    setDraft((current) => ({ ...current, market: next }));
-    setMethod("Manual");
+  function applyMarketAction(action: MarketEditAction) {
+    const next = updateMarketWithUndo(market, undo, action);
+    setUndo(next.undo);
+    if (next.market !== market)
+      setDraft((current) => ({ ...current, market: next.market }));
   }
-  const methods = [
-    { name: "Preset", symbol: "✳", text: "Start with an example market" },
-    { name: "Manual", symbol: "≡", text: "Enter assumptions yourself" },
-    { name: "Import file", symbol: "↥", text: "CSV, YAML, or JSON" },
-  ];
+  function editMarket(next: MarketCalibrationDraft) {
+    applyMarketAction({ type: "edit", market: next });
+  }
+  const isExample =
+    JSON.stringify(market) === JSON.stringify(initialMarketCalibration());
   return (
     <div className="setup-layout">
       <aside className="insight-card">
@@ -82,46 +87,40 @@ function MarketSetup() {
           title="Market assumptions"
           description="Define up to 10 assets and how they move together."
         />
-        <div className="form-card">
+        <div className="form-card market-input-card">
           <div className="card-heading">
             <div>
-              <span className="tiny-label">INPUT METHOD</span>
-              <h3>Choose your starting point</h3>
+              <span className="tiny-label">YOUR MARKET</span>
+              <h3>Market inputs</h3>
+            </div>
+            <div className="market-actions">
+              <button
+                type="button"
+                className="button button-light"
+                onClick={() => applyMarketAction({ type: "reset" })}
+                disabled={isExample}
+              >
+                ↺ &nbsp; Reset to example
+              </button>
+              {undo && (
+                <button
+                  type="button"
+                  className="button button-light"
+                  onClick={() => applyMarketAction({ type: "undo" })}
+                >
+                  Undo reset
+                </button>
+              )}
+              <DemoAction message="Price data import is not connected yet.">
+                ↥ &nbsp; Import price data
+              </DemoAction>
             </div>
           </div>
-          <div className="method-grid">
-            {methods.map((item) => (
-              <button
-                key={item.name}
-                type="button"
-                className={`method ${method === item.name ? "active" : ""}`}
-                aria-pressed={method === item.name}
-                onClick={() => {
-                  if (item.name === "Preset" && method !== "Preset") {
-                    notice(
-                      "Restoring the preset is not connected yet. Your manual inputs have been kept.",
-                    );
-                    return;
-                  }
-                  setMethod(item.name);
-                }}
-              >
-                <span>{item.symbol}</span>
-                <strong>{item.name}</strong>
-                <small>{item.text}</small>
-              </button>
-            ))}
-          </div>
-          {method === "Import file" && (
-            <p>
-              File import is not connected yet. Your current manual inputs have
-              been kept.
-            </p>
-          )}
-          {method === "Manual" && (
-            <p>
-              Manual assumptions are editable below; they are not yet connected
-              to simulation results.
+          <p>Enter your own assumptions or restore the two-asset example.</p>
+          {undo && (
+            <p role="status">
+              Example restored. You can undo the reset until you edit another
+              input.
             </p>
           )}
           <p className="mortality-market-note">
@@ -129,7 +128,7 @@ function MarketSetup() {
             changing them, check the fit under Investor &amp; mortality. The
             underlying cohort data do not change.
           </p>
-          <div className="input-grid">
+          <div className="input-grid market-input-grid">
             <label>
               Base currency
               <select defaultValue="EUR">
@@ -145,12 +144,13 @@ function MarketSetup() {
                   value={market.nominalRiskFreePercent}
                   aria-invalid={!!riskFreeError}
                   aria-describedby="risk-free-rate-hint risk-free-rate-error"
-                  onChange={(event) =>
-                    editMarket({
-                      ...market,
-                      nominalRiskFreePercent: event.target.value,
-                    })
-                  }
+                  onChange={(event) => {
+                    if (isEditableDecimal(event.target.value))
+                      editMarket({
+                        ...market,
+                        nominalRiskFreePercent: event.target.value,
+                      });
+                  }}
                   inputMode="decimal"
                 />
                 <span>% / year</span>
@@ -170,19 +170,31 @@ function MarketSetup() {
             </label>
             <label>
               Inflation assumption
-              <div className="input-suffix">
+              <div
+                className={`input-suffix${inflationError ? " input-suffix-invalid" : ""}`}
+              >
                 <input
                   value={market.inflationPercent}
-                  onChange={(event) =>
-                    editMarket({
-                      ...market,
-                      inflationPercent: event.target.value,
-                    })
-                  }
+                  aria-invalid={!!inflationError}
+                  aria-describedby="inflation-error"
+                  onChange={(event) => {
+                    if (isEditableDecimal(event.target.value))
+                      editMarket({
+                        ...market,
+                        inflationPercent: event.target.value,
+                      });
+                  }}
                   inputMode="decimal"
                 />
                 <span>% / year</span>
               </div>
+              <small
+                id="inflation-error"
+                className="field-error"
+                aria-live="polite"
+              >
+                {inflationError}
+              </small>
             </label>
           </div>
         </div>

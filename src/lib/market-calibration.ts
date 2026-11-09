@@ -28,6 +28,11 @@ export interface MarketCalibrationDraft {
 /** Maximum number of risky assets accepted by the editor. */
 export const MAX_ASSETS = 10;
 
+/** Allow incomplete decimal text while editing; final values are validated separately. */
+export function isEditableDecimal(value: string): boolean {
+  return /^-?\d*(?:\.\d*)?$/.test(value);
+}
+
 /** Create the two-asset example using the paper's 0.08 correlation. */
 export function initialMarketCalibration(): MarketCalibrationDraft {
   return {
@@ -54,6 +59,23 @@ export function initialMarketCalibration(): MarketCalibrationDraft {
     inflationPercent: "2.00",
     nextAssetId: 3,
   };
+}
+
+export type MarketEditAction =
+  | { type: "edit"; market: MarketCalibrationDraft }
+  | { type: "reset" }
+  | { type: "undo" };
+
+/** A reset has one undo; later edits discard it rather than replace newer work. */
+export function updateMarketWithUndo(
+  market: MarketCalibrationDraft,
+  undo: MarketCalibrationDraft | null,
+  action: MarketEditAction,
+): { market: MarketCalibrationDraft; undo: MarketCalibrationDraft | null } {
+  if (action.type === "edit") return { market: action.market, undo: null };
+  if (action.type === "reset")
+    return { market: initialMarketCalibration(), undo: market };
+  return undo ? { market: undo, undo: null } : { market, undo: null };
 }
 
 /**
@@ -167,6 +189,14 @@ export function nominalRiskFreeRateError(
   return null;
 }
 
+/** An effective annual inflation rate must be finite and greater than -100%. */
+export function inflationRateError(value: string): string | null {
+  const inflation = parseDecimal(value);
+  return inflation === null || inflation <= -100
+    ? "Enter an inflation assumption greater than −100%."
+    : null;
+}
+
 /**
  * Check dimensions, entries, symmetry and positive definiteness. Returns the
  * first human-readable error, or null when accepted. A Cholesky diagonal pivot
@@ -248,9 +278,8 @@ export function marketValidationErrors(
     market.inflationPercent,
   );
   if (rateError) errors.push(rateError);
-  const inflation = parseDecimal(market.inflationPercent);
-  if (inflation === null || inflation <= -100)
-    errors.push("Enter an inflation assumption greater than −100%.");
+  const inflationError = inflationRateError(market.inflationPercent);
+  if (inflationError) errors.push(inflationError);
   if (market.correlations.length !== market.assets.length) {
     errors.push("The correlation matrix must match the number of assets.");
   } else {

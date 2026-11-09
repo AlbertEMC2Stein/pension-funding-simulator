@@ -6,7 +6,7 @@ Status: **proposed specification for review**. The website does not yet perform 
 
 The primary reference is the research manuscript, sections 2.1 and 6.1.1, together with `code/utils/getMarketCalibration.m` in the sibling `gompertz-pension-funding` project. The manuscript uses a constant-coefficient, multi-asset Black–Scholes market in real terms. Its numerical example describes how its nominal annualized inputs are interpreted and converted. The manuscript is a research draft; this specification is not an independent verification of its mathematical results.
 
-The website implements its own calculation and tests; it does not import or run MATLAB code at runtime. Its initial asset and inflation assumptions match the paper's numerical example, although the asset names are more generic. Its default 2.5% effective annual nominal risk-free rate implies approximately 0.489% real at 2% inflation; the paper reference uses 0.5% real. Restoring the preset is not yet implemented.
+The website implements its own calculation and tests; it does not import or run MATLAB code at runtime. Its preset asset and inflation assumptions match the paper's numerical example, although the asset names are more generic. Its preset 2.5% effective annual nominal risk-free rate implies approximately 0.489% real at 2% inflation; the paper reference uses 0.5% real.
 
 ## Inputs and units
 

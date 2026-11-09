@@ -6,13 +6,54 @@ import {
   addAsset,
   correlationMatrixError,
   initialMarketCalibration,
+  inflationRateError,
+  isEditableDecimal,
   marketValidationErrors,
   MAX_ASSETS,
   removeAsset,
   nominalRiskFreeRateError,
   realRateFromNominal,
+  updateMarketWithUndo,
   setCorrelation,
 } from "../src/lib/market-calibration";
+
+test("market fields accept decimal editing and reject letters and commas", () => {
+  for (const value of ["", "-", ".", "-.", "1.2", "0.34", "-0.075", "12."])
+    assert.equal(isEditableDecimal(value), true);
+  for (const value of ["a3,1", "3,1", "1e3", "2-3", "1.2.3", " "])
+    assert.equal(isEditableDecimal(value), false);
+});
+
+test("inflation validation identifies empty and out-of-range values", () => {
+  assert.ok(inflationRateError(""));
+  assert.ok(inflationRateError("-100"));
+  assert.equal(inflationRateError("2.00"), null);
+});
+
+test("reset and undo preserve the complete prior market draft", () => {
+  const initial = initialMarketCalibration();
+  const manual = setCorrelation(addAsset(initial), 1, 0, "0.42");
+  manual.assets[0].nominalReturnPercent = "8.10";
+  const reset = updateMarketWithUndo(manual, null, { type: "reset" });
+  assert.deepEqual(reset.market, initialMarketCalibration());
+  assert.equal(reset.undo, manual);
+  const restored = updateMarketWithUndo(reset.market, reset.undo, {
+    type: "undo",
+  });
+  assert.equal(restored.market, manual);
+  assert.equal(restored.market.assets.length, 3);
+  assert.equal(restored.market.correlations[1][0], "0.42");
+  assert.equal(restored.undo, null);
+  const edited = updateMarketWithUndo(reset.market, reset.undo, {
+    type: "edit",
+    market: addAsset(reset.market),
+  });
+  assert.equal(edited.undo, null);
+  assert.equal(
+    updateMarketWithUndo(edited.market, edited.undo, { type: "undo" }).market,
+    edited.market,
+  );
+});
 
 test("the derived real risk-free rate must be strictly positive", () => {
   for (const value of ["0", "-0.5", "2", "", "not a number"])
