@@ -275,64 +275,67 @@ function MarketSetup() {
             </p>
           </div>
         )}
-        <div className="form-card diagnostic-card">
-          <div className="card-heading">
-            <div>
-              <span className="tiny-label">SCENARIO COMPARISON</span>
-              <h3>Recalibrated market scenarios</h3>
-              <p>
-                Compare estimated return assumptions with covariance held fixed.
-              </p>
-            </div>
-            <span className="chip">NOT CALCULATED</span>
-          </div>
-          <label className="check-card scenario-toggle">
-            <input
-              type="checkbox"
-              checked={stress}
-              onChange={(event) => setStress(event.target.checked)}
-            />
-            <span>
-              <strong>Explore return scenarios</strong>
-              <small>
-                Recalculate the policy and compatible mortality calibration for
-                each scenario.
-              </small>
-            </span>
-          </label>
-          {stress && (
-            <>
-              <div className="capital-table-wrap">
-                <table className="capital-table">
-                  <thead>
-                    <tr>
-                      <th>Scenario</th>
-                      <th>Return assumptions</th>
-                      <th>Diagnostics</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      ["Baseline", "Historical estimates"],
-                      ["Lower returns", "Individual lower bounds"],
-                      ["Higher returns", "Individual upper bounds"],
-                    ].map(([name, assumption]) => (
-                      <tr key={name}>
-                        <td>{name}</td>
-                        <td>{assumption}</td>
-                        <td>Not evaluated</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        {hasHistoricalCsvCalibration && (
+          <div className="form-card diagnostic-card">
+            <div className="card-heading">
+              <div>
+                <span className="tiny-label">SCENARIO COMPARISON</span>
+                <h3>Recalibrated market scenarios</h3>
+                <p>
+                  Compare estimated return assumptions with covariance held
+                  fixed.
+                </p>
               </div>
-              <p className="chart-disclaimer">
-                Individual interval endpoints are not a joint confidence region
-                or guaranteed worst- and best-case outcomes.
-              </p>
-            </>
-          )}
-        </div>
+              <span className="chip">NOT CALCULATED</span>
+            </div>
+            <label className="check-card scenario-toggle">
+              <input
+                type="checkbox"
+                checked={stress}
+                onChange={(event) => setStress(event.target.checked)}
+              />
+              <span>
+                <strong>Explore return scenarios</strong>
+                <small>
+                  Recalculate the policy and compatible mortality calibration
+                  for each scenario.
+                </small>
+              </span>
+            </label>
+            {stress && (
+              <>
+                <div className="capital-table-wrap">
+                  <table className="capital-table">
+                    <thead>
+                      <tr>
+                        <th>Scenario</th>
+                        <th>Return assumptions</th>
+                        <th>Diagnostics</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        ["Baseline", "Historical estimates"],
+                        ["Lower returns", "Individual lower bounds"],
+                        ["Higher returns", "Individual upper bounds"],
+                      ].map(([name, assumption]) => (
+                        <tr key={name}>
+                          <td>{name}</td>
+                          <td>{assumption}</td>
+                          <td>Not evaluated</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="chart-disclaimer">
+                  Individual interval endpoints are not a joint confidence
+                  region or guaranteed worst- and best-case outcomes.
+                </p>
+              </>
+            )}
+          </div>
+        )}
         <div className="feasibility-status market-assumptions" role="status">
           <strong>
             Assumption checks <span>Not evaluated</span>

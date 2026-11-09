@@ -38,6 +38,7 @@ test("setup and data views retain the requested design elements", () => {
     </DraftContext.Provider>,
   );
   assert.doesNotMatch(setup, /Estimation uncertainty/);
+  assert.doesNotMatch(setup, /Recalibrated market scenarios/);
   assert.match(setup, /Custom mixture/);
   assert.match(setup, /compatible CE fit depends on market assumptions/);
   assert.match(
