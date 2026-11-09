@@ -51,7 +51,7 @@ The website will implement GM and CE only. The constant-hazard exponential model
 
 Port the safe boundary, compatible policy and withdrawal/risk relationship in independently tested pieces. Respect which of target risk and withdrawal is the input; do not present a quantity as available when the necessary inputs or assumptions are missing. Implement result-specific assumption checks, including the conditions behind global simplex feasibility.
 
-Start by checking the safe boundary's precise definition, units and applicability against the current research sources, then implement and test it independently before connecting it to the evaluation panel. The initial code organization is documented in [`src/lib/model`](../src/lib/model/README.md); it does not implement a formula or establish a complete simulation snapshot yet.
+The safe boundary, safe withdrawal, compatible CE withdrawal/risk/required-capital relationship, unconstrained feedback and global simplex-feasibility diagnostic are implemented as standalone calculations. Their provenance, domains and tests are documented in [`src/lib/model/analytical`](../src/lib/model/analytical/README.md). They are not yet connected to the evaluation panel; a complete simulation snapshot remains future work. Other diagnostics must be added only when their result-specific assumptions and numerical requirements are established.
 
 **Check:** Compare boundary values, limiting cases and selected results with reference cases. Connect one verified result at a time, with the correct applicability message and status.
 

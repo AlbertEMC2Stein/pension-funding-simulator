@@ -8,8 +8,8 @@ source of truth.
 
 - `inputs.ts` defines the currently known investor capital inputs using the
   existing validated-options type. Amounts are euros, not percentages.
-- `analytical/` is reserved for small, independently testable analytical
-  calculations. The safe boundary is the first planned calculation.
+- `analytical/` contains small, independently testable analytical
+  calculations, beginning with the safe boundary.
 - `simulation/` is reserved for the financial-path engine and its numerical
   building blocks. Its algorithms and run snapshot have not been specified.
 
