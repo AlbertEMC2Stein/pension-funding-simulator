@@ -143,6 +143,19 @@ test("worker validates its cloned input and reports real batch progress", async 
     progress.map((message) => message.progress.completedPaths),
     [2, 4, 5],
   );
+  assert.ok(
+    progress.every(
+      (message) =>
+        Number.isFinite(message.batchElapsedMs) && message.batchElapsedMs >= 0,
+    ),
+  );
+  assert.ok(
+    progress.every(
+      (message, index) =>
+        index === 0 ||
+        message.batchElapsedMs >= progress[index - 1].batchElapsedMs,
+    ),
+  );
   const complete = messages.at(-1);
   assert.ok(complete?.type === "complete");
   assert.equal(complete.result.completedPaths, 5);

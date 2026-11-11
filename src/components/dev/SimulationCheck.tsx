@@ -21,13 +21,27 @@ import styles from "./developer.module.css";
 interface CheckRun {
   signature: string;
   phase:
-  "starting" | "running" | "cancelling" | "complete" | "cancelled" | "error";
+    "starting" | "running" | "cancelling" | "complete" | "cancelled" | "error";
   backend?: TensorBackend;
   annualWithdrawal?: number;
   progress?: RunProgress;
+  /** Elapsed batch-processing time, excluding backend initialization. */
+  batchElapsedMs?: number;
   result?: RunSchedulerResult;
   elapsedMs?: number;
   message?: string;
+}
+
+/** Format a rough batch-based estimate without implying subsecond precision. */
+function formatRemainingTime(milliseconds: number): string {
+  const seconds = Math.max(1, Math.ceil(milliseconds / 1000));
+
+  if (seconds < 60) return `about ${seconds} s`;
+
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+
+  return `about ${minutes} min${remainder ? ` ${remainder} s` : ""}`;
 }
 
 /**
@@ -58,6 +72,11 @@ export function SimulationCheck() {
     backend,
   });
   const outdated = !!run && run.signature !== signature;
+  const remainingMs =
+    run?.progress && run.batchElapsedMs !== undefined
+      ? (run.batchElapsedMs / run.progress.completedPaths) *
+        (run.progress.totalPaths - run.progress.completedPaths)
+      : null;
 
   useEffect(
     () => () => {
@@ -176,7 +195,12 @@ export function SimulationCheck() {
         );
       else if (message.type === "progress")
         setRun(
-          (current) => current && { ...current, progress: message.progress },
+          (current) =>
+            current && {
+              ...current,
+              progress: message.progress,
+              batchElapsedMs: message.batchElapsedMs,
+            },
         );
       else if (message.type === "complete") {
         finish();
@@ -379,6 +403,14 @@ export function SimulationCheck() {
               </p>
             </>
           )}
+          {run.phase === "running" &&
+            (remainingMs === null ? (
+              <p>Estimated time remaining: available after the first batch.</p>
+            ) : remainingMs > 0 ? (
+              <p>
+                Estimated time remaining: {formatRemainingTime(remainingMs)}.
+              </p>
+            ) : null)}
           {run.phase === "cancelled" && (
             <p>Check cancelled. No partial result was saved.</p>
           )}

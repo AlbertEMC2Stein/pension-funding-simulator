@@ -50,13 +50,21 @@ worker.onmessage = ({ data }) => {
         annualWithdrawal: snapshot.resolvedAnnualWithdrawal,
       });
 
+      let batchStarted = 0;
       const result = await runScheduler(snapshot, {
         backendOrder,
         signal: controller.signal,
-        onBackendReady: (backend) =>
-          worker.postMessage({ type: "backend", runId, backend }),
+        onBackendReady: (backend) => {
+          batchStarted = performance.now();
+          worker.postMessage({ type: "backend", runId, backend });
+        },
         onProgress: (progress) =>
-          worker.postMessage({ type: "progress", runId, progress }),
+          worker.postMessage({
+            type: "progress",
+            runId,
+            progress,
+            batchElapsedMs: performance.now() - batchStarted,
+          }),
       });
       worker.postMessage({
         type: "complete",

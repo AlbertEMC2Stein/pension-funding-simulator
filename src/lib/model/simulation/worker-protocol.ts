@@ -19,7 +19,13 @@ export type SimulationWorkerRequest =
 export type SimulationWorkerResponse =
   | { type: "prepared"; runId: number; annualWithdrawal: number }
   | { type: "backend"; runId: number; backend: TensorBackend }
-  | { type: "progress"; runId: number; progress: RunProgress }
+  | {
+      type: "progress";
+      runId: number;
+      progress: RunProgress;
+      /** Milliseconds since backend initialization, including completed batches. */
+      batchElapsedMs: number;
+    }
   | {
       type: "complete";
       runId: number;
