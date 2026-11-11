@@ -286,9 +286,9 @@ export function CohortChart({
     return mortality === "custom"
       ? mixCohortSurvival(loaded.female!, loaded.male!, age, maleWeight)
       : cohortSurvival(
-        (mortality === "female" ? loaded.female : loaded.male)!,
-        age,
-      );
+          (mortality === "female" ? loaded.female : loaded.male)!,
+          age,
+        );
   }, [valid, loaded, key, mortality, age, maleWeight]);
 
   if (!valid)
@@ -445,103 +445,109 @@ export function CohortChart({
       {fitErrors.gm && <p role="alert">GM fit: {fitErrors.gm}</p>}
       {fitErrors.ce && <p role="alert">CE fit: {fitErrors.ce}</p>}
       {(gm || ce) && (
-        <div className="capital-table-wrap">
-          <table className="capital-table">
-            <thead>
-              <tr>
-                <th>Model</th>
-                <th>KL divergence</th>
-                <th>Largest difference</th>
-                <th>Optimizer</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(
-                [
-                  ["GM", gm],
-                  ["CE", ce],
-                ] as const
-              ).map(
-                ([label, fit]) =>
-                  fit && (
-                    <tr key={label}>
-                      <td>{label}</td>
-                      <td>{fit.klDivergence.toPrecision(4)}</td>
-                      <td>{(fit.maxSurvivalDifference * 100).toFixed(2)} pp</td>
-                      <td>{fit.converged ? "Converged" : "Iteration limit"}</td>
-                    </tr>
-                  ),
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {(gm || ce) && (
-        <p className="chart-disclaimer">
-          KL divergence compares annual death bins and the final survival tail.
-          Largest difference is measured on the annual grid. Fits are numerical
-          estimates; a convergence status is not a quality grade.
-        </p>
-      )}
-      {(gm || ce) && (
-        <details className="borrowing-details diagnostic-details">
-          <summary>Fit parameters and optimization</summary>
-          <dl>
-            {gm && (
-              <>
-                <div>
-                  <dt>GM α</dt>
-                  <dd>{gm.parameters.alpha.toPrecision(5)} yr⁻¹</dd>
-                </div>
-                <div>
-                  <dt>GM β</dt>
-                  <dd>{gm.parameters.beta.toPrecision(5)} yr⁻¹</dd>
-                </div>
-                <div>
-                  <dt>GM λ</dt>
-                  <dd>{gm.parameters.lambda.toPrecision(5)} yr⁻¹</dd>
-                </div>
-                <div>
-                  <dt>GM starts converged</dt>
-                  <dd>
-                    {gm.convergedStarts} / {gm.starts}
-                  </dd>
-                </div>
-              </>
-            )}
-            {ce && (
-              <>
-                <div>
-                  <dt>CE T · remaining lifetime endpoint</dt>
-                  <dd>{ce.parameters.tau.toFixed(3)} years</dd>
-                </div>
-                <div>
-                  <dt>CE δ</dt>
-                  <dd>{ce.parameters.p.toPrecision(5)}</dd>
-                </div>
-                <div>
-                  <dt>
-                    CE λ<sub>∞</sub> · derived
-                  </dt>
-                  <dd>{ce.parameters.lambda.toPrecision(5)} yr⁻¹</dd>
-                </div>
-                <div>
-                  <dt>CE starts converged</dt>
-                  <dd>
-                    {ce.convergedStarts} / {ce.starts}
-                  </dd>
-                </div>
-              </>
-            )}
-            <div>
-              <dt>Fitting horizon · years after retirement</dt>
-              <dd>{100 - age}</dd>
+        <details className="borrowing-details diagnostic-details mortality-fit-details">
+          <summary>View fit diagnostics and model parameters</summary>
+          <section className="mortality-fit-section">
+            <h4>Fit diagnostics</h4>
+            <div className="capital-table-wrap">
+              <table className="capital-table">
+                <thead>
+                  <tr>
+                    <th>Model</th>
+                    <th>KL divergence</th>
+                    <th>Largest difference</th>
+                    <th>Optimizer</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(
+                    [
+                      ["GM", gm],
+                      ["CE", ce],
+                    ] as const
+                  ).map(
+                    ([label, fit]) =>
+                      fit && (
+                        <tr key={label}>
+                          <td>{label}</td>
+                          <td>{fit.klDivergence.toPrecision(4)}</td>
+                          <td>
+                            {(fit.maxSurvivalDifference * 100).toFixed(2)} pp
+                          </td>
+                          <td>
+                            {fit.converged ? "Converged" : "Iteration limit"}
+                          </td>
+                        </tr>
+                      ),
+                  )}
+                </tbody>
+              </table>
             </div>
-          </dl>
-          <p>
-            The CE fit uses the current real risk-free rate and rho. A low KL
-            value is not a guarantee of predictive accuracy.
-          </p>
+            <p className="chart-disclaimer">
+              KL divergence compares annual death bins and the final survival
+              tail. Largest difference is measured on the annual grid. Fits are
+              numerical estimates; a convergence status is not a quality grade.
+            </p>
+          </section>
+          <section className="mortality-fit-section">
+            <h4>Model parameters and optimization</h4>
+            <dl>
+              {gm && (
+                <>
+                  <div>
+                    <dt>GM α</dt>
+                    <dd>{gm.parameters.alpha.toPrecision(5)} yr⁻¹</dd>
+                  </div>
+                  <div>
+                    <dt>GM β</dt>
+                    <dd>{gm.parameters.beta.toPrecision(5)} yr⁻¹</dd>
+                  </div>
+                  <div>
+                    <dt>GM λ</dt>
+                    <dd>{gm.parameters.lambda.toPrecision(5)} yr⁻¹</dd>
+                  </div>
+                  <div>
+                    <dt>GM starts converged</dt>
+                    <dd>
+                      {gm.convergedStarts} / {gm.starts}
+                    </dd>
+                  </div>
+                </>
+              )}
+              {ce && (
+                <>
+                  <div>
+                    <dt>CE T · remaining lifetime endpoint</dt>
+                    <dd>{ce.parameters.tau.toFixed(3)} years</dd>
+                  </div>
+                  <div>
+                    <dt>CE δ</dt>
+                    <dd>{ce.parameters.p.toPrecision(5)}</dd>
+                  </div>
+                  <div>
+                    <dt>
+                      CE λ<sub>∞</sub> · derived
+                    </dt>
+                    <dd>{ce.parameters.lambda.toPrecision(5)} yr⁻¹</dd>
+                  </div>
+                  <div>
+                    <dt>CE starts converged</dt>
+                    <dd>
+                      {ce.convergedStarts} / {ce.starts}
+                    </dd>
+                  </div>
+                </>
+              )}
+              <div>
+                <dt>Fitting horizon · years after retirement</dt>
+                <dd>{100 - age}</dd>
+              </div>
+            </dl>
+            <p>
+              The CE fit uses the current real risk-free rate and rho. A low KL
+              value is not a guarantee of predictive accuracy.
+            </p>
+          </section>
         </details>
       )}
     </>

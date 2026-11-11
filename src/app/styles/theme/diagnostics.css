@@ -492,6 +492,16 @@ table.capital-table {
   margin-top: 16px;
 }
 
+.mortality-fit-section {
+  margin-top: 18px;
+}
+
+.mortality-fit-section h4 {
+  margin: 0 0 10px;
+  color: var(--text-strong);
+  font-size: 11px;
+}
+
 .scenario-toggle {
   margin-top: 16px;
 }
