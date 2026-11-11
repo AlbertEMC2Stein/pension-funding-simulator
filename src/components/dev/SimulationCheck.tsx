@@ -21,7 +21,7 @@ import styles from "./developer.module.css";
 interface CheckRun {
   signature: string;
   phase:
-    "starting" | "running" | "cancelling" | "complete" | "cancelled" | "error";
+  "starting" | "running" | "cancelling" | "complete" | "cancelled" | "error";
   backend?: TensorBackend;
   annualWithdrawal?: number;
   progress?: RunProgress;
@@ -296,7 +296,7 @@ export function SimulationCheck() {
             onChange={(event) => setBatch(event.target.value)}
           >
             <option value="auto">Automatic (up to 1,024)</option>
-            {[256, 512, 1024, 2048, 4096].map((size) => (
+            {[1024, 2048, 4096, 8192, 16384, 32768, 65536].map((size) => (
               <option key={size} value={size}>
                 {size.toLocaleString("en-US")}
               </option>
