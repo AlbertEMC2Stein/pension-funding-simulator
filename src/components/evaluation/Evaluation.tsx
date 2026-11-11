@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useSimulationDraft } from "../SimulationDraftContext";
+import { RiskWithdrawalChart } from "./RiskWithdrawalChart";
 import {
   MANUAL_BATCH_SIZES,
   type BatchSizeChoice,
@@ -58,113 +59,6 @@ const visualGroups: {
     entries: [{ id: "trajectories", label: "Illustrative trajectories" }],
   },
 ];
-
-/** Draw the illustrative withdrawal/risk curve; its values are not calculated. */
-function WithdrawalChart() {
-  return (
-    <div className="chart-card">
-      <div className="card-top">
-        <div>
-          <span className="tiny-label">YOUR WITHDRAWAL</span>
-          <div className="big-value">
-            €24,800 <span>/ year</span>
-          </div>
-          <div className="value-note">
-            <span className="mini-dot" /> Example amount at your target risk
-          </div>
-        </div>
-        <span className="chip">NOT CALCULATED</span>
-      </div>
-      <div className="chart-wrap">
-        <svg
-          viewBox="0 0 760 245"
-          role="img"
-          aria-label="Illustrative withdrawal versus risk curve"
-        >
-          <defs>
-            <linearGradient id="withdrawal-area" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#74b5a7" stopOpacity=".3" />
-              <stop offset="100%" stopColor="#74b5a7" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <g className="grid-lines">
-            <path d="M48 28H735 M48 76H735 M48 124H735 M48 172H735" />
-          </g>
-          <g className="axis-text">
-            <text x="20" y="32">
-              €40k
-            </text>
-            <text x="20" y="80">
-              €30k
-            </text>
-            <text x="20" y="128">
-              €20k
-            </text>
-            <text x="20" y="176">
-              €10k
-            </text>
-            <text x="44" y="206">
-              0%
-            </text>
-            <text x="206" y="206">
-              2.5%
-            </text>
-            <text x="379" y="206">
-              5%
-            </text>
-            <text x="548" y="206">
-              7.5%
-            </text>
-            <text x="716" y="206">
-              10%
-            </text>
-          </g>
-          <text
-            className="plot-axis-title"
-            x="10"
-            y="102"
-            textAnchor="middle"
-            transform="rotate(-90 10 102)"
-          >
-            ANNUAL WITHDRAWAL
-          </text>
-          <text className="plot-axis-title" x="391" y="235" textAnchor="middle">
-            LIFETIME IMPOVERISHMENT RISK
-          </text>
-          <path
-            d="M48 169 C160 164 243 153 325 132 S500 89 570 67 S685 38 735 28 L735 172 L48 172 Z"
-            fill="url(#withdrawal-area)"
-          />
-          <path
-            d="M48 169 C160 164 243 153 325 132 S500 89 570 67 S685 38 735 28"
-            fill="none"
-            stroke="#347d70"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <path
-            d="M389 116 V172"
-            stroke="#347d70"
-            strokeWidth="1.3"
-            strokeDasharray="4 5"
-          />
-          <circle
-            cx="389"
-            cy="116"
-            r="8"
-            fill="#fff"
-            stroke="#347d70"
-            strokeWidth="3"
-          />
-          <circle cx="389" cy="116" r="2.5" fill="#347d70" />
-        </svg>
-      </div>
-      <div className="chart-disclaimer">
-        Illustrative curve · not calculated from your inputs
-      </div>
-    </div>
-  );
-}
 
 /**
  * Placeholder GM-risk comparison. `projected` only reveals the additional
@@ -606,7 +500,7 @@ function BorrowingCard() {
 
 /**
  * Evaluation dashboard and its local display controls. Scenario summary,
- * plots and result values are illustrative; Run simulation is a placeholder.
+ * The CE chart is analytical; remaining result cards and Run simulation are placeholders.
  */
 export function Evaluation() {
   const { navigate } = useDraft();
@@ -702,8 +596,9 @@ export function Evaluation() {
         </div>
       </PageHeading>
       <PreviewBanner>
-        <strong>You&apos;re exploring a design draft.</strong> Values and charts
-        below are illustrative placeholders, not simulation results.
+        <strong>You&apos;re exploring a design draft.</strong> The CE withdrawal
+        chart uses your current inputs and fitted model. Other results remain
+        illustrative placeholders.
       </PreviewBanner>
       {errors.length > 0 && (
         <div className="form-card" role="alert">
@@ -811,12 +706,12 @@ export function Evaluation() {
                 ))}
               </div>
               <p className="visual-picker-note">
-                Mortality fit is shown in Investor & mortality. All results are
-                illustrative placeholders.
+                Mortality fit is shown in Investor & mortality. The CE chart is
+                calculated; other visuals remain illustrative placeholders.
               </p>
             </div>
           )}
-          {visuals.withdrawal && <WithdrawalChart />}
+          {visuals.withdrawal && <RiskWithdrawalChart />}
           {visuals.gm && <GmRiskCard projected={projected} />}
           {visuals.capital && <CapitalCard />}
           <div className="lower-grid">
@@ -963,7 +858,7 @@ export function Evaluation() {
                     — <small>{custom ? "%" : "/ year"}</small>
                   </div>
                   <span className="withdrawal-status">
-                    ○ &nbsp; Not calculated yet
+                    ○ &nbsp; See CE chart
                   </span>
                 </div>
               </div>
@@ -1066,7 +961,7 @@ export function Evaluation() {
             <div className="settings-footer">
               ◷ &nbsp; Results appear here after a run.
               <br />
-              <small>Settings are placeholders in this draft.</small>
+              <small>The CE chart responds to relevant settings.</small>
             </div>
           </aside>
         )}
