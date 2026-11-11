@@ -8,13 +8,16 @@ export async function initializeTensorBackend(
   order: readonly TensorBackend[] = ["webgpu", "webgl", "cpu"],
 ): Promise<TensorBackend> {
   const failures: string[] = [];
+
   for (const name of order) {
     try {
       if (name === "webgpu") await import("@tensorflow/tfjs-backend-webgpu");
       if (await tf.setBackend(name)) {
         await tf.ready();
+
         return name;
       }
+
       failures.push(`${name}: unavailable`);
     } catch (error) {
       failures.push(

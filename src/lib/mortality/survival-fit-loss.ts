@@ -40,10 +40,12 @@ export function createSurvivalKlObjective(
     throw new RangeError(
       "The target must be a normalized non-increasing survival curve.",
     );
+
   const data = target.map((value, i) =>
     i === 0 ? 1 : Math.max(0, Math.min(1, value)),
   );
   const length = times.length;
+
   return (model) => {
     if (model.length !== length)
       throw new RangeError(
@@ -60,18 +62,23 @@ export function createSurvivalKlObjective(
       )
     )
       return Infinity;
+
     const fitted = model.map((value, i) =>
       i === 0 ? 1 : Math.max(0, Math.min(1, value)),
     );
     let loss = 0;
+
     for (let i = 0; i < length; i += 1) {
       const p = i === length - 1 ? data[i] : Math.max(data[i] - data[i + 1], 0);
       const q =
         i === length - 1 ? fitted[i] : Math.max(fitted[i] - fitted[i + 1], 0);
+
       if (p === 0) continue;
       if (q <= 0) return Infinity;
+
       loss += p * (Math.log(p) - Math.log(q));
     }
+
     return Number.isFinite(loss) ? Math.max(loss, 0) : Infinity;
   };
 }

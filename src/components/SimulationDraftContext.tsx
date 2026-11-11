@@ -27,6 +27,7 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
     draft: SimulationDraft;
     options: SimulationOptions;
   } | null>(null);
+
   return (
     <Context.Provider value={{ draft, setDraft, prepared, setPrepared }}>
       {children}
@@ -37,7 +38,9 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
 /** Read the shared simulation draft and prepared options. Throws when called outside SimulationDraftProvider. */
 export function useSimulationDraft() {
   const value = useContext(Context);
+
   if (!value)
     throw new Error("Simulation inputs require SimulationDraftProvider.");
+
   return value;
 }

@@ -17,11 +17,13 @@ if (process.argv.length !== 3 || !["--complete", "--missing"].includes(mode)) {
 /** Deterministic Mulberry32 uniform generator; not cryptographically secure. */
 function createUniform(seed) {
   let state = seed;
+
   return () => {
     state = (state + 0x6d2b79f5) | 0;
     let value = state;
     value = Math.imul(value ^ (value >>> 15), value | 1);
     value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+
     return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
   };
 }
@@ -29,9 +31,12 @@ function createUniform(seed) {
 /** Box–Muller transforms two uniform draws into independent standard normals. */
 function normalPair(random) {
   let first = 0;
+
   while (first === 0) first = random();
+
   const radius = Math.sqrt(-2 * Math.log(first));
   const angle = 2 * Math.PI * random();
+
   return [radius * Math.cos(angle), radius * Math.sin(angle)];
 }
 
@@ -58,6 +63,7 @@ const l33 = Math.sqrt(1 - l31 ** 2 - l32 ** 2);
 
 for (let time = firstDate; time <= lastDate; time += dayMs) {
   const date = new Date(time);
+
   if (date.getUTCDay() === 0 || date.getUTCDay() === 6) continue;
   if (previousTime !== null) {
     const dt = (time - previousTime) / dayMs / 365.25;
@@ -68,6 +74,7 @@ for (let time = firstDate; time <= lastDate; time += dayMs) {
       l21 * z1 + l22 * z2,
       l31 * z1 + l32 * z2 + l33 * z3,
     ];
+
     for (let i = 0; i < prices.length; i += 1) {
       prices[i] *= Math.exp(
         (drift[i] - volatility[i] ** 2 / 2) * dt +
@@ -75,10 +82,12 @@ for (let time = firstDate; time <= lastDate; time += dayMs) {
       );
     }
   }
+
   const endpoint = time === firstDate || time === lastDate;
   const fields = prices.map((price) => {
     // Consume the same mask stream in either mode, independently per asset.
     const missing = !endpoint && maskRandom() < missingProbability;
+
     return mode === "--missing" && missing ? "" : price.toFixed(6);
   });
   lines.push(`${date.toISOString().slice(0, 10)},${fields.join(",")}`);

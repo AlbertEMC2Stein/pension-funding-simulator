@@ -99,6 +99,7 @@ export function createRunSnapshot(input: RunConfigurationInput): RunSnapshot {
   const r =
     Math.log1p(options.market.nominalRiskFreeRate) -
     Math.log1p(options.market.inflationRate);
+
   if (
     !Number.isFinite(r) ||
     Math.abs(r - options.market.realRiskFreeRate) > 1e-12
@@ -109,17 +110,22 @@ export function createRunSnapshot(input: RunConfigurationInput): RunSnapshot {
 
   // Recalculate the market to detect a snapshot assembled from mismatched inputs.
   const calibrated = calibrateMarket(options.market);
+
   if (!calibrated.ok) throw new RangeError(calibrated.error);
+
   const names = options.market.assets.map((asset) =>
     asset.name.trim().toLocaleLowerCase(),
   );
+
   if (names.some((name) => !name) || new Set(names).size !== names.length)
     throw new RangeError("Asset names must be nonempty and unique.");
+
   /** Compare two numerical vectors element by element in their existing asset order. */
   const sameVector = (left: readonly number[], right: readonly number[]) =>
     left.length === right.length &&
     left.every((value, i) => value === right[i]);
   const expected = calibrated.market;
+
   if (
     market.realRiskFreeRate !== expected.realRiskFreeRate ||
     market.inflationRate !== expected.inflationRate ||
@@ -144,6 +150,7 @@ export function createRunSnapshot(input: RunConfigurationInput): RunSnapshot {
     );
   if (!mortality.gm.converged || !mortality.ce.converged)
     throw new RangeError("Both mortality fits must have converged.");
+
   gompertzMakehamSurvival(0, mortality.gm.parameters);
 
   // Check that the selected policy can be constructed from the supplied fit.
@@ -153,6 +160,7 @@ export function createRunSnapshot(input: RunConfigurationInput): RunSnapshot {
     String(investor.birthYear),
     String(investor.retirementYear),
   );
+
   if (
     years.birthError ||
     years.retirementError ||
@@ -177,12 +185,14 @@ export function createRunSnapshot(input: RunConfigurationInput): RunSnapshot {
     );
   if (options.policy.projected)
     throw new RangeError("Projected policies are not implemented yet.");
+
   const model = {
     market,
     mortality: mortality.ce.parameters,
     impoverishmentLevel,
   };
   let resolvedAnnualWithdrawal: number;
+
   if (options.policy.withdrawal.mode === "targetRisk") {
     resolvedAnnualWithdrawal = compatibleWithdrawal(
       model,
@@ -227,6 +237,7 @@ export function createRunSnapshot(input: RunConfigurationInput): RunSnapshot {
     throw new RangeError(
       "Seed, versions and data provenance must be specified.",
     );
+
   // Validation above establishes the private compile-time marker's contract.
   const snapshot = {
     ...structuredClone(input),
@@ -234,5 +245,6 @@ export function createRunSnapshot(input: RunConfigurationInput): RunSnapshot {
   } as unknown as RunSnapshot;
   freezeSnapshot(snapshot);
   validatedSnapshots.add(snapshot);
+
   return snapshot;
 }

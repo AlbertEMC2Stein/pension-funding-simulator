@@ -14,11 +14,13 @@ export function nelderMead(
     ...start.map((value, index) => {
       const x = [...start];
       x[index] = value === 0 ? 0.00025 : value * 1.05;
+
       return evaluate(x);
     }),
   ];
   let iterations = 0;
   let converged = false;
+
   for (; iterations < maxIterations; iterations += 1) {
     simplex.sort((a, b) => a.loss - b.loss);
     const best = simplex[0];
@@ -30,10 +32,12 @@ export function nelderMead(
     const spreadLoss = Math.max(
       ...simplex.slice(1).map((v) => Math.abs(v.loss - best.loss)),
     );
+
     if (Number.isFinite(best.loss) && spreadX <= 1e-9 && spreadLoss <= 1e-11) {
       converged = true;
       break;
     }
+
     const centroid = Array.from(
       { length: n },
       (_, i) => simplex.slice(0, n).reduce((sum, v) => sum + v.x[i], 0) / n,
@@ -43,6 +47,7 @@ export function nelderMead(
     const point = (factor: number) =>
       centroid.map((value, i) => value + factor * (centroid[i] - worst.x[i]));
     const reflected = evaluate(point(1));
+
     if (reflected.loss < best.loss) {
       const expanded = evaluate(point(2));
       simplex[n] = expanded.loss < reflected.loss ? expanded : reflected;
@@ -50,6 +55,7 @@ export function nelderMead(
     else {
       const outside = reflected.loss < worst.loss;
       const contracted = evaluate(point(outside ? 0.5 : -0.5));
+
       if (contracted.loss < (outside ? reflected.loss : worst.loss))
         simplex[n] = contracted;
       else
@@ -62,5 +68,6 @@ export function nelderMead(
     }
   }
   simplex.sort((a, b) => a.loss - b.loss);
+
   return { point: simplex[0].x, loss: simplex[0].loss, converged, iterations };
 }

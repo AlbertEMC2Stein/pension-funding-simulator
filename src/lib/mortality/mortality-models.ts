@@ -38,8 +38,10 @@ function cumulativeHazard(
   { alpha, beta, lambda }: GompertzMakehamParameters,
 ): number {
   if (t === 0) return 0;
+
   const z = beta * t;
   let gompertz: number;
+
   if (z < 50) {
     // expm1(z)/z tends to one, avoiding alpha/beta overflow for small beta.
     gompertz = alpha * t * (z === 0 ? 1 : Math.expm1(z) / z);
@@ -50,6 +52,7 @@ function cumulativeHazard(
       Math.log(alpha) - Math.log(beta) + z + Math.log1p(-Math.exp(-z));
     gompertz = Math.exp(logTerm);
   }
+
   return (lambda === 0 ? 0 : lambda * t) + gompertz;
 }
 
@@ -60,6 +63,7 @@ export function gompertzMakehamSurvival(
 ): number {
   nonnegativeFinite(t, "t");
   validateGompertzMakeham(params);
+
   return Math.exp(-cumulativeHazard(t, params));
 }
 
@@ -77,19 +81,25 @@ export function compactifiedExponentialSurvival(
   positiveFinite(params.p, "p");
   positiveFinite(params.kappa, "kappa");
   positiveFinite(params.tau, "tau");
+
   if (t === 0) return 1;
   if (t >= params.tau) return 0;
+
   const endpointProduct = params.kappa * params.tau;
   const denominator = -Math.expm1(-endpointProduct);
+
   if (denominator === 0)
     throw new RangeError(
       "CE parameters are outside the supported numerical range.",
     );
+
   const numerator = -Math.expm1(-params.kappa * (params.tau - t));
+
   if (numerator === 0)
     throw new RangeError(
       "CE parameters are outside the supported numerical range.",
     );
+
   // The ratio is near one close to t=0; log1p avoids subtracting two logs.
   const difference =
     (Math.exp(-params.kappa * (params.tau - t)) *
@@ -105,13 +115,17 @@ export function compactifiedExponentialSurvival(
     endpointProduct -
     Math.log(denominator),
   );
+
   if (!Number.isFinite(eta))
     throw new RangeError(
       "CE parameters are outside the supported numerical range.",
     );
+
   const logSurvival = (eta - params.lambda) * t + params.p * logRatio;
+
   if (Number.isNaN(logSurvival) || logSurvival > 1e-10)
     throw new RangeError("CE parameters produced an invalid survival value.");
+
   return Math.exp(Math.min(logSurvival, 0));
 }
 
@@ -130,10 +144,12 @@ export function gompertzMakehamQuantile(
   params: GompertzMakehamParameters,
 ): number {
   validateGompertzMakeham(params);
+
   if (!Number.isFinite(probability) || probability < 0 || probability > 1)
     throw new RangeError("Probability must be finite and between 0 and 1.");
   if (probability === 0) return 0;
   if (probability === 1) return Infinity;
+
   const target = -Math.log1p(-probability);
   const gompertzBound =
     softplus(
@@ -143,6 +159,7 @@ export function gompertzMakehamQuantile(
     params.lambda === 0
       ? gompertzBound
       : Math.min(gompertzBound, target / params.lambda);
+
   if (!Number.isFinite(upper) || upper <= 0)
     throw new RangeError(
       "GM quantile is outside the supported numerical range.",
@@ -150,15 +167,20 @@ export function gompertzMakehamQuantile(
   // Correct possible rounding of an analytical upper bound before bisection.
   if (cumulativeHazard(upper, params) < target) {
     upper *= 1 + 8 * Number.EPSILON;
+
     if (!Number.isFinite(upper) || cumulativeHazard(upper, params) < target)
       throw new RangeError("Could not bracket the GM quantile.");
   }
+
   let lower = 0;
+
   for (let i = 0; i < 200; i += 1) {
     const midpoint = lower + (upper - lower) / 2;
+
     if (midpoint === lower || midpoint === upper) break;
     if (cumulativeHazard(midpoint, params) < target) lower = midpoint;
     else upper = midpoint;
   }
+
   return lower + (upper - lower) / 2;
 }

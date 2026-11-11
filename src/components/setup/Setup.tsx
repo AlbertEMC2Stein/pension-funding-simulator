@@ -55,6 +55,7 @@ function MarketSetup() {
   function applyMarketAction(action: MarketEditAction) {
     const next = updateMarketWithUndo(market, undo, action);
     setUndo(next.undo);
+
     if (next.market !== market)
       setDraft((current) => ({ ...current, market: next.market }));
   }
@@ -64,6 +65,7 @@ function MarketSetup() {
   }
   const isExample =
     JSON.stringify(market) === JSON.stringify(initialMarketCalibration());
+
   return (
     <div className="setup-layout">
       <aside className="insight-card">
@@ -398,6 +400,7 @@ function InvestorSetup({
       investor: { ...current.investor, ...change },
     }));
   }
+
   return (
     <div className="setup-layout">
       <aside className="insight-card">
@@ -607,6 +610,7 @@ function InvestorSetup({
 export function Setup() {
   const [tab, setTab] = useState<"market" | "investor">("market");
   const [ceFitStatus, setCeFitStatus] = useState<CeFitStatus>("not-fitted");
+
   return (
     <section className="view active">
       <PageHeading

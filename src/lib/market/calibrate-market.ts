@@ -40,6 +40,7 @@ export function calibrateMarket(input: MarketInput): Result {
   /** Construct a failed calibration result without throwing from normal validation paths. */
   const fail = (error: string): Result => ({ ok: false, error });
   const n = input.assets.length;
+
   if (n < 1 || n > 10 || input.currency !== "EUR")
     return fail("Select between 1 and 10 assets in euros.");
   if (
@@ -63,12 +64,15 @@ export function calibrateMarket(input: MarketInput): Result {
     return fail(
       "Each asset needs valid expected growth and positive volatility.",
     );
+
   const correlation = input.correlation;
+
   if (correlation.length !== n || correlation.some((row) => row.length !== n))
     return fail("The correlation matrix must match the number of assets.");
   for (let i = 0; i < n; i += 1) {
     for (let j = 0; j < n; j += 1) {
       const value = correlation[i][j];
+
       if (
         !Number.isFinite(value) ||
         Math.abs(value) > 1 ||
@@ -83,15 +87,18 @@ export function calibrateMarket(input: MarketInput): Result {
 
   // Cholesky factorization R = L L^T, with the same residual guard as the editor.
   const lower = Array.from({ length: n }, () => Array<number>(n).fill(0));
+
   for (let i = 0; i < n; i += 1) {
     for (let j = 0; j <= i; j += 1) {
       let residual = correlation[i][j];
+
       for (let k = 0; k < j; k += 1) residual -= lower[i][k] * lower[j][k];
       if (i === j) {
         if (!Number.isFinite(residual) || residual <= 1e-12)
           return fail(
             "The correlation matrix is not positive definite or is numerically near-singular.",
           );
+
         lower[i][j] = Math.sqrt(residual);
       } else lower[i][j] = residual / lower[j][j];
     }
@@ -108,6 +115,7 @@ export function calibrateMarket(input: MarketInput): Result {
     row.map((value, j) => vol[i] * value * vol[j]),
   );
   const scaledExcess = excessReturn.map((value, i) => value / vol[i]);
+
   if (
     [
       ...realLogGrowth,
@@ -123,17 +131,21 @@ export function calibrateMarket(input: MarketInput): Result {
   // Forward and backward substitution for L L^T y = D^-1 theta.
   const intermediate = Array<number>(n).fill(0);
   const scaledDirection = Array<number>(n).fill(0);
+
   for (let i = 0; i < n; i += 1) {
     let value = scaledExcess[i];
+
     for (let j = 0; j < i; j += 1) value -= lower[i][j] * intermediate[j];
     intermediate[i] = value / lower[i][i];
   }
   for (let i = n - 1; i >= 0; i -= 1) {
     let value = intermediate[i];
+
     for (let j = i + 1; j < n; j += 1)
       value -= lower[j][i] * scaledDirection[j];
     scaledDirection[i] = value / lower[i][i];
   }
+
   const mertonDirection = scaledDirection.map((value, i) => value / vol[i]);
   // The Cholesky quadratic form is a sum of squares, avoiding cancellation.
   const rho = intermediate.reduce((sum, value) => sum + value * value, 0) / 2;
@@ -154,6 +166,7 @@ export function calibrateMarket(input: MarketInput): Result {
       Math.max(...scaledDirection.map(Math.abs)) +
     Math.max(...scaledExcess.map(Math.abs));
   const zeroPremium = excessReturn.every((value) => value === 0);
+
   if (
     [...mertonDirection, rho, residual, scale].some(
       (value) => !Number.isFinite(value),

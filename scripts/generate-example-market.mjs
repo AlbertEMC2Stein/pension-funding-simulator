@@ -15,6 +15,7 @@ function uniform() {
   let value = randomState;
   value = Math.imul(value ^ (value >>> 15), value | 1);
   value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+
   return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
 }
 
@@ -22,9 +23,12 @@ function uniform() {
 function independentNormals() {
   // The first uniform must be nonzero for the natural logarithm.
   let first = 0;
+
   while (first === 0) first = uniform();
+
   const radius = Math.sqrt(-2 * Math.log(first));
   const angle = 2 * Math.PI * uniform();
+
   return [radius * Math.cos(angle), radius * Math.sin(angle)];
 }
 
@@ -40,10 +44,12 @@ let firstObservation = true;
 
 while (date <= end) {
   const day = date.getUTCDay();
+
   if (day !== 0 && day !== 6) {
     if (!firstObservation) {
       const [z1, independent] = independentNormals();
       const shocks = [z1, correlation * z1 + Math.sqrt(1 - correlation ** 2) * independent];
+
       for (let asset = 0; asset < prices.length; asset += 1) {
         const volatility = annualVolatilities[asset];
         prices[asset] *= Math.exp(
@@ -52,9 +58,11 @@ while (date <= end) {
         );
       }
     }
+
     lines.push(`${date.toISOString().slice(0, 10)},${prices.map((price) => price.toFixed(4)).join(",")}`);
     firstObservation = false;
   }
+
   date.setUTCDate(date.getUTCDate() + 1);
 }
 

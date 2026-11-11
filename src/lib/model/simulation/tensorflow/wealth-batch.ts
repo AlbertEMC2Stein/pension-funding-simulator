@@ -57,6 +57,7 @@ export async function simulateTensorWealthBatch(
   let wealth: tf.Tensor1D = tf.tensor1d(initialWealth as number[], "float32");
   let firstHit: tf.Tensor1D = tf.fill([count], -1, "int32");
   const direction = tf.tensor2d([...mertonDirection], [assets, 1]);
+
   try {
     for (let step = 0; step < times.length - 1; step += 1) {
       const dt = times[step + 1] - times[step];
@@ -97,6 +98,7 @@ export async function simulateTensorWealthBatch(
           tf.fill([count], step + 1, "int32"),
           firstHit,
         ) as tf.Tensor1D;
+
         return { wealth: nextWealth, firstHit: nextHit };
       });
       wealth.dispose();
@@ -110,8 +112,10 @@ export async function simulateTensorWealthBatch(
       wealth.data(),
       firstHit.data(),
     ]);
+
     if (Array.from(wealthData).some((value) => !Number.isFinite(value)))
       throw new RangeError("Tensor simulation produced a non-finite result.");
+
     return {
       finalWealth: Float32Array.from(wealthData),
       firstGridHit: Int32Array.from(hitData),
@@ -145,6 +149,7 @@ export async function simulateTensorSnapshotBatch(
   );
   const factor = factorPreparedCovariance(market.covariance);
   const stream = createRandomStream(numerical.seed);
+
   return simulateTensorWealthBatch({
     model,
     annualWithdrawal: withdrawal,
@@ -154,12 +159,14 @@ export async function simulateTensorSnapshotBatch(
     times,
     increments: (_step, dt) => {
       const batch: number[] = [];
+
       for (let path = 0; path < numerical.batchSize; path += 1) {
         const normals = Array.from({ length: factor.length }, () =>
           stream.nextStandardNormal(),
         );
         batch.push(...correlatePreparedIncrement(factor, normals, dt));
       }
+
       return batch;
     },
   });

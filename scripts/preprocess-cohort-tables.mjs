@@ -48,8 +48,11 @@ function sha256(bytes) {
  */
 export function convertCohortTable(source, spec, range = { firstYear: 1926, lastYear: 2026, maxAge: 99 }) {
   const lines = source.replace(/^\uFEFF/, "").split(/\r?\n/);
+
   if (lines.at(-1) === "") lines.pop();
+
   const header = lines.shift()?.split(";").map((field) => field.trim());
+
   if (!header || header.length !== expectedHeader.length || header.some((field, i) => field !== expectedHeader[i])) {
     throw new Error("Unexpected source CSV header.");
   }
@@ -58,41 +61,56 @@ export function convertCohortTable(source, spec, range = { firstYear: 1926, last
   }
 
   const cohorts = new Map();
+
   for (let year = range.firstYear; year <= range.lastYear; year += 1) {
     cohorts.set(year, { values: Array(range.maxAge + 1).fill(null), terminal: false });
   }
   for (const [index, line] of lines.entries()) {
     const fields = line.split(";").map((field) => field.trim());
+
     if (fields.length !== 6) throw new Error(`Line ${index + 2}: expected six fields.`);
+
     const [statistic, cohortText, sex, variant, ageText, probabilityText] = fields;
+
     if (statistic !== "Kohortensterbetafel" || sex !== spec.sourceSex || variant !== spec.variant) {
       throw new Error(`Line ${index + 2}: unexpected statistic, sex, or variant.`);
     }
     if (!/^\d{4}$/.test(cohortText)) throw new Error(`Line ${index + 2}: invalid cohort.`);
+
     const cohort = cohorts.get(Number(cohortText));
+
     if (!cohort) throw new Error(`Line ${index + 2}: cohort outside the expected range.`);
     if (!/^\d+(?:,\d+)?$/.test(probabilityText)) throw new Error(`Line ${index + 2}: invalid probability.`);
+
     const probability = Number(probabilityText.replace(",", "."));
+
     if (!Number.isFinite(probability)) throw new Error(`Line ${index + 2}: non-finite probability.`);
     if (ageText === "100 und mehr") {
       if (cohort.terminal || probability !== 1) throw new Error(`Line ${index + 2}: invalid or duplicate open terminal row.`);
+
       cohort.terminal = true;
       continue;
     }
     if (!/^\d+$/.test(ageText)) throw new Error(`Line ${index + 2}: invalid age.`);
+
     const age = Number(ageText);
+
     if (age > range.maxAge || probability < 0 || probability >= 1) throw new Error(`Line ${index + 2}: age or annual probability outside the expected range.`);
     if (cohort.values[age] !== null) throw new Error(`Line ${index + 2}: duplicate cohort/age.`);
+
     cohort.values[age] = probabilityText.replace(",", ".");
   }
 
   const rows = [["birth_year", ...Array.from({ length: range.maxAge + 1 }, (_, age) => `age_${age}`)].join(",")];
+
   for (const [year, cohort] of cohorts) {
     if (!cohort.terminal || cohort.values.some((value) => value === null)) {
       throw new Error(`Cohort ${year} is incomplete or missing its terminal row.`);
     }
+
     rows.push([year, ...cohort.values].join(","));
   }
+
   return `${rows.join("\n")}\n`;
 }
 
@@ -100,11 +118,13 @@ export function convertCohortTable(source, spec, range = { firstYear: 1926, last
 function parseArguments(args) {
   let sourceDir = defaultSourceDir;
   let check = false;
+
   for (let i = 0; i < args.length; i += 1) {
     if (args[i] === "--check") check = true;
     else if (args[i] === "--source-dir" && args[i + 1] && !args[i + 1].startsWith("--")) sourceDir = path.resolve(args[++i]);
     else throw new Error(`Unknown or incomplete argument: ${args[i]}`);
   }
+
   return { sourceDir, check };
 }
 
@@ -116,6 +136,7 @@ function main() {
     const sourceName = `csv-12621-b${spec.number}-Table 1.csv`;
     const bytes = readFileSync(path.join(sourceDir, sourceName));
     const csv = convertCohortTable(bytes.toString("utf8"), spec);
+
     return {
       sourceName,
       sourceSha256: sha256(bytes),
@@ -145,6 +166,7 @@ function main() {
   // Never overwrite a changed file. Check every target before creating any.
   for (const file of files) {
     const target = path.join(outputDir, file.name);
+
     if (!existsSync(target)) {
       if (check) throw new Error(`Missing output: ${target}`);
     } else if (readFileSync(target, "utf8") !== file.content) {
@@ -153,11 +175,14 @@ function main() {
   }
   if (!check) {
     mkdirSync(outputDir, { recursive: true });
+
     for (const file of files) {
       const target = path.join(outputDir, file.name);
+
       if (!existsSync(target)) writeFileSync(target, file.content, { encoding: "utf8", flag: "wx" });
     }
   }
+
   console.log(`${check ? "Verified" : "Prepared"} ${outputs.length} cohort tables: 101 cohorts × 100 ages each.`);
   console.log(`Output: ${outputDir}`);
 }

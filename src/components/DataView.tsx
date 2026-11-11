@@ -54,6 +54,7 @@ export function DataView() {
       ),
     }));
   }
+
   return (
     <section className="view active">
       <PageHeading

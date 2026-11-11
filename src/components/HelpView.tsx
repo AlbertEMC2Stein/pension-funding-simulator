@@ -98,6 +98,7 @@ function Equation({ source }: { source: string }) {
       katex.renderToString(source, { displayMode: true, throwOnError: false }),
     [source],
   );
+
   return (
     <div
       className="math-formula"
@@ -115,6 +116,7 @@ export function HelpView({ selectedTerm }: { selectedTerm: string | null }) {
   const container = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!selectedTerm) return;
+
     setQuery("");
     // The view stays mounted across navigation; wait for it to become visible.
     const frame = requestAnimationFrame(() => {
@@ -124,6 +126,7 @@ export function HelpView({ selectedTerm }: { selectedTerm: string | null }) {
       entry?.scrollIntoView({ behavior: "smooth", block: "center" });
       entry?.focus({ preventScroll: true });
     });
+
     return () => cancelAnimationFrame(frame);
   }, [selectedTerm]);
   // Match the title, search keywords and introductory text; this is a local
@@ -133,6 +136,7 @@ export function HelpView({ selectedTerm }: { selectedTerm: string | null }) {
       .toLocaleLowerCase()
       .includes(query.trim().toLocaleLowerCase()),
   );
+
   return (
     <section className="view active" ref={container}>
       <PageHeading

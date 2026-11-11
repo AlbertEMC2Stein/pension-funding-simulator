@@ -42,6 +42,7 @@ export function simulateWealthPath(
   _nextIncrement: (timeStepYears: number) => readonly number[],
 ): WealthPathResult {
   const currentState = _input.initialStep.current;
+
   if (
     _input.times.length < 1 ||
     _input.times[0] !== currentState.time ||
@@ -58,6 +59,7 @@ export function simulateWealthPath(
       "Initial wealth must exceed the impoverishment level.",
     );
   }
+
   // This standalone reference entry accepts arbitrary inputs, unlike a batch
   // prepared from a validated snapshot. Check its domain once before looping.
   const { model, annualWithdrawal } = _input.initialStep;
@@ -74,6 +76,7 @@ export function simulateWealthPath(
     _input.initialStep.annualWithdrawal,
     _input.times,
   );
+
   return simulatePreparedPath(_input, _nextIncrement, steps);
 }
 
@@ -88,6 +91,7 @@ function simulatePreparedPath(
     : [];
   let currentState = input.initialStep.current;
   let status: WealthPathResult["status"] = "completed";
+
   for (let i = 1; i < input.times.length; i++) {
     const step = steps[i - 1];
     currentState = advancePreparedWealth(
@@ -145,6 +149,7 @@ export function simulateWealthBatch(_snapshot: RunSnapshot): WealthBatchResult {
     const standardNormals = Array.from({ length: sigma.length }, () =>
       rng.nextStandardNormal(),
     );
+
     return correlatePreparedIncrement(sigma, standardNormals, timeStepYears);
   };
 
@@ -196,6 +201,7 @@ export function generateTimeGrid(
 ): readonly number[] {
   if (!Number.isFinite(horizonYears) || horizonYears <= 0)
     throw new RangeError("The simulation horizon must be finite and positive.");
+
   const stepsPerYear =
     timeStep === "monthly"
       ? 12
@@ -204,12 +210,15 @@ export function generateTimeGrid(
         : timeStep === "weekly"
           ? 52
           : 0;
+
   if (
     !stepsPerYear ||
     !Number.isSafeInteger(Math.ceil(horizonYears * stepsPerYear))
   )
     throw new RangeError("Invalid time step or simulation horizon.");
+
   const timePoints: number[] = [0];
+
   // Compute each time from its index to avoid accumulated rounding error.
   for (let index = 1; index / stepsPerYear < horizonYears; index += 1)
     timePoints.push(index / stepsPerYear);

@@ -7,5 +7,6 @@ export function ceFitStatus(
   currentKey: string | null,
 ): CeFitStatus {
   if (resultKey === null) return "not-fitted";
+
   return currentKey === resultKey ? "current" : "needs-update";
 }

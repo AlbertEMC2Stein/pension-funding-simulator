@@ -137,10 +137,13 @@ export function MarketEditor({
   async function importFile(file: File) {
     const sequence = ++importSequence.current;
     setImportError(null);
+
     try {
       const estimate = estimateHistoricalMarket(await file.text());
       const next = historicalMarketToDraft(estimate, latestMarket.current);
+
       if (sequence !== importSequence.current) return;
+
       latestOnImport.current(next);
       setImported({ name: file.name, estimate, signature: signature(next) });
     } catch (error) {
@@ -183,6 +186,7 @@ export function MarketEditor({
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = "";
+
               if (file) void importFile(file);
             }}
           />

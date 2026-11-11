@@ -34,6 +34,7 @@ export function advancePreparedWealth(
   const { realRiskFreeRate: r, mertonDirection } = model.market;
   const delta = model.mortality.p;
   let wealth: number;
+
   if (current.wealth >= step.currentBoundary) {
     wealth =
       current.wealth +
@@ -50,6 +51,7 @@ export function advancePreparedWealth(
   }
   if (!Number.isFinite(wealth))
     throw new RangeError("Wealth step produced a non-finite result.");
+
   return { time: endTime, wealth };
 }
 
@@ -64,6 +66,7 @@ export function advanceUnconstrainedWealth(
   const { model, annualWithdrawal, current, endTime, marketIncrement } = input;
   const { realRiskFreeRate: r, rho, mertonDirection } = model.market;
   const { tau, p: delta } = model.mortality;
+
   if (
     !Number.isFinite(current.wealth) ||
     current.wealth <= model.impoverishmentLevel
@@ -82,6 +85,7 @@ export function advanceUnconstrainedWealth(
     throw new RangeError(
       "Market increments must be finite and match the asset order.",
     );
+
   const boundaryInput = {
     realRiskFreeRate: r,
     annualWithdrawal,
@@ -91,6 +95,7 @@ export function advanceUnconstrainedWealth(
   const xSafe = safeBoundary({ ...boundaryInput, time: current.time });
   const dt = endTime - current.time;
   const nextBoundary = safeBoundary({ ...boundaryInput, time: endTime });
+
   return advancePreparedWealth(
     model,
     annualWithdrawal,

@@ -45,17 +45,22 @@ function Plot({
       attributeFilter: ["data-theme"],
     });
     setTheme(document.documentElement.dataset.theme ?? "light");
+
     return () => observer.disconnect();
   }, []);
   useEffect(() => {
     const node = element.current;
+
     if (!node) return;
+
     let disposed = false;
     let cleanup: (() => void) | undefined;
     setPlotError(false);
     void (async () => {
       const { default: plotly } = await import("plotly.js-basic-dist-min");
+
       if (disposed) return;
+
       const colors = getComputedStyle(document.documentElement);
       const text = colors.getPropertyValue("--text-secondary").trim();
       const grid = colors.getPropertyValue("--chart-grid").trim();
@@ -74,6 +79,7 @@ function Plot({
           hovertemplate: "Age %{x}<br>Survival %{y:.1%}<extra>Cohort</extra>",
         },
       ];
+
       if (gm)
         traces.push({
           x: curve.map((point) => point.age),
@@ -94,6 +100,7 @@ function Plot({
           line: { color: coral, width: 2, dash: "dot" },
           hovertemplate: "Age %{x}<br>Survival %{y:.1%}<extra>CE fit</extra>",
         });
+
       await plotly.react(
         node,
         traces,
@@ -125,10 +132,13 @@ function Plot({
           displayModeBar: false,
         },
       );
+
       if (disposed) {
         plotly.purge(node);
+
         return;
       }
+
       const resize = new ResizeObserver(() => {
         if (node.clientWidth > 0) void plotly.Plots.resize(node);
       });
@@ -140,11 +150,13 @@ function Plot({
     })().catch(() => {
       if (!disposed) setPlotError(true);
     });
+
     return () => {
       disposed = true;
       cleanup?.();
     };
   }, [curve, gm, ce, theme]);
+
   return (
     <>
       {plotError && <p role="alert">The chart could not be displayed.</p>}
@@ -225,6 +237,7 @@ export function CohortChart({
   useEffect(() => {
     if (!active || !Number.isInteger(birth) || birth < 1926 || birth > 2026)
       return;
+
     const controller = new AbortController();
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
     const sexes: CohortSex[] =
@@ -236,6 +249,7 @@ export function CohortChart({
     )
       .then((tables) => {
         if (controller.signal.aborted) return;
+
         setLoaded({
           key,
           female: sexes.includes("female")
@@ -256,12 +270,14 @@ export function CohortChart({
                 : "Could not load cohort data.",
           });
       });
+
     return () => controller.abort();
   }, [active, birth, key, longevity, mortality]);
 
   const curve = useMemo(() => {
     if (!valid || !loaded || loaded.key !== key || "error" in loaded)
       return null;
+
     return mortality === "custom"
       ? mixCohortSurvival(loaded.female!, loaded.male!, age, maleWeight)
       : cohortSurvival(
@@ -287,6 +303,7 @@ export function CohortChart({
     );
   if ("error" in loaded) return <p role="alert">{loaded.error}</p>;
   if (!curve) return null;
+
   const currentCurve = curve;
   const gm = gmResult?.key === gmKey ? gmResult.fit : null;
   const ce = ceKey && ceResult?.key === ceKey ? ceResult.fit : null;
@@ -302,11 +319,13 @@ export function CohortChart({
       )
     )
       return;
+
     workerRef.current?.terminate();
     setFitErrors({});
     setGmResult(null);
     setCeResult(null);
     let worker: Worker;
+
     try {
       const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
       worker = new Worker(`${basePath}/workers/mortality-fit.worker.js`);
@@ -314,6 +333,7 @@ export function CohortChart({
       workerRef.current = null;
       setRunning(null);
       setFitErrors({ gm: "Could not start the fitting worker." });
+
       return;
     }
     workerRef.current = worker;
@@ -328,7 +348,9 @@ export function CohortChart({
     });
     worker.onmessage = (event) => {
       if (workerRef.current !== worker) return;
+
       const message = event.data;
+
       if (message.type === "progress")
         setRunning({
           gmKey: capturedGmKey,
@@ -354,6 +376,7 @@ export function CohortChart({
     };
     worker.onerror = () => {
       if (workerRef.current !== worker) return;
+
       worker.terminate();
       workerRef.current = null;
       setRunning(null);
@@ -368,6 +391,7 @@ export function CohortChart({
       market: market ? { r: market.realRiskFreeRate, rho: market.rho } : null,
     });
   }
+
   return (
     <>
       <div className="mortality-fit-toolbar">

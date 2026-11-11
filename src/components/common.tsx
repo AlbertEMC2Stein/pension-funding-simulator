@@ -19,8 +19,10 @@ export const DraftContext = createContext<DraftActions | null>(null);
 /** Access shell actions and fail clearly if the provider is missing. */
 export function useDraft(): DraftActions {
   const value = useContext(DraftContext);
+
   if (!value)
     throw new Error("Draft components must be inside the application shell.");
+
   return value;
 }
 
@@ -35,6 +37,7 @@ export function DemoAction({
   className?: string;
 }) {
   const { notice } = useDraft();
+
   return (
     <button type="button" className={className} onClick={() => notice(message)}>
       {children}
@@ -51,6 +54,7 @@ export function TermLink({
   children: React.ReactNode;
 }) {
   const { navigate } = useDraft();
+
   return (
     <button
       type="button"

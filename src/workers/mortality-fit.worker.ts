@@ -16,6 +16,7 @@ worker.onmessage = ({ data }) => {
   /** Create a model-specific callback that posts multistart fitting progress to the main thread. */
   const progress = (model: "gm" | "ce") => (completed: number, total: number) =>
     worker.postMessage({ type: "progress", model, completed, total });
+
   // GM fitting does not depend on the market, so it runs even when CE cannot.
   try {
     worker.postMessage({
@@ -51,5 +52,6 @@ worker.onmessage = ({ data }) => {
       });
     }
   }
+
   worker.postMessage({ type: "done" });
 };

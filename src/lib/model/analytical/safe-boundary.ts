@@ -62,10 +62,12 @@ export function safeBoundary({
     time,
     mortalityEndpoint: endpoint,
   });
+
   if (!Number.isFinite(result))
     throw new RangeError(
       "The safe boundary exceeds the supported numerical range.",
     );
+
   return result;
 }
 
@@ -78,10 +80,12 @@ export function safeBoundaryValue({
   mortalityEndpoint: endpoint,
 }: SafeBoundaryInputs): number {
   if (endpoint === Infinity) return withdrawal / rate;
+
   const remaining = endpoint - time;
   const exponent = rate * remaining;
   const discount = Math.exp(-exponent);
   // When the product underflows to zero, the annuity factor tends to remaining.
   const annuity = exponent === 0 ? remaining : -Math.expm1(-exponent) / rate;
+
   return threshold * discount + withdrawal * annuity;
 }

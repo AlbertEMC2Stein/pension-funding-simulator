@@ -78,6 +78,7 @@ export function updateMarketWithUndo(
   if (action.type === "replace") return { market: action.market, undo: market };
   if (action.type === "reset")
     return { market: initialMarketCalibration(), undo: market };
+
   return undo ? { market: undo, undo: null } : { market, undo: null };
 }
 
@@ -89,7 +90,9 @@ export function addAsset(
   market: MarketCalibrationDraft,
 ): MarketCalibrationDraft {
   if (market.assets.length >= MAX_ASSETS) return market;
+
   const id = market.nextAssetId;
+
   return {
     ...market,
     assets: [
@@ -119,6 +122,7 @@ export function removeAsset(
 ): MarketCalibrationDraft {
   if (market.assets.length <= 1 || index < 0 || index >= market.assets.length)
     return market;
+
   return {
     ...market,
     assets: market.assets.filter((_, i) => i !== index),
@@ -146,18 +150,23 @@ export function setCorrelation(
     column >= market.assets.length
   )
     return market;
+
   const correlations = market.correlations.map((values) => [...values]);
   correlations[row][column] = value;
   correlations[column][row] = value;
+
   return { ...market, correlations };
 }
 
 /** Parse a finite decimal or scientific-notation string; reject empty input. */
 function parseDecimal(value: string): number | null {
   const text = value.trim();
+
   if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(text))
     return null;
+
   const number = Number(text);
+
   return Number.isFinite(number) ? number : null;
 }
 
@@ -168,6 +177,7 @@ export function realRateFromNominal(
 ): number | null {
   const nominal = parseDecimal(nominalPercent);
   const inflation = parseDecimal(inflationPercent);
+
   if (
     nominal === null ||
     inflation === null ||
@@ -175,6 +185,7 @@ export function realRateFromNominal(
     inflation <= -100
   )
     return null;
+
   return Math.log1p(nominal / 100) - Math.log1p(inflation / 100);
 }
 
@@ -184,17 +195,22 @@ export function nominalRiskFreeRateError(
   inflationPercent: string,
 ): string | null {
   const nominal = parseDecimal(value);
+
   if (nominal === null || nominal <= -100)
     return "Enter a nominal risk-free rate greater than −100%.";
+
   const real = realRateFromNominal(value, inflationPercent);
+
   if (real !== null && real <= 0)
     return "The nominal risk-free rate must exceed inflation, so the real rate is greater than 0%.";
+
   return null;
 }
 
 /** An effective annual inflation rate must be finite and greater than -100%. */
 export function inflationRateError(value: string): string | null {
   const inflation = parseDecimal(value);
+
   return inflation === null || inflation <= -100
     ? "Enter an inflation assumption greater than −100%."
     : null;
@@ -207,9 +223,12 @@ export function inflationRateError(value: string): string | null {
  */
 export function correlationMatrixError(values: string[][]): string | null {
   const size = values.length;
+
   if (size === 0 || values.some((row) => row.length !== size))
     return "The correlation matrix must be square.";
+
   const matrix = values.map((row) => row.map(parseDecimal));
+
   if (
     matrix.some((row) =>
       row.some((value) => value === null || value < -1 || value > 1),
@@ -224,22 +243,27 @@ export function correlationMatrixError(values: string[][]): string | null {
         return "The correlation matrix must be symmetric.";
     }
   }
+
   // Build the lower Cholesky factor one entry at a time. A non-positive
   // diagonal residual means a positive-definite factor cannot be formed.
   const lower = Array.from({ length: size }, () => Array<number>(size).fill(0));
+
   for (let i = 0; i < size; i += 1) {
     for (let j = 0; j <= i; j += 1) {
       let residual = matrix[i][j]!;
+
       for (let k = 0; k < j; k += 1) residual -= lower[i][k] * lower[j][k];
       if (i === j) {
         if (residual <= 1e-12)
           return "The correlation matrix must be positive definite; these correlations are inconsistent or nearly singular.";
+
         lower[i][j] = Math.sqrt(residual);
       } else {
         lower[i][j] = residual / lower[j][j];
       }
     }
   }
+
   return null;
 }
 
@@ -255,12 +279,14 @@ export function marketValidationErrors(
   const names = market.assets.map((asset) =>
     asset.name.trim().toLocaleLowerCase(),
   );
+
   if (names.some((name) => !name)) errors.push("Enter a name for every asset.");
   if (new Set(names).size !== names.length)
     errors.push("Asset names must be unique.");
   if (
     market.assets.some((asset) => {
       const value = parseDecimal(asset.nominalReturnPercent);
+
       return value === null || value <= -100;
     })
   ) {
@@ -271,23 +297,30 @@ export function marketValidationErrors(
   if (
     market.assets.some((asset) => {
       const value = parseDecimal(asset.volatilityPercent);
+
       return value === null || value <= 0;
     })
   ) {
     errors.push("Enter a positive annual volatility for each asset.");
   }
+
   const rateError = nominalRiskFreeRateError(
     market.nominalRiskFreePercent,
     market.inflationPercent,
   );
+
   if (rateError) errors.push(rateError);
+
   const inflationError = inflationRateError(market.inflationPercent);
+
   if (inflationError) errors.push(inflationError);
   if (market.correlations.length !== market.assets.length) {
     errors.push("The correlation matrix must match the number of assets.");
   } else {
     const correlationError = correlationMatrixError(market.correlations);
+
     if (correlationError) errors.push(correlationError);
   }
+
   return errors;
 }

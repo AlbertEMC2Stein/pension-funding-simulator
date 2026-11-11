@@ -50,6 +50,7 @@ function runStarts<P>(
   const objective = (point: number[]) => {
     try {
       const params = decode(point);
+
       return lossFor(times.map((time) => survival(time, params)));
     } catch {
       return Infinity;
@@ -59,15 +60,20 @@ function runStarts<P>(
   let convergedStarts = 0;
   starts.forEach((start, index) => {
     const run = nelderMead(objective, start);
+
     if (run.converged) convergedStarts += 1;
     if (Number.isFinite(run.loss) && (!best || run.loss < best.loss))
       best = run;
+
     onProgress?.(index + 1, starts.length);
   });
   const winner = best as ReturnType<typeof nelderMead> | null;
+
   if (!winner) throw new Error("No optimizer start produced a finite fit.");
+
   const parameters = decode(winner.point);
   const fittedSurvival = times.map((time) => survival(time, parameters));
+
   return {
     parameters,
     fittedSurvival,
@@ -116,6 +122,7 @@ export function fitGompertzMakeham(
       Math.log(fraction * hazard),
     ]),
   );
+
   return runStarts(
     times,
     target,
@@ -144,10 +151,12 @@ export function fitCompatibleCe(
   onProgress?: (completed: number, total: number) => void,
 ): CeFit {
   survivalKlDivergence(times, target, target);
+
   if (!Number.isFinite(r) || r <= 0 || !Number.isFinite(rho) || rho <= 0)
     throw new RangeError(
       "CE fitting requires a positive real rate and positive rho.",
     );
+
   const horizon = times.at(-1)!;
   const starts = [2, 5, 10, 20, 40].flatMap((endpoint) =>
     [0.01, 0.1, 0.5, 2, 10].map((delta) => [
@@ -163,6 +172,7 @@ export function fitCompatibleCe(
     const deltaMin = 1 + rho / b0;
     const p = deltaMin + deltaExcess;
     const lambda = (p * b0 * deltaExcess) / (rho / b0 + deltaExcess);
+
     if (
       !Number.isFinite(tau) ||
       tau <= horizon ||
@@ -172,8 +182,10 @@ export function fitCompatibleCe(
       lambda <= 0
     )
       throw new RangeError("Invalid CE fit parameters.");
+
     return { tau, p, kappa: r, lambda, deltaMin };
   };
+
   return runStarts(
     times,
     target,

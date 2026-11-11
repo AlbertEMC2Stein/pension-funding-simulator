@@ -169,6 +169,7 @@ function WithdrawalChart() {
 function GmRiskCard({ projected }: { projected: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const { navigate } = useDraft();
+
   return (
     <article className="chart-card diagnostic-card">
       <div className="card-top">
@@ -406,6 +407,7 @@ function TimingCard() {
   // Map the example age range 67–100 to the SVG's horizontal span 48–735.
   // These numbers describe the mock chart coordinates, not model parameters.
   const x = 48 + ((age - 67) / 33) * 687;
+
   return (
     <article className="chart-card timing-card">
       <div className="card-top">
@@ -617,9 +619,11 @@ export function Evaluation() {
   /** Validate the current draft and capture its options for inspection. Report errors or a debug event; this does not run a simulation. */
   function prepareSimulation() {
     const result = buildSimulationOptions(draft);
+
     if (!result.ok) {
       setPrepared(null);
       setErrors(result.errors);
+
       if (process.env.NODE_ENV === "development") {
         window.dispatchEvent(
           new CustomEvent("simulation-debug-event", {
@@ -630,10 +634,13 @@ export function Evaluation() {
           }),
         );
       }
+
       return;
     }
+
     setErrors([]);
     setPrepared({ draft, options: result.options });
+
     if (process.env.NODE_ENV === "development") {
       window.dispatchEvent(
         new CustomEvent("simulation-debug-event", {

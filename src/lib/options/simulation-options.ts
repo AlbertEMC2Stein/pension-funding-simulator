@@ -89,8 +89,11 @@ export function initialSimulationDraft(): SimulationDraft {
 /** Parse plain decimals or English-style grouped EUR amounts, rejecting partial text. */
 export function parseAmount(text: string): number | null {
   const trimmed = text.trim();
+
   if (!/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/.test(trimmed)) return null;
+
   const value = Number(trimmed.replaceAll(",", ""));
+
   return Number.isFinite(value) ? value : null;
 }
 
@@ -101,7 +104,9 @@ export function buildMarketOptions(
   | { ok: true; market: SimulationOptions["market"] }
   | { ok: false; errors: string[] } {
   const errors = marketValidationErrors(market);
+
   if (errors.length) return { ok: false, errors };
+
   return {
     ok: true,
     market: {
@@ -135,10 +140,13 @@ export function buildSimulationOptions(
   const { investor, simulation } = draft;
   const { birthYear, retirementYear, birthError, retirementError } =
     validateCohortYears(investor.birthYear, investor.retirementYear);
+
   if (birthError) errors.push(birthError);
   if (retirementError) errors.push(retirementError);
+
   const initialCapital = parseAmount(investor.initialCapital);
   const impoverishmentLevel = parseAmount(investor.impoverishmentLevel);
+
   if (initialCapital === null || initialCapital <= 0)
     errors.push("Enter a positive initial capital in euros.");
   if (impoverishmentLevel === null || impoverishmentLevel < 1)
@@ -171,12 +179,14 @@ export function buildSimulationOptions(
   if (!Number.isSafeInteger(simulation.paths) || simulation.paths <= 0)
     errors.push("Number of paths must be a positive integer.");
   if (errors.length || !marketResult.ok) return { ok: false, errors };
+
   const maleWeight =
     investor.mortality === "male"
       ? 1
       : investor.mortality === "female"
         ? 0
         : investor.maleWeight;
+
   return {
     ok: true,
     options: {

@@ -35,12 +35,14 @@ export default function DeveloperView() {
       const detail = (
         event as CustomEvent<{ level: "info" | "error"; message: string }>
       ).detail;
+
       if (
         !detail ||
         typeof detail.message !== "string" ||
         !["info", "error"].includes(detail.level)
       )
         return;
+
       const entry: Activity = {
         id: nextId++,
         time: new Date().toLocaleTimeString(),
@@ -50,6 +52,7 @@ export default function DeveloperView() {
       setActivity((previous) => [...previous, entry].slice(-100));
     }
     window.addEventListener("simulation-debug-event", record);
+
     return () => window.removeEventListener("simulation-debug-event", record);
   }, []);
 

@@ -51,7 +51,9 @@ export function SimulatorDraft() {
   /** Replace any existing toast and restart its dismissal timer. */
   const notice = useCallback((message: string) => {
     setToast(message);
+
     if (timer.current) clearTimeout(timer.current);
+
     timer.current = setTimeout(() => setToast(""), 3500);
   }, []);
   useEffect(

@@ -32,18 +32,23 @@ export function safeWithdrawal({
     );
   if (endpoint === Infinity) {
     const result = rate * initialCapital;
+
     if (!Number.isFinite(result) || result <= rate * threshold)
       throw new RangeError(
         "The safe withdrawal is outside the supported numerical range.",
       );
+
     return result;
   }
+
   const exponent = rate * endpoint;
   const annuity = exponent === 0 ? endpoint : -Math.expm1(-exponent) / rate;
   const result = rate * threshold + (initialCapital - threshold) / annuity;
+
   if (!Number.isFinite(result) || result <= rate * threshold)
     throw new RangeError(
       "The safe withdrawal is outside the supported numerical range.",
     );
+
   return result;
 }
