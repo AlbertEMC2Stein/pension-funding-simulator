@@ -11,6 +11,10 @@ import {
   type FeasibilityResult,
 } from "./global-feasibility";
 import {
+  calculateCapitalComparison,
+  type CapitalComparison,
+} from "./capital-comparison";
+import {
   MANUAL_BATCH_SIZES,
   type BatchSizeChoice,
 } from "../../lib/options/batch-size";
@@ -189,8 +193,20 @@ function GmRiskCard({ projected }: { projected: boolean }) {
   );
 }
 
-/** Placeholder for the unconstrained capital-relief comparison. */
-function CapitalCard() {
+/** Show capital needed at nearby CE risk levels for the same withdrawal. */
+export function CapitalCard({ comparison }: { comparison: CapitalComparison }) {
+  const available = "rows" in comparison;
+  const relief = available
+    ? comparison.zeroRisk
+      ? Math.max(0, comparison.initialCapital - comparison.safeCapital)
+      : comparison.safeCapital - comparison.initialCapital
+    : null;
+
+  /** Format real euro amounts consistently across the comparison. */
+  function euros(amount: number): string {
+    return `€${Math.round(amount).toLocaleString("en-US")}`;
+  }
+
   return (
     <article className="chart-card capital-card">
       <div className="card-top">
@@ -200,56 +216,87 @@ function CapitalCard() {
           </span>
           <h3>What does accepting risk change?</h3>
           <p className="timing-intro">
-            Compare your starting capital with the risk-free capital needed for
-            your setup&apos;s annual withdrawal.
+            Compare your starting capital with the amount needed without
+            investment risk for your setup&apos;s annual withdrawal.
           </p>
         </div>
-        <span className="chip">NOT CALCULATED</span>
+        <span className="chip">
+          {available ? "CALCULATED" : "NOT AVAILABLE"}
+        </span>
       </div>
-      <div className="capital-summary">
-        <Metric
-          label="Risk-free capital"
-          note={
-            <>
-              <TermLink term="safe-boundary">Safe boundary</TermLink> at
-              retirement
-            </>
-          }
-        />
-        <Metric
-          label="Starting capital"
-          note="The initial capital in your setup"
-        />
-        <Metric label="Capital relief" note="Difference in euros and percent" />
-      </div>
-      <div className="capital-table-wrap">
-        <table className="capital-table">
-          <thead>
-            <tr>
-              <th>Target lifetime risk</th>
-              <th>Capital required</th>
-              <th>Change from target</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              "0.95 α · 5% lower",
-              "α · selected target",
-              "1.05 α · 5% higher",
-            ].map((label) => (
-              <tr key={label}>
-                <td>{label}</td>
-                <td>—</td>
-                <td>—</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p className="chart-disclaimer">
-        Illustrative layout · sensitivity holds the setup&apos;s withdrawal
-        fixed and compares nearby target or implied risk levels.
-      </p>
+      {!available ? (
+        <p role="status">{comparison.message}</p>
+      ) : (
+        <>
+          <p className="timing-intro">
+            Annual withdrawal used: {euros(comparison.annualWithdrawal)} / year
+          </p>
+          <div className="capital-summary">
+            <div>
+              <span>Capital needed without risk-taking</span>
+              <strong>{euros(comparison.safeCapital)}</strong>
+              <small>
+                <TermLink term="safe-boundary">Safe boundary</TermLink> at
+                retirement
+              </small>
+            </div>
+            <div>
+              <span>Starting capital</span>
+              <strong>{euros(comparison.initialCapital)}</strong>
+              <small>The initial capital in your setup</small>
+            </div>
+            <div>
+              <span>
+                {comparison.zeroRisk ? "Capital surplus" : "Capital relief"}
+              </span>
+              <strong>{euros(relief!)}</strong>
+              <small>
+                {((relief! / comparison.safeCapital) * 100).toFixed(2)}% of
+                capital needed without risk-taking
+              </small>
+            </div>
+          </div>
+          <div className="capital-table-wrap">
+            <table className="capital-table">
+              <thead>
+                <tr>
+                  <th>CE lifetime risk</th>
+                  <th>Capital required</th>
+                  <th>Change from starting capital</th>
+                </tr>
+              </thead>
+              <tbody key={comparison.zeroRisk ? "zero-risk" : "positive-risk"}>
+                {comparison.rows.map((row) => (
+                  <tr key={`${row.label}/${row.risk}`}>
+                    <td>
+                      {row.label} <span>({(row.risk * 100).toFixed(2)}%)</span>
+                    </td>
+                    <td>
+                      {row.capital === null
+                        ? "Not available"
+                        : euros(row.capital)}
+                    </td>
+                    <td>
+                      {row.difference === null
+                        ? "—"
+                        : row.difference === 0
+                          ? euros(0)
+                          : `${row.difference > 0 ? "+" : "−"}${euros(Math.abs(row.difference))}`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="chart-disclaimer">
+            Unconstrained CE model · annual withdrawal is held fixed. Changes
+            are relative to your starting capital; a target at or above 100% is
+            outside the supported range.
+            {comparison.zeroRisk &&
+              " Your starting capital may exceed the minimum without risk-taking."}
+          </p>
+        </>
+      )}
     </article>
   );
 }
@@ -620,8 +667,9 @@ export function Evaluation() {
       </PageHeading>
       <PreviewBanner>
         <strong>You&apos;re exploring a design draft.</strong> The CE withdrawal
-        chart and global feasibility diagnostic use your current inputs and
-        fitted model. Other results remain illustrative placeholders.
+        chart, capital comparison and global feasibility diagnostic use your
+        current inputs and fitted model. Other results remain illustrative
+        placeholders.
       </PreviewBanner>
       {errors.length > 0 && (
         <div className="form-card" role="alert">
@@ -729,15 +777,19 @@ export function Evaluation() {
                 ))}
               </div>
               <p className="visual-picker-note">
-                Mortality fit is shown in Investor & mortality. The CE chart is
-                calculated, as is global feasibility. Other results remain
-                illustrative placeholders.
+                Mortality fit is shown in Investor & mortality. The CE chart,
+                capital comparison and global feasibility are calculated when
+                available. Other results remain illustrative placeholders.
               </p>
             </div>
           )}
           {visuals.withdrawal && <RiskWithdrawalChart result={ceResult} />}
           {visuals.gm && <GmRiskCard projected={projected} />}
-          {visuals.capital && <CapitalCard />}
+          {visuals.capital && (
+            <CapitalCard
+              comparison={calculateCapitalComparison(ceResult, projected)}
+            />
+          )}
           <div className="lower-grid">
             {visuals.allocation && <AllocationCard />}
             {visuals.comparison && (

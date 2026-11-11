@@ -17,6 +17,8 @@ import { useSimulationDraft } from "../SimulationDraftContext";
 
 /** An analytical CE relationship and the current selection, in euros and probability. */
 export interface ChartData {
+  /** Initial capital shared by every point on the curve. */
+  initialCapital: number;
   risks: number[];
   withdrawals: number[];
   selectedRisk: number;
@@ -82,6 +84,7 @@ export function makeChartData(
   );
 
   return {
+    initialCapital: capital,
     risks,
     withdrawals,
     selectedRisk,
