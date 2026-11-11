@@ -1,12 +1,13 @@
 import {
-  advanceUnconstrainedWealth,
+  advancePreparedWealth,
   type WealthState,
   type WealthStepInput,
 } from "./wealth-step";
-import type { RunSnapshot } from "./run-configuration";
-import { compatibleWithdrawal } from "../analytical/compatible-policy";
-import { correlatedMarketIncrement, covarianceFactor } from "./matrix";
-import { createRandomStream, standardNormalVector } from "./random";
+import { assertRunSnapshot, type RunSnapshot } from "./run-configuration";
+import { correlatePreparedIncrement, factorPreparedCovariance } from "./matrix";
+import { createRandomStream } from "./random";
+import { prepareWealthGrid, type PreparedWealthStep } from "./prepared-grid";
+import { safeBoundary } from "../analytical/safe-boundary";
 
 /** Inputs for one path; termination and first-passage choices remain open. */
 export interface WealthPathInput {
@@ -40,11 +41,7 @@ export function simulateWealthPath(
   _input: WealthPathInput,
   _nextIncrement: (timeStepYears: number) => readonly number[],
 ): WealthPathResult {
-  const trajectory: WealthState[] = _input.recordTrajectory
-    ? [{ ..._input.initialStep.current }]
-    : [];
-
-  let currentState = _input.initialStep.current;
+  const currentState = _input.initialStep.current;
   if (
     _input.times.length < 1 ||
     _input.times[0] !== currentState.time ||
@@ -61,24 +58,51 @@ export function simulateWealthPath(
       "Initial wealth must exceed the impoverishment level.",
     );
   }
+  // This standalone reference entry accepts arbitrary inputs, unlike a batch
+  // prepared from a validated snapshot. Check its domain once before looping.
+  const { model, annualWithdrawal } = _input.initialStep;
+  const boundaryInput = {
+    realRiskFreeRate: model.market.realRiskFreeRate,
+    annualWithdrawal,
+    impoverishmentLevel: model.impoverishmentLevel,
+    mortalityEndpoint: model.mortality.tau,
+  };
+  safeBoundary({ ...boundaryInput, time: _input.times[0] });
+  safeBoundary({ ...boundaryInput, time: _input.times.at(-1)! });
+  const steps = prepareWealthGrid(
+    _input.initialStep.model,
+    _input.initialStep.annualWithdrawal,
+    _input.times,
+  );
+  return simulatePreparedPath(_input, _nextIncrement, steps);
+}
+
+/** Simulate one path using the grid and coefficients already prepared for its batch. */
+function simulatePreparedPath(
+  input: WealthPathInput,
+  nextIncrement: (timeStepYears: number) => readonly number[],
+  steps: readonly PreparedWealthStep[],
+): WealthPathResult {
+  const trajectory: WealthState[] = input.recordTrajectory
+    ? [{ ...input.initialStep.current }]
+    : [];
+  let currentState = input.initialStep.current;
   let status: WealthPathResult["status"] = "completed";
-  for (let i = 1; i < _input.times.length; i++) {
-    const endTime = _input.times[i];
-    const marketIncrement = _nextIncrement(endTime - currentState.time);
+  for (let i = 1; i < input.times.length; i++) {
+    const step = steps[i - 1];
+    currentState = advancePreparedWealth(
+      input.initialStep.model,
+      input.initialStep.annualWithdrawal,
+      currentState,
+      input.times[i],
+      nextIncrement(step.timeStepYears),
+      step,
+    );
 
-    const stepInput: WealthStepInput = {
-      ..._input.initialStep,
-      current: currentState,
-      endTime,
-      marketIncrement,
-    };
-
-    currentState = advanceUnconstrainedWealth(stepInput);
-
-    if (_input.recordTrajectory) {
+    if (input.recordTrajectory) {
       trajectory.push({ ...currentState });
     }
-    if (currentState.wealth <= _input.initialStep.model.impoverishmentLevel) {
+    if (currentState.wealth <= input.initialStep.model.impoverishmentLevel) {
       status = "impoverished-on-grid";
       break;
     }
@@ -87,7 +111,7 @@ export function simulateWealthPath(
   return {
     finalState: currentState,
     status,
-    trajectory: _input.recordTrajectory ? trajectory : undefined,
+    trajectory: input.recordTrajectory ? trajectory : undefined,
   };
 }
 
@@ -107,68 +131,53 @@ export interface WealthBatchResult {
  * cancellation and paired-policy comparisons to later milestones.
  */
 export function simulateWealthBatch(_snapshot: RunSnapshot): WealthBatchResult {
+  assertRunSnapshot(_snapshot);
   const numPaths = _snapshot.numerical.batchSize;
   const paths: WealthPathResult[] = [];
 
   const rng = createRandomStream(_snapshot.numerical.seed);
-  const sigma = covarianceFactor(_snapshot.market.covariance);
+  const sigma = factorPreparedCovariance(_snapshot.market.covariance);
 
-  const annualWithdrawal = (() => {
-    const policy = _snapshot.options.policy.withdrawal;
-    if (policy.mode === "targetRisk") {
-      return compatibleWithdrawal(
-        {
-          market: {
-            realRiskFreeRate: _snapshot.market.realRiskFreeRate,
-            rho: _snapshot.market.rho,
-            mertonDirection: _snapshot.market.mertonDirection,
-          },
-          mortality: _snapshot.mortality.ce.parameters,
-          impoverishmentLevel: _snapshot.options.investor.impoverishmentLevel,
-        },
-        _snapshot.options.investor.initialCapital,
-        policy.targetRisk,
-      );
-    } else {
-      return policy.annualAmount;
-    }
-  })();
+  const annualWithdrawal = _snapshot.resolvedAnnualWithdrawal;
 
   /** Draw one vector of independent normals and apply the covariance factor and square-root time scaling. */
   const incrementGenerator = (timeStepYears: number) => {
-    const standardNormals = standardNormalVector(
-      rng,
-      _snapshot.market.assetNames.length,
+    const standardNormals = Array.from({ length: sigma.length }, () =>
+      rng.nextStandardNormal(),
     );
-    return correlatedMarketIncrement(sigma, standardNormals, timeStepYears);
+    return correlatePreparedIncrement(sigma, standardNormals, timeStepYears);
   };
+
+  const model = {
+    market: _snapshot.market,
+    mortality: _snapshot.mortality.ce.parameters,
+    impoverishmentLevel: _snapshot.options.investor.impoverishmentLevel,
+  };
+  const times = generateTimeGrid(
+    _snapshot.numerical.horizonYears,
+    _snapshot.options.numerical.timeStep,
+  );
+  const steps = prepareWealthGrid(model, annualWithdrawal, times);
 
   for (let i = 0; i < numPaths; i++) {
     const pathInput: WealthPathInput = {
       initialStep: {
-        model: {
-          market: {
-            realRiskFreeRate: _snapshot.market.realRiskFreeRate,
-            rho: _snapshot.market.rho,
-            mertonDirection: _snapshot.market.mertonDirection,
-          },
-          mortality: _snapshot.mortality.ce.parameters,
-          impoverishmentLevel: _snapshot.options.investor.impoverishmentLevel,
-        },
+        model,
         annualWithdrawal: annualWithdrawal,
         current: {
           time: 0,
           wealth: _snapshot.options.investor.initialCapital,
         },
       },
-      times: generateTimeGrid(
-        _snapshot.numerical.horizonYears,
-        _snapshot.options.numerical.timeStep,
-      ),
+      times,
       recordTrajectory: _snapshot.numerical.recordTrajectories,
     };
 
-    const pathResult = simulateWealthPath(pathInput, incrementGenerator);
+    const pathResult = simulatePreparedPath(
+      pathInput,
+      incrementGenerator,
+      steps,
+    );
     paths.push(pathResult);
   }
 

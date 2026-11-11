@@ -1,6 +1,13 @@
 import * as tf from "@tensorflow/tfjs";
 import type { CompatiblePolicyInputs } from "../../analytical/compatible-policy";
-import { safeBoundary } from "../../analytical/safe-boundary";
+import { assertRunSnapshot, type RunSnapshot } from "../run-configuration";
+import { generateTimeGrid } from "../wealth-path";
+import { prepareWealthGrid } from "../prepared-grid";
+import {
+  correlatePreparedIncrement,
+  factorPreparedCovariance,
+} from "../matrix";
+import { createRandomStream } from "../random";
 
 /** Deterministic grid experiment; each step supplies asset noise for all paths. */
 export interface TensorWealthBatchInput {
@@ -14,8 +21,8 @@ export interface TensorWealthBatchInput {
    * [number of paths, number of assets]. A callback avoids retaining all steps.
    */
   increments:
-  | readonly (readonly number[])[]
-  | ((step: number, timeStepYears: number) => readonly number[]);
+    | readonly (readonly number[])[]
+    | ((step: number, timeStepYears: number) => readonly number[]);
 }
 
 /** Final Float32 grid states and the first observed grid-hit indices for one supplied-increment batch. */
@@ -27,67 +34,29 @@ export interface TensorWealthBatchResult {
 }
 
 /**
- * Batched counterpart of advanceUnconstrainedWealth. This intentionally accepts
+ * Internal batched counterpart of advanceUnconstrainedWealth. This accepts
  * supplied increments so it can be checked against the double-precision scalar
  * reference. It records grid hits only and performs no bridge detection.
- * Initialize a TensorFlow.js backend before calling. The caller owns the plain
- * returned arrays; this function disposes all tensors it creates.
+ * This low-level test harness trusts its inputs; production callers must use
+ * simulateTensorSnapshotBatch. Initialize a backend before calling. The caller
+ * owns the returned arrays; this function disposes all tensors it creates.
  */
 export async function simulateTensorWealthBatch(
   input: TensorWealthBatchInput,
 ): Promise<TensorWealthBatchResult> {
   const { model, annualWithdrawal, initialWealth, times, increments } = input;
-  const { realRiskFreeRate: r, rho, mertonDirection } = model.market;
-  const { tau, p: delta } = model.mortality;
+  const { realRiskFreeRate: r, mertonDirection } = model.market;
+  const { p: delta } = model.mortality;
   const threshold = model.impoverishmentLevel;
   const count = initialWealth.length;
   const assets = mertonDirection.length;
 
-  // Validate the batch layout before allocating device memory.
-  if (
-    !count ||
-    !assets ||
-    initialWealth.some((x) => !Number.isFinite(x) || x <= threshold)
-  )
-    throw new RangeError(
-      "Initial wealth must be finite and above the impoverishment level.",
-    );
-  if (
-    times.length < 1 ||
-    (typeof increments !== "function" &&
-      increments.length !== times.length - 1) ||
-    times.some(
-      (t, i) =>
-        !Number.isFinite(t) || t < 0 || t > tau || (i > 0 && t <= times[i - 1]),
-    )
-  )
-    throw new RangeError(
-      "Provide an increasing time grid within the mortality endpoint.",
-    );
-  if (
-    typeof increments !== "function" &&
-    increments.some(
-      (values) =>
-        values.length !== count * assets ||
-        values.some((v) => !Number.isFinite(v)),
-    )
-  )
-    throw new RangeError(
-      "Each increment must contain one finite value per path and asset.",
-    );
-  /** Evaluate the model safe boundary at a grid time using the shared market and withdrawal. */
-  const boundary = (time: number) =>
-    safeBoundary({
-      realRiskFreeRate: r,
-      annualWithdrawal,
-      impoverishmentLevel: threshold,
-      time,
-      mortalityEndpoint: tau,
-    });
+  const steps = prepareWealthGrid(model, annualWithdrawal, times);
 
   // Tensor state survives between steps; tidy releases each step's temporaries.
   let wealth: tf.Tensor1D = tf.tensor1d(initialWealth as number[], "float32");
   let firstHit: tf.Tensor1D = tf.fill([count], -1, "int32");
+  const direction = tf.tensor2d([...mertonDirection], [assets, 1]);
   try {
     for (let step = 0; step < times.length - 1; step += 1) {
       const dt = times[step + 1] - times[step];
@@ -95,32 +64,28 @@ export async function simulateTensorWealthBatch(
         typeof increments === "function"
           ? increments(step, dt)
           : increments[step];
-      if (
-        stepIncrements.length !== count * assets ||
-        stepIncrements.some((value) => !Number.isFinite(value))
-      )
-        throw new RangeError(
-          "Each increment must contain one finite value per path and asset.",
-        );
-      const currentBoundary = boundary(times[step]);
-      const nextBoundary = boundary(times[step + 1]);
-      const logDrift = r - (2 * rho) / (delta - 1) - rho / (delta - 1) ** 2;
+      const prepared = steps[step];
       const next = tf.tidy(() => {
         const active = firstHit.equal(-1);
-        const risky = wealth.less(currentBoundary);
+        const risky = wealth.less(prepared.currentBoundary);
         const z = tf.tensor2d(stepIncrements as number[], [count, assets]);
-        const direction = tf.tensor2d(mertonDirection, [assets, 1]);
         const noise = z.matMul(direction).reshape([count]);
         const gap = tf
-          .scalar(currentBoundary)
+          .scalar(prepared.currentBoundary)
           .sub(wealth)
-          .mul(tf.exp(tf.scalar(logDrift * dt).sub(noise.div(delta - 1))));
-        const riskyWealth = tf.scalar(nextBoundary).sub(gap);
+          .mul(
+            tf.exp(
+              tf
+                .scalar(prepared.logGapDriftTimesStep)
+                .sub(noise.div(delta - 1)),
+            ),
+          );
+        const riskyWealth = tf.scalar(prepared.nextBoundary).sub(gap);
         const safeWealth = wealth.add(
           wealth
             .mul(r)
             .sub(annualWithdrawal)
-            .mul(Math.expm1(r * dt) / r),
+            .mul(prepared.riskFreeAnnuityFactor),
         );
         const nextWealth = tf.where(
           active,
@@ -154,5 +119,48 @@ export async function simulateTensorWealthBatch(
   } finally {
     wealth.dispose();
     firstHit.dispose();
+    direction.dispose();
   }
+}
+
+/**
+ * Simulate one trusted snapshot batch using internal seeded market increments.
+ * This is an initial grid-only prototype; separate calls restart the seed and
+ * therefore must not yet be combined as independent batches of a larger run.
+ */
+export async function simulateTensorSnapshotBatch(
+  snapshot: RunSnapshot,
+): Promise<TensorWealthBatchResult> {
+  assertRunSnapshot(snapshot);
+  const { market, options, mortality, numerical } = snapshot;
+  const model = {
+    market,
+    mortality: mortality.ce.parameters,
+    impoverishmentLevel: options.investor.impoverishmentLevel,
+  };
+  const withdrawal = snapshot.resolvedAnnualWithdrawal;
+  const times = generateTimeGrid(
+    numerical.horizonYears,
+    options.numerical.timeStep,
+  );
+  const factor = factorPreparedCovariance(market.covariance);
+  const stream = createRandomStream(numerical.seed);
+  return simulateTensorWealthBatch({
+    model,
+    annualWithdrawal: withdrawal,
+    initialWealth: Array(numerical.batchSize).fill(
+      options.investor.initialCapital,
+    ),
+    times,
+    increments: (_step, dt) => {
+      const batch: number[] = [];
+      for (let path = 0; path < numerical.batchSize; path += 1) {
+        const normals = Array.from({ length: factor.length }, () =>
+          stream.nextStandardNormal(),
+        );
+        batch.push(...correlatePreparedIncrement(factor, normals, dt));
+      }
+      return batch;
+    },
+  });
 }

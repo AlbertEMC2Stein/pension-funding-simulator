@@ -4,10 +4,9 @@ import { safeBoundary } from "./safe-boundary";
 
 /** The compatible CE law and the market it was fitted against. */
 export interface CompatiblePolicyInputs {
-  market: Pick<
-    CalibratedMarket,
-    "realRiskFreeRate" | "rho" | "mertonDirection"
-  >;
+  market: Pick<CalibratedMarket, "realRiskFreeRate" | "rho"> & {
+    readonly mertonDirection: readonly number[];
+  };
   mortality: CompactifiedExponentialParameters;
   /** Impoverishment level in real euros. */
   impoverishmentLevel: number;

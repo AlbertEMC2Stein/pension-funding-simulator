@@ -5,7 +5,10 @@ import {
   type GompertzMakehamParameters,
 } from "./mortality-models";
 import { nelderMead } from "../numerics/nelder-mead";
-import { survivalKlDivergence } from "./survival-fit-loss";
+import {
+  createSurvivalKlObjective,
+  survivalKlDivergence,
+} from "./survival-fit-loss";
 
 /** Fitted parameters, survival values and optimizer diagnostics for one mortality model. The selected best start may not have converged. */
 export interface MortalityFit<P> {
@@ -42,16 +45,12 @@ function runStarts<P>(
   onProgress?: (completed: number, total: number) => void,
 ): MortalityFit<P> {
   // Validate target/grid before calling the optimizer.
-  survivalKlDivergence(times, target, target);
+  const lossFor = createSurvivalKlObjective(times, target);
   /** Decode optimizer coordinates and evaluate survival KL loss; treat invalid parameter combinations as infinite loss. */
   const objective = (point: number[]) => {
     try {
       const params = decode(point);
-      return survivalKlDivergence(
-        times,
-        target,
-        times.map((time) => survival(time, params)),
-      );
+      return lossFor(times.map((time) => survival(time, params)));
     } catch {
       return Infinity;
     }
@@ -72,7 +71,7 @@ function runStarts<P>(
   return {
     parameters,
     fittedSurvival,
-    klDivergence: survivalKlDivergence(times, target, fittedSurvival),
+    klDivergence: lossFor(fittedSurvival),
     maxSurvivalDifference: Math.max(
       ...target.map((value, i) => Math.abs(value - fittedSurvival[i])),
     ),

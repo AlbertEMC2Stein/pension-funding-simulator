@@ -28,21 +28,33 @@ export function covarianceFactor(
     }
   }
 
+  return factorPreparedCovariance(_covariance);
+}
+
+/** Factor a validated covariance matrix, retaining checks for numerical failure. */
+export function factorPreparedCovariance(
+  covariance: readonly (readonly number[])[],
+): number[][] {
+  const n = covariance.length;
   // Cholesky decomposition
   const L: number[][] = Array.from({ length: n }, () => Array(n).fill(0));
   for (let i = 0; i < n; i++) {
     for (let j = 0; j <= i; j++) {
-      let sum = _covariance[i][j];
+      let sum = covariance[i][j];
       for (let k = 0; k < j; k++) {
         sum -= L[i][k] * L[j][k];
       }
       if (i === j) {
-        if (sum <= 0) {
+        if (!Number.isFinite(sum) || sum <= 0) {
           throw new Error("Covariance matrix must be positive definite.");
         }
         L[i][j] = Math.sqrt(sum);
       } else {
         L[i][j] = sum / L[j][j];
+        if (!Number.isFinite(L[i][j]))
+          throw new Error(
+            "Covariance factorization produced a non-finite value.",
+          );
       }
     }
   }
@@ -87,11 +99,21 @@ export function correlatedMarketIncrement(
     throw new Error("Time step in years must be a positive finite number.");
   }
 
+  return correlatePreparedIncrement(_factor, _standardNormals, _timeStepYears);
+}
+
+/** Transform trusted normals using a previously validated covariance factor. */
+export function correlatePreparedIncrement(
+  factor: readonly (readonly number[])[],
+  normals: readonly number[],
+  timeStepYears: number,
+): number[] {
+  const n = factor.length;
   const increment: number[] = Array(n).fill(0);
-  const sqrtDt = Math.sqrt(_timeStepYears);
+  const sqrtDt = Math.sqrt(timeStepYears);
   for (let i = 0; i < n; i++) {
     for (let j = 0; j <= i; j++) {
-      increment[i] += _factor[i][j] * _standardNormals[j];
+      increment[i] += factor[i][j] * normals[j];
     }
     increment[i] *= sqrtDt;
   }

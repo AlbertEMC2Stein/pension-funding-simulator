@@ -1,5 +1,6 @@
 import type { CompatiblePolicyInputs } from "../analytical/compatible-policy";
 import { safeBoundary } from "../analytical/safe-boundary";
+import type { PreparedWealthStep } from "./prepared-grid";
 
 /** One grid observation; time is in years and wealth is in real euros. */
 export interface WealthState {
@@ -15,6 +16,41 @@ export interface WealthStepInput {
   endTime: number;
   /** Asset-ordered increments with covariance Σ Δt, already scaled by √Δt. */
   marketIncrement: readonly number[];
+}
+
+/**
+ * Advance a trusted solvent state using coefficients prepared once for the run.
+ * Checks only the computed wealth for numerical failure; input validation is
+ * the responsibility of the enclosing boundary.
+ */
+export function advancePreparedWealth(
+  model: CompatiblePolicyInputs,
+  annualWithdrawal: number,
+  current: WealthState,
+  endTime: number,
+  marketIncrement: readonly number[],
+  step: PreparedWealthStep,
+): WealthState {
+  const { realRiskFreeRate: r, mertonDirection } = model.market;
+  const delta = model.mortality.p;
+  let wealth: number;
+  if (current.wealth >= step.currentBoundary) {
+    wealth =
+      current.wealth +
+      (current.wealth * r - annualWithdrawal) * step.riskFreeAnnuityFactor;
+  } else {
+    const noise = mertonDirection.reduce(
+      (sum, value, i) => sum + value * marketIncrement[i],
+      0,
+    );
+    const gap =
+      (step.currentBoundary - current.wealth) *
+      Math.exp(step.logGapDriftTimesStep - noise / (delta - 1));
+    wealth = step.nextBoundary - gap;
+  }
+  if (!Number.isFinite(wealth))
+    throw new RangeError("Wealth step produced a non-finite result.");
+  return { time: endTime, wealth };
 }
 
 /**
@@ -54,23 +90,20 @@ export function advanceUnconstrainedWealth(
   };
   const xSafe = safeBoundary({ ...boundaryInput, time: current.time });
   const dt = endTime - current.time;
-  let wealth: number;
-  if (current.wealth >= xSafe) {
-    // Stable equivalent of C/r + (x-C/r) exp(r Δt).
-    wealth =
-      current.wealth +
-      (current.wealth * r - annualWithdrawal) * (Math.expm1(r * dt) / r);
-  } else {
-    const logDrift = r - (2 * rho) / (delta - 1) - rho / (delta - 1) ** 2;
-    const noise = mertonDirection.reduce(
-      (sum, value, i) => sum + value * marketIncrement[i],
-      0,
-    );
-    const gap =
-      (xSafe - current.wealth) * Math.exp(logDrift * dt - noise / (delta - 1));
-    wealth = safeBoundary({ ...boundaryInput, time: endTime }) - gap;
-  }
-  if (!Number.isFinite(wealth))
-    throw new RangeError("Wealth step produced a non-finite result.");
-  return { time: endTime, wealth };
+  const nextBoundary = safeBoundary({ ...boundaryInput, time: endTime });
+  return advancePreparedWealth(
+    model,
+    annualWithdrawal,
+    current,
+    endTime,
+    marketIncrement,
+    {
+      currentBoundary: xSafe,
+      nextBoundary,
+      timeStepYears: dt,
+      riskFreeAnnuityFactor: Math.expm1(r * dt) / r,
+      logGapDriftTimesStep:
+        (r - (2 * rho) / (delta - 1) - rho / (delta - 1) ** 2) * dt,
+    },
+  );
 }

@@ -55,24 +55,33 @@ export function safeBoundary({
   if (time > endpoint)
     throw new RangeError("Time cannot be past the mortality endpoint.");
 
-  if (endpoint === Infinity) {
-    const result = withdrawal / rate;
-    if (!Number.isFinite(result))
-      throw new RangeError(
-        "The safe boundary exceeds the supported numerical range.",
-      );
-    return result;
-  }
-
-  const remaining = endpoint - time;
-  const exponent = rate * remaining;
-  const discount = Math.exp(-exponent);
-  // When the product underflows to zero, the annuity factor tends to remaining.
-  const annuity = exponent === 0 ? remaining : -Math.expm1(-exponent) / rate;
-  const result = threshold * discount + withdrawal * annuity;
+  const result = safeBoundaryValue({
+    realRiskFreeRate: rate,
+    annualWithdrawal: withdrawal,
+    impoverishmentLevel: threshold,
+    time,
+    mortalityEndpoint: endpoint,
+  });
   if (!Number.isFinite(result))
     throw new RangeError(
       "The safe boundary exceeds the supported numerical range.",
     );
   return result;
+}
+
+/** Compute a safe boundary from inputs already checked by a trusted caller. */
+export function safeBoundaryValue({
+  realRiskFreeRate: rate,
+  annualWithdrawal: withdrawal,
+  impoverishmentLevel: threshold,
+  time,
+  mortalityEndpoint: endpoint,
+}: SafeBoundaryInputs): number {
+  if (endpoint === Infinity) return withdrawal / rate;
+  const remaining = endpoint - time;
+  const exponent = rate * remaining;
+  const discount = Math.exp(-exponent);
+  // When the product underflows to zero, the annuity factor tends to remaining.
+  const annuity = exponent === 0 ? remaining : -Math.expm1(-exponent) / rate;
+  return threshold * discount + withdrawal * annuity;
 }
