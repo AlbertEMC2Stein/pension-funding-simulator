@@ -52,7 +52,7 @@ export function findFeasibilityThreshold(
 
   if (candidate < 1 || candidate >= data.initialCapital)
     return {
-      message: `The required impoverishment level must be at least €1 and less than your starting capital. (Required level: €${candidate.toLocaleString("en-US", { maximumFractionDigits: 2 })}.)`,
+      message: `The required impoverishment level must be at least €1 and less than your starting capital. (Required level: approx. €${candidate.toLocaleString("en-US", { maximumFractionDigits: 2 })}.)`,
     };
 
   // The tiny upward adjustment prevents rounding from placing ζ above 1.

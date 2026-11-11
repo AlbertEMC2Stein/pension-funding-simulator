@@ -1010,12 +1010,12 @@ export function Evaluation() {
                     }));
                   }}
                 >
-                  Make globally feasible
+                  Make globally feasible (ζ = 1)
                 </button>
                 <small>
                   {"message" in feasibilityThreshold
                     ? feasibilityThreshold.message
-                    : `Approximately €${feasibilityThreshold.amount.toLocaleString("en-US", { maximumFractionDigits: 2 })}. Changes your impoverishment level; ${custom ? "the withdrawal stays fixed" : "the target risk stays fixed and the model-derived withdrawal may change"}.`}
+                    : `Changes your impoverishment level to approx. €${feasibilityThreshold.amount.toLocaleString("en-US", { maximumFractionDigits: 2 })}; ${custom ? "the target withdrawal stays fixed and the model-derived risk may change" : "the target risk stays fixed and the model-derived withdrawal may change"}.`}
                 </small>
               </div>
             </div>
