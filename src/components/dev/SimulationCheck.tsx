@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { StatusBadge, type ResultStatus } from "../StatusBadge";
 import { calibrateMarket } from "../../lib/market/calibrate-market";
 import { mortalityFitKeys } from "../../lib/mortality/fit-status";
 import { buildSimulationOptions } from "../../lib/options/simulation-options";
@@ -97,6 +98,16 @@ export function SimulationCheck() {
     backend,
   });
   const outdated = !!run && run.signature !== signature;
+  const runStatus: ResultStatus =
+    run?.phase === "error"
+      ? "error"
+      : run?.phase === "cancelled"
+        ? "cancelled"
+        : running
+          ? "running"
+          : outdated
+            ? "needs-updating"
+            : "calculated";
   const remainingMs =
     run?.progress && run.batchElapsedMs !== undefined
       ? (run.batchElapsedMs / run.progress.completedPaths) *
@@ -310,11 +321,7 @@ export function SimulationCheck() {
           <span className="tiny-label">DEVELOPMENT · BRIDGE PROTOTYPE</span>
           <h3>Simulation worker check</h3>
         </div>
-        {run && (
-          <span className="chip">
-            {outdated ? "INPUTS CHANGED" : run.phase.toUpperCase()}
-          </span>
-        )}
+        {run && <StatusBadge status={runStatus} />}
       </div>
       <p>
         Runs the current market and investor settings with their current GM and

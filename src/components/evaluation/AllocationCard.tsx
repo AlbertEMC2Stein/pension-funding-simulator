@@ -7,6 +7,7 @@ import {
   type AllocationData,
 } from "./allocation-data";
 import type { RiskWithdrawalResult } from "./RiskWithdrawalChart";
+import { StatusBadge } from "../StatusBadge";
 
 /** Render portfolio fractions without clipping short positions or borrowing. */
 function AllocationPlot({
@@ -245,9 +246,9 @@ export function AllocationCard({
           </span>
           <h3>Portfolio allocation</h3>
         </div>
-        <span className="chip">
-          {"data" in chart ? "CALCULATED" : "NOT AVAILABLE"}
-        </span>
+        <StatusBadge
+          status={"data" in chart ? "calculated" : "not-available"}
+        />
       </div>
       <p>Allocation by wealth between the impoverishment and safe levels.</p>
       <label className="field-label" htmlFor="allocation-time">
@@ -287,9 +288,9 @@ export function AllocationCard({
             </p>
           )}
           <p className="chart-disclaimer">
-            The policy stops when the impoverishment level is reached.
-            Negative fractions indicate short positions or
-            borrowing. The slider ends one day before the CE endpoint.
+            The policy stops when the impoverishment level is reached. Negative
+            fractions indicate short positions or borrowing. The slider ends one
+            day before the CE endpoint.
             {timeLimit === 0 &&
               " The endpoint is at most one day away, so the slider is disabled."}
           </p>

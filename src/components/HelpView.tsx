@@ -3,6 +3,7 @@
 import katex from "katex";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeading, PreviewBanner } from "./common";
+import { RESULT_STATUSES, StatusBadge } from "./StatusBadge";
 
 /** One example dictionary entry; `id` is also the target of a `TermLink`. */
 interface Entry {
@@ -149,20 +150,62 @@ export function HelpView({ selectedTerm }: { selectedTerm: string | null }) {
         help could work.
       </PreviewBanner>
       <div className="status-guide form-card">
-        <span className="tiny-label">DESIGN PREVIEW</span>
-        <h2>Result status examples</h2>
+        <span className="tiny-label">A QUICK GUIDE</span>
+        <h2>Result statuses</h2>
         <p>
-          These examples show how calculation states could look; they do not
+          These labels explain the state of a result. The examples do not
           reflect an actual run.
         </p>
         <div className="status-examples">
-          <span className="chip status-idle">○ &nbsp; NOT CALCULATED</span>
-          <span className="chip status-running">◌ &nbsp; CALCULATING</span>
-          <span className="chip status-stale">↻ &nbsp; NEEDS UPDATE</span>
-          <span className="chip status-error">
-            ! &nbsp; UNABLE TO CALCULATE
-          </span>
+          {RESULT_STATUSES.map(({ status, description }) => (
+            <div className="status-example" key={status}>
+              <StatusBadge status={status} />
+              <small>{description}</small>
+            </div>
+          ))}
         </div>
+        <details className="borrowing-details diagnostic-details">
+          <summary>Other status labels</summary>
+          <p>
+            The developer panel also uses labels for input validation and
+            prepared settings:
+          </p>
+          <div className="status-examples">
+            {(
+              [
+                [
+                  "not-available",
+                  "CHECK INPUTS",
+                  "Some inputs need attention.",
+                ],
+                ["calculated", "VALID", "The input validation passed."],
+                ["error", "FAILED", "A development calculation failed."],
+                [
+                  "not-calculated",
+                  "NOT PREPARED",
+                  "No run settings have been captured yet.",
+                ],
+                [
+                  "calculated",
+                  "CURRENT",
+                  "The captured settings match the current inputs.",
+                ],
+              ] as const
+            ).map(([status, label, description]) => (
+              <div className="status-example" key={label}>
+                <StatusBadge status={status} label={label} />
+                <small>{description}</small>
+              </div>
+            ))}
+          </div>
+          <p>
+            <strong>Review fit</strong> means the mortality fit needs updating.
+            Imported-data diagnostics use <strong>Matches inputs</strong> or{" "}
+            <strong>Inputs changed</strong> to describe their relationship to
+            the current market settings. The feasibility box separately reports{" "}
+            <strong>Feasible</strong> or <strong>Not feasible</strong>.
+          </p>
+        </details>
       </div>
       <div className="dictionary-layout">
         <div>

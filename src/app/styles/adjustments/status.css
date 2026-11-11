@@ -1,0 +1,37 @@
+/* Shared result badges. Theme tokens keep all colors editable in palette.css. */
+.status-badge[data-status="not-calculated"],
+.status-badge[data-status="not-available"] {
+  --status-background: var(--surface-soft);
+  --status-color: var(--text-secondary);
+}
+
+.status-badge[data-status="running"],
+.status-badge[data-status="needs-updating"] {
+  --status-background: var(--notice-bg);
+  --status-color: var(--notice-text);
+}
+
+.status-badge[data-status="error"] {
+  --status-background: var(--surface-accent);
+  --status-color: var(--accent);
+}
+
+.status-badge[data-status="cancelled"] {
+  --status-background: var(--surface-accent);
+  --status-color: var(--text-secondary);
+}
+
+.status-badge[data-status="calculated"] {
+  --status-background: var(--status-calculated-bg);
+  --status-color: var(--status-calculated-text);
+}
+
+/* Match the dark-mode .chip selector while preserving semantic colors. */
+:root .status-badge,
+:root[data-theme] .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--status-background);
+  color: var(--status-color);
+}

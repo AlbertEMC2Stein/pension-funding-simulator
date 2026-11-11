@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { StatusBadge } from "./StatusBadge";
 import {
   DemoAction,
   PageHeading,
@@ -215,9 +216,7 @@ export function DataView() {
                   <td>—</td>
                   {tableType !== "withdrawal" && <td>—</td>}
                   <td>
-                    <span className="table-status">
-                      ○ &nbsp; Not calculated
-                    </span>
+                    <StatusBadge status="not-calculated" />
                   </td>
                   <td>
                     <button

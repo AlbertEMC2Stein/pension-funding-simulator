@@ -62,5 +62,20 @@ test("dictionary renders its examples and mathematical notation", () => {
   const html = renderToStaticMarkup(<HelpView selectedTerm={null} />);
   assert.match(html, /Safe boundary/);
   assert.match(html, /class="katex"/);
-  assert.match(html, /NEEDS UPDATE/);
+  for (const label of [
+    "NOT CALCULATED",
+    "NOT AVAILABLE",
+    "RUNNING",
+    "NEEDS UPDATING",
+    "ERROR",
+    "CANCELLED",
+    "CALCULATED",
+    "CHECK INPUTS",
+    "VALID",
+    "FAILED",
+    "NOT PREPARED",
+    "CURRENT",
+  ]) {
+    assert.ok(html.includes(label), `Missing status: ${label}`);
+  }
 });

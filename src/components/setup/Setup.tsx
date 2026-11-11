@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { StatusBadge } from "../StatusBadge";
 import {
   DemoAction,
   PageHeading,
@@ -217,7 +218,7 @@ function MarketSetup() {
                   data.
                 </p>
               </div>
-              <span className="chip">NOT CALCULATED</span>
+              <StatusBadge status="not-calculated" />
             </div>
             <div className="diagnostic-meta">
               {[
@@ -293,7 +294,7 @@ function MarketSetup() {
                   fixed.
                 </p>
               </div>
-              <span className="chip">NOT CALCULATED</span>
+              <StatusBadge status="not-calculated" />
             </div>
             <label className="check-card scenario-toggle">
               <input

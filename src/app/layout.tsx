@@ -19,6 +19,7 @@ import "./styles/adjustments/market-editor.css";
 import "./styles/adjustments/responsive.css";
 import "./styles/adjustments/selects.css";
 import "./styles/adjustments/details.css";
+import "./styles/adjustments/status.css";
 
 /** Static page metadata included in the exported site. */
 export const metadata: Metadata = {

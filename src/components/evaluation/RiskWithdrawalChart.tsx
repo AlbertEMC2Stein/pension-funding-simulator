@@ -14,6 +14,7 @@ import {
 } from "../../lib/model/analytical/compatible-policy";
 import { safeWithdrawal } from "../../lib/model/analytical/safe-withdrawal";
 import { useSimulationDraft } from "../SimulationDraftContext";
+import { StatusBadge } from "../StatusBadge";
 
 /** An analytical CE relationship and the current selection, in euros and probability. */
 export interface ChartData {
@@ -384,9 +385,9 @@ export function RiskWithdrawalChart({
               : "CE withdrawal and risk"}
           </div>
         </div>
-        <span className="chip">
-          {"data" in result ? "CALCULATED" : "NOT AVAILABLE"}
-        </span>
+        <StatusBadge
+          status={"data" in result ? "calculated" : "not-available"}
+        />
       </div>
       {"data" in result ? (
         <>

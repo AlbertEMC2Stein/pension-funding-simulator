@@ -24,6 +24,8 @@
   --notice-bg: #f8ece7;
   --notice-border: #efd9d2;
   --notice-text: #83544c;
+  --status-calculated-bg: #eff6f1;
+  --status-calculated-text: #699586;
   --feasibility-good-bg: #e5f2e9;
   --feasibility-good-border: #a6cbb1;
   --feasibility-good-text: #276441;
@@ -65,6 +67,8 @@
   --notice-bg: #49383b;
   --notice-border: #67494a;
   --notice-text: #f2c7b9;
+  --status-calculated-bg: #263f35;
+  --status-calculated-text: #b1dbc1;
   --feasibility-good-bg: #233e34;
   --feasibility-good-border: #4c8063;
   --feasibility-good-text: #a5dfb8;

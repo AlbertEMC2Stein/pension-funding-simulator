@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { AllocationCard } from "./AllocationCard";
+import { StatusBadge, type ResultStatus } from "../StatusBadge";
 import { useEvaluationRun, type EvaluationRun } from "./useEvaluationRun";
 import { FeasibilityControls } from "./FeasibilityControls";
 import { useSimulationDraft } from "../SimulationDraftContext";
@@ -95,17 +96,17 @@ export function GmRiskCard({
   const targetMode = run
     ? run.options.policy.withdrawal.mode === "targetRisk"
     : !custom;
-  const status = running
-    ? "RUNNING"
+  const status: ResultStatus = running
+    ? "running"
     : stale && risk
-      ? "NEEDS UPDATING"
+      ? "needs-updating"
       : run?.phase === "error"
-        ? "ERROR"
+        ? "error"
         : run?.phase === "cancelled"
-          ? "CANCELLED"
+          ? "cancelled"
           : risk
-            ? "CALCULATED"
-            : "NOT CALCULATED";
+            ? "calculated"
+            : "not-calculated";
   const difference = risk ? (risk.gm.estimate - risk.ceBenchmark) * 100 : null;
   const remainingMs =
     run?.progress && run.batchElapsedMs !== undefined
@@ -136,7 +137,7 @@ export function GmRiskCard({
             fitted GM model.
           </p>
         </div>
-        <span className="chip">{status}</span>
+        <StatusBadge status={status} />
       </div>
       {running && (
         <div className="risk-run-progress" role="status">
@@ -269,7 +270,7 @@ export function GmRiskCard({
             <span className="tiny-label">
               PROJECTED POLICY · PAIRED COMPARISON
             </span>
-            <span className="chip">NOT CALCULATED</span>
+            <StatusBadge status="not-calculated" />
           </div>
           <div className="diagnostic-metrics">
             <Metric
@@ -365,9 +366,7 @@ export function CapitalCard({ comparison }: { comparison: CapitalComparison }) {
             investment risk for your setup&apos;s annual withdrawal.
           </p>
         </div>
-        <span className="chip">
-          {available ? "CALCULATED" : "NOT AVAILABLE"}
-        </span>
+        <StatusBadge status={available ? "calculated" : "not-available"} />
       </div>
       {!available ? (
         <p role="status">{comparison.message}</p>
@@ -469,7 +468,7 @@ function TimingCard() {
             mortality assumptions.
           </p>
         </div>
-        <span className="chip">NOT CALCULATED</span>
+        <StatusBadge status="not-calculated" />
       </div>
       <div className="timing-controls">
         <fieldset>
@@ -605,7 +604,7 @@ function BorrowingCard({ feasibility }: { feasibility: FeasibilityResult }) {
             risk-free position.
           </p>
         </div>
-        <span className="chip">NOT CALCULATED</span>
+        <StatusBadge status="not-calculated" />
       </div>
       <div className="borrowing-metrics">
         <Metric
@@ -890,7 +889,7 @@ export function Evaluation() {
                     <span className="tiny-label">OPTIONAL VISUAL</span>
                     <h3>Illustrative trajectories</h3>
                   </div>
-                  <span className="chip">NOT CALCULATED</span>
+                  <StatusBadge status="not-calculated" />
                 </div>
                 <p>Sample paths can be displayed here when enabled.</p>
                 <div className="empty-visual">﹏　﹋　﹏</div>

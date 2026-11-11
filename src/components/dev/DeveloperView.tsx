@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { StatusBadge } from "../StatusBadge";
 import { PageHeading } from "../common";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import {
@@ -72,17 +73,17 @@ export default function DeveloperView() {
               <span className="tiny-label">LIVE · MANUAL INPUTS</span>
               <h3>Market calibration</h3>
             </div>
-            <span className="chip">
-              {!calibration
-                ? "CHECK INPUTS"
-                : calibration.ok
-                  ? "CALCULATED"
-                  : "FAILED"}
-            </span>
+            {!calibration ? (
+              <StatusBadge status="not-available" label="CHECK INPUTS" />
+            ) : calibration.ok ? (
+              <StatusBadge status="calculated" />
+            ) : (
+              <StatusBadge status="error" label="FAILED" />
+            )}
           </div>
           <p>
-            Real annual parameters, covariance, Merton direction and rho. These
-            The mortality fit and worker check use the calibrated market.
+            Real annual parameters, covariance, Merton direction and rho. The
+            mortality fit and worker check use the calibrated market.
           </p>
           {!marketInput.ok ? (
             <ul className={styles.errors}>
@@ -126,9 +127,11 @@ export default function DeveloperView() {
               <span className="tiny-label">LIVE · VALIDATED</span>
               <h3>Validated simulation options</h3>
             </div>
-            <span className="chip">
-              {current.ok ? "VALID" : "CHECK INPUTS"}
-            </span>
+            {current.ok ? (
+              <StatusBadge status="calculated" label="VALID" />
+            ) : (
+              <StatusBadge status="not-available" label="CHECK INPUTS" />
+            )}
           </div>
           <p>
             Derived from the current inputs after validation. Rates are decimal
@@ -153,13 +156,13 @@ export default function DeveloperView() {
               <span className="tiny-label">LAST RUN REQUEST</span>
               <h3>Last prepared options</h3>
             </div>
-            <span className="chip">
-              {!prepared
-                ? "NOT PREPARED"
-                : prepared.draft === draft
-                  ? "CURRENT"
-                  : "NEEDS UPDATING"}
-            </span>
+            {!prepared ? (
+              <StatusBadge status="not-calculated" label="NOT PREPARED" />
+            ) : prepared.draft === draft ? (
+              <StatusBadge status="calculated" label="CURRENT" />
+            ) : (
+              <StatusBadge status="needs-updating" />
+            )}
           </div>
           {prepared ? (
             <>

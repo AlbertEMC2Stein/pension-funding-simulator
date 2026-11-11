@@ -444,35 +444,18 @@ table.capital-table {
 }
 
 .status-examples {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 12px;
   margin-top: 14px;
 }
 
-.status-examples .status-idle {
-  background: var(--surface-soft);
+.status-example small {
+  display: block;
+  margin-top: 5px;
   color: var(--text-secondary);
-}
-
-.status-examples .status-running {
-  background: var(--surface-accent);
-  color: var(--text-strong);
-}
-
-.status-examples .status-stale {
-  background: var(--notice-bg);
-  color: var(--notice-text);
-}
-
-.status-examples .status-error {
-  background: #f7e4e2;
-  color: #812b25;
-}
-
-:root[data-theme="dark"] .status-examples .status-error {
-  background: #54312f;
-  color: #ffd3ca;
+  font-size: 10px;
+  line-height: 1.5;
 }
 
 .diagnostic-meta {
