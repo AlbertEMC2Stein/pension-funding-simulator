@@ -15,11 +15,13 @@ export interface TensorWealthBatchInput {
   market: CompatiblePolicyInputs["market"];
   mortality: CompatiblePolicyInputs["mortality"];
   annualWithdrawal: number;
-  /** Investor threshold and the initial real wealth of each path, in euros. */
+  /** Initial capital and impoverishment level, in real euros. */
   investor: {
     impoverishmentLevel: number;
-    initialWealth: readonly number[];
+    initialCapital: number;
   };
+  /** Number of paths in this batch, all sharing the investor's starting capital. */
+  pathCount: number;
   /** Years after retirement, including the initial time. */
   times: readonly number[];
   /**
@@ -27,8 +29,8 @@ export interface TensorWealthBatchInput {
    * [number of paths, number of assets]. A callback avoids retaining all steps.
    */
   increments:
-    | readonly (readonly number[])[]
-    | ((step: number, timeStepYears: number) => readonly number[]);
+  | readonly (readonly number[])[]
+  | ((step: number, timeStepYears: number) => readonly number[]);
 }
 
 /** Final Float32 grid states and the first observed grid-hit indices for one supplied-increment batch. */
@@ -50,12 +52,19 @@ export interface TensorWealthBatchResult {
 export async function simulateTensorWealthBatch(
   input: TensorWealthBatchInput,
 ): Promise<TensorWealthBatchResult> {
-  const { market, mortality, investor, annualWithdrawal, times, increments } =
-    input;
-  const { initialWealth, impoverishmentLevel: threshold } = investor;
+  const {
+    market,
+    mortality,
+    investor,
+    annualWithdrawal,
+    pathCount,
+    times,
+    increments,
+  } = input;
+  const { initialCapital, impoverishmentLevel: threshold } = investor;
   const { realRiskFreeRate: r, mertonDirection } = market;
   const { p: delta } = mortality;
-  const count = initialWealth.length;
+  const count = pathCount;
   const assets = mertonDirection.length;
 
   // The analytical model uses the same investor threshold, not another copy.
@@ -70,7 +79,7 @@ export async function simulateTensorWealthBatch(
   const steps = prepareWealthGrid(model, annualWithdrawal, times);
 
   // Tensor state survives between steps; tidy releases each step's temporaries.
-  let wealth: tf.Tensor1D = tf.tensor1d(initialWealth as number[], "float32");
+  let wealth: tf.Tensor1D = tf.fill([count], initialCapital, "float32");
   let firstHit: tf.Tensor1D = tf.fill([count], -1, "int32");
   const direction = tf.tensor2d([...mertonDirection], [assets, 1]);
 
@@ -195,10 +204,9 @@ export async function simulateTensorSnapshotBatch(
     annualWithdrawal: withdrawal,
     investor: {
       impoverishmentLevel: options.investor.impoverishmentLevel,
-      initialWealth: Array(numerical.batchSize).fill(
-        options.investor.initialCapital,
-      ),
+      initialCapital: options.investor.initialCapital,
     },
+    pathCount: numerical.batchSize,
     times,
     increments: (_step, dt) => {
       const batch: number[] = [];

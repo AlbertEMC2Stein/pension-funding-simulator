@@ -38,11 +38,20 @@ const model = {
 };
 const annualWithdrawal = 300000 * r;
 
+/** Build a scalar test input with both investor amounts in the same group. */
+function investorAt(wealth: number) {
+  return {
+    impoverishmentLevel: model.impoverishmentLevel,
+    current: { time: 0, wealth },
+  };
+}
+
 test("scalar step follows exact gap and preserves safe wealth at the endpoint", () => {
   const input = {
-    model,
+    market: model.market,
+    mortality: model.mortality,
     annualWithdrawal,
-    current: { time: 0, wealth: 150000 },
+    investor: investorAt(150000),
     endTime: 1,
     marketIncrement: [0.1, -0.2],
   };
@@ -52,7 +61,7 @@ test("scalar step follows exact gap and preserves safe wealth at the endpoint", 
   assert.ok(Math.abs(actual.wealth - expected) < 1e-8);
   const safe = advanceUnconstrainedWealth({
     ...input,
-    current: { time: 0, wealth: 250000 },
+    investor: investorAt(250000),
     endTime: 10,
   });
   assert.ok(Math.abs(safe.wealth - 200000) < 1e-8);
@@ -65,9 +74,10 @@ test("scalar paths use the grid once, stop on observed hits and propagate invali
   const path = simulateWealthPath(
     {
       initialStep: {
-        model,
+        market: model.market,
+        mortality: model.mortality,
         annualWithdrawal,
-        current: { time: 0, wealth: 150000 },
+        investor: investorAt(150000),
       },
       times: grid,
       recordTrajectory: true,
@@ -83,9 +93,10 @@ test("scalar paths use the grid once, stop on observed hits and propagate invali
   const hit = simulateWealthPath(
     {
       initialStep: {
-        model,
+        market: model.market,
+        mortality: model.mortality,
         annualWithdrawal,
-        current: { time: 0, wealth: 150000 },
+        investor: investorAt(150000),
       },
       times: [0, 1, 2],
       recordTrajectory: true,
@@ -99,9 +110,10 @@ test("scalar paths use the grid once, stop on observed hits and propagate invali
       simulateWealthPath(
         {
           initialStep: {
-            model,
+            market: model.market,
+            mortality: model.mortality,
             annualWithdrawal,
-            current: { time: 0, wealth: 150000 },
+            investor: investorAt(150000),
           },
           times: [0, 2, 1],
           recordTrajectory: false,
@@ -134,49 +146,72 @@ test("random streams and covariance increments are deterministic and reject inva
 
 test("TensorFlow CPU batch matches scalar paths with the same supplied increments", async () => {
   assert.equal(await initializeTensorBackend(["cpu"]), "cpu");
-  const initial = [150000, 150000, 250000];
   const times = [0, 1, 2];
-  const increments = [
-    [0, 0, -2, -2, 0, 0],
-    [0.03, -0.01, 0, 0, 0, 0],
+  const scenarios = [
+    {
+      initialCapital: 150000,
+      pathCount: 2,
+      increments: [
+        [0, 0, -2, -2],
+        [0.03, -0.01, 0, 0],
+      ],
+    },
+    {
+      initialCapital: 250000,
+      pathCount: 1,
+      increments: [
+        [0, 0],
+        [0, 0],
+      ],
+    },
   ];
   const before = tf.memory().numTensors;
-  const result = await simulateTensorWealthBatch({
-    model,
-    annualWithdrawal,
-    initialWealth: initial,
-    times,
-    increments,
-  });
-  for (let i = 0; i < initial.length; i += 1) {
-    let step = 0;
-    const path = simulateWealthPath(
-      {
-        initialStep: {
-          model,
-          annualWithdrawal,
-          current: { time: 0, wealth: initial[i] },
-        },
-        times,
-        recordTrajectory: true,
+
+  for (const { initialCapital, pathCount, increments } of scenarios) {
+    const input = {
+      market: model.market,
+      mortality: model.mortality,
+      annualWithdrawal,
+      investor: {
+        impoverishmentLevel: model.impoverishmentLevel,
+        initialCapital,
       },
-      () => increments[step++].slice(2 * i, 2 * i + 2),
-    );
-    assert.ok(Math.abs(result.finalWealth[i] - path.finalState.wealth) < 0.1);
-    assert.equal(
-      result.firstGridHit[i] < 0 ? "completed" : "impoverished-on-grid",
-      path.status,
-    );
+      pathCount,
+      times,
+      increments,
+    };
+    const result = await simulateTensorWealthBatch(input);
+
+    for (let i = 0; i < pathCount; i += 1) {
+      let step = 0;
+      const path = simulateWealthPath(
+        {
+          initialStep: {
+            market: model.market,
+            mortality: model.mortality,
+            annualWithdrawal,
+            investor: investorAt(initialCapital),
+          },
+          times,
+          recordTrajectory: true,
+        },
+        () => increments[step++].slice(2 * i, 2 * i + 2),
+      );
+      assert.ok(Math.abs(result.finalWealth[i] - path.finalState.wealth) < 0.1);
+      assert.equal(
+        result.firstGridHit[i] < 0 ? "completed" : "impoverished-on-grid",
+        path.status,
+      );
+    }
+
+    const streamed = await simulateTensorWealthBatch({
+      ...input,
+      increments: (step) => increments[step],
+    });
+    assert.deepEqual(streamed.finalWealth, result.finalWealth);
+    assert.deepEqual(streamed.firstGridHit, result.firstGridHit);
   }
-  const streamed = await simulateTensorWealthBatch({
-    model,
-    annualWithdrawal,
-    initialWealth: initial,
-    times,
-    increments: (step) => increments[step],
-  });
-  assert.deepEqual(streamed.finalWealth, result.finalWealth);
-  assert.deepEqual(streamed.firstGridHit, result.firstGridHit);
+
   assert.equal(tf.memory().numTensors, before);
 });
 
