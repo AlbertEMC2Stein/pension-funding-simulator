@@ -140,6 +140,12 @@ export function createRunSnapshot(input: RunConfigurationInput): RunSnapshot {
     market.covariance.some(
       (row, i) => !sameVector(row, expected.covariance[i]),
     ) ||
+    !Array.isArray(market.covarianceFactor) ||
+    market.covarianceFactor.length !== expected.covarianceFactor.length ||
+    market.covarianceFactor.some(
+      (row, i) =>
+        !Array.isArray(row) || !sameVector(row, expected.covarianceFactor[i]),
+    ) ||
     market.paperAssumptions.positiveRho !==
       expected.paperAssumptions.positiveRho ||
     market.paperAssumptions.nonnegativeMerton !==

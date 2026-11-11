@@ -19,6 +19,25 @@ function close(actual: number, expected: number, tolerance = 1e-12) {
   );
 }
 
+/** Verify the retained lower factor reconstructs the covariance in asset order. */
+function checkCovarianceFactor(covariance: number[][], factor: number[][]) {
+  assert.equal(factor.length, covariance.length);
+
+  covariance.forEach((row, i) => {
+    assert.equal(factor[i].length, covariance.length);
+    assert.ok(factor[i][i] > 0);
+
+    row.forEach((value, j) => {
+      if (j > i) assert.equal(factor[i][j], 0);
+      const reconstructed = factor[i].reduce(
+        (sum, entry, k) => sum + entry * factor[j][k],
+        0,
+      );
+      close(reconstructed, value);
+    });
+  });
+}
+
 test("manual calibration matches the paper's two-asset reference", () => {
   const input = baseline();
   // The paper's reference rate is 0.5% real; the website default is 0.489%.
@@ -28,6 +47,10 @@ test("manual calibration matches the paper's two-asset reference", () => {
   assert.ok(result.ok);
   assert.deepEqual(input, copy);
   const market = result.market;
+  checkCovarianceFactor(market.covariance, market.covarianceFactor);
+  close(market.covarianceFactor[0][0], 0.145);
+  close(market.covarianceFactor[1][0], 0.04 * 0.08);
+  close(market.covarianceFactor[1][1], 0.04 * Math.sqrt(1 - 0.08 ** 2));
   [0.05602933882446285, 0.01346456284132178].forEach((value, i) =>
     close(market.realDrift[i], value),
   );
@@ -51,6 +74,44 @@ test("manual calibration matches the paper's two-asset reference", () => {
     ),
   );
   assert.equal(market.paperAssumptions.positiveRho, true);
+});
+
+test("retained covariance factor reconstructs a correlated three-asset market in any order", () => {
+  const input = {
+    currency: "EUR" as const,
+    realRiskFreeRate: 0.01,
+    inflationRate: 0.02,
+    assets: [
+      { name: "A", nominalReturn: 0.05, volatility: 0.2 },
+      { name: "B", nominalReturn: 0.03, volatility: 0.1 },
+      { name: "C", nominalReturn: 0.07, volatility: 0.3 },
+    ],
+    correlation: [
+      [1, 0.3, -0.2],
+      [0.3, 1, 0.1],
+      [-0.2, 0.1, 1],
+    ],
+  };
+
+  for (const order of [
+    [0, 1, 2],
+    [2, 0, 1],
+  ]) {
+    const result = calibrateMarket({
+      ...input,
+      assets: order.map((i) => input.assets[i]),
+      correlation: order.map((i) => order.map((j) => input.correlation[i][j])),
+    });
+    assert.ok(result.ok);
+    assert.deepEqual(
+      result.market.assetNames,
+      order.map((i) => input.assets[i].name),
+    );
+    checkCovarianceFactor(
+      result.market.covariance,
+      result.market.covarianceFactor,
+    );
+  }
 });
 
 test("negative Merton components are reported without rejecting the market", () => {

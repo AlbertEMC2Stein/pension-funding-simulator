@@ -4,7 +4,7 @@ import {
   type WealthStepInput,
 } from "./wealth-step";
 import { assertRunSnapshot, type RunSnapshot } from "./run-configuration";
-import { correlatePreparedIncrement, factorPreparedCovariance } from "./matrix";
+import { correlatePreparedIncrement } from "./matrix";
 import { createRandomStream } from "./random";
 import { prepareWealthGrid, type PreparedWealthStep } from "./prepared-grid";
 import { safeBoundary } from "../analytical/safe-boundary";
@@ -147,7 +147,7 @@ export function simulateWealthBatch(_snapshot: RunSnapshot): WealthBatchResult {
   const paths: WealthPathResult[] = [];
 
   const rng = createRandomStream(_snapshot.numerical.seed);
-  const sigma = factorPreparedCovariance(_snapshot.market.covariance);
+  const sigma = _snapshot.market.covarianceFactor;
 
   const annualWithdrawal = _snapshot.resolvedAnnualWithdrawal;
 

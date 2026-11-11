@@ -319,4 +319,14 @@ test("snapshot copies and freezes inputs and rejects changed markets and unsuppo
       }),
     /does not match/,
   );
+  const changedFactor = market.covarianceFactor.map((row) => [...row]);
+  changedFactor[0][0] *= 2;
+  assert.throws(
+    () =>
+      createRunSnapshot({
+        ...input,
+        market: { ...market, covarianceFactor: changedFactor },
+      }),
+    /does not match/,
+  );
 });

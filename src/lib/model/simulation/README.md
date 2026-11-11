@@ -14,8 +14,10 @@ Suggested order:
    compatibility, but cannot verify mortality-fit provenance or freshness.
    Cross-version reproducibility remains to be specified.
 2. **`random.ts` and `matrix.ts`** generate seeded draws and transform them to
-   market increments. The RNG uses a string hash, sfc32 and Box–Muller. Full
-   known-answer, statistical and stream-partition tests are still needed.
+   market increments. Calibration retains the covariance factor, so batches
+   reuse it without refactorization. The RNG uses a string hash, sfc32 and
+   Box–Muller. Full known-answer, statistical and stream-partition tests are
+   still needed.
 3. **`wealth-step.ts` and `wealth-path.ts`** advance and stop scalar reference
    paths on grid-observed impoverishment. A batch prepares the time grid and
    safe-boundary coefficients once; its inner loop trusts those inputs and

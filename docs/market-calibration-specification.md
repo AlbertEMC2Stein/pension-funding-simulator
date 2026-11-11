@@ -42,6 +42,12 @@ Solve `Sigma * m = theta` for the Merton direction `m`, then compute
 rho = (theta transpose * m) / 2
 ```
 
+Calibration factors the correlation matrix as `R = L_R * L_R transpose` and
+retains `L_Sigma = D * L_R`, where `D` is the diagonal matrix of volatilities.
+Thus `Sigma = L_Sigma * L_Sigma transpose`, and simulation batches can reuse
+the lower-triangular covariance factor without factoring the matrix again. Its
+rows and columns follow the same asset order as `Sigma`.
+
 The factor one-half follows the manuscript. `m` is not, by itself, a portfolio allocation. The market price of Brownian risk is not generally the same vector as `m` and depends on the chosen factorization of `Sigma`; it is not needed as a manual input for this calibration.
 
 The inverse relationship is `iN = exp(r) * (1 + inflation) - 1`. All computations use unrounded inputs and intermediate values. Display rounding must not feed back into the model. Real withdrawals and capital use euros of the calibration year; do not apply inflation to a real withdrawal a second time.

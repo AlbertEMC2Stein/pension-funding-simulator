@@ -3,10 +3,7 @@ import type { CompatiblePolicyInputs } from "../../analytical/compatible-policy"
 import { assertRunSnapshot, type RunSnapshot } from "../run-configuration";
 import { generateTimeGrid } from "../wealth-path";
 import { prepareWealthGrid } from "../prepared-grid";
-import {
-  correlatePreparedIncrement,
-  factorPreparedCovariance,
-} from "../matrix";
+import { correlatePreparedIncrement } from "../matrix";
 import type { RandomStream } from "../random";
 
 /** Deterministic grid experiment; each step supplies asset noise for all paths. */
@@ -202,9 +199,9 @@ export async function simulateTensorBatch(
     options.numerical.timeStep,
   );
 
-  // Factor Sigma = L L^T once. Every step draws independent standard normals
-  // and transforms them to Delta Z = L * xi * sqrt(dt) for each path.
-  const factor = factorPreparedCovariance(market.covariance);
+  // Reuse the factor L from calibration. Every step transforms independent
+  // standard normals to Delta Z = L * xi * sqrt(dt) for each path.
+  const factor = market.covarianceFactor;
 
   return simulateTensorWealthBatch({
     market,

@@ -15,6 +15,8 @@ export interface CalibratedMarket {
   realDrift: number[];
   excessReturn: number[];
   covariance: number[][];
+  /** Lower-triangular factor L with covariance = L Lᵀ, in asset order. */
+  covarianceFactor: number[][];
   /** Sigma-inverse times excess drift; not itself an allocation. */
   mertonDirection: number[];
   /** One half of the excess-drift quadratic form, as defined in the manuscript. */
@@ -114,6 +116,10 @@ export function calibrateMarket(input: MarketInput): Result {
   const covariance = correlation.map((row, i) =>
     row.map((value, j) => vol[i] * value * vol[j]),
   );
+  // If R = L_R L_Rᵀ and D contains asset volatilities, D L_R factors D R D.
+  const covarianceFactor = lower.map((row, i) =>
+    row.map((value) => vol[i] * value),
+  );
   const scaledExcess = excessReturn.map((value, i) => value / vol[i]);
 
   if (
@@ -123,6 +129,7 @@ export function calibrateMarket(input: MarketInput): Result {
       ...excessReturn,
       ...scaledExcess,
       ...covariance.flat(),
+      ...covarianceFactor.flat(),
     ].some((value) => !Number.isFinite(value)) ||
     covariance.some((row, i) => row[i] <= 0)
   )
@@ -188,6 +195,7 @@ export function calibrateMarket(input: MarketInput): Result {
       realDrift,
       excessReturn,
       covariance,
+      covarianceFactor,
       mertonDirection,
       rho,
       paperAssumptions: {
