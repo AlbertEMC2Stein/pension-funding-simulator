@@ -81,6 +81,10 @@ table.capital-table {
   color: var(--text-muted);
 }
 
+.lower-grid > :only-child {
+  grid-column: 1 / -1;
+}
+
 .allocation-legend {
   display: flex;
   flex-wrap: wrap;

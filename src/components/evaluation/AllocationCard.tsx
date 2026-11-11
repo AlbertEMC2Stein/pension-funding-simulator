@@ -240,7 +240,9 @@ export function AllocationCard({
     <article className="small-card">
       <div className="card-heading">
         <div>
-          <span className="tiny-label">UNCONSTRAINED CE POLICY</span>
+          <span className="tiny-label">
+            {projected ? "PROJECTED CE POLICY" : "UNCONSTRAINED CE POLICY"}
+          </span>
           <h3>Portfolio allocation</h3>
         </div>
         <span className="chip">

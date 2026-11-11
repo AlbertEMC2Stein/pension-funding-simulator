@@ -36,7 +36,6 @@ type Visual =
   | "gm"
   | "capital"
   | "allocation"
-  | "comparison"
   | "timing"
   | "borrowing"
   | "trajectories";
@@ -57,7 +56,6 @@ const visualGroups: {
     title: "Portfolio & policies",
     entries: [
       { id: "allocation", label: "Portfolio allocation" },
-      { id: "comparison", label: "Policy comparison" },
     ],
   },
   {
@@ -594,7 +592,6 @@ export function Evaluation() {
     gm: true,
     capital: true,
     allocation: true,
-    comparison: true,
     timing: false,
     borrowing: true,
     trajectories: false,
@@ -758,35 +755,6 @@ export function Evaluation() {
                 projected={projected}
                 assetNames={assetNames}
               />
-            )}
-            {visuals.comparison && (
-              <article className="small-card">
-                <div className="card-heading">
-                  <div>
-                    <span className="tiny-label">SIDE BY SIDE</span>
-                    <h3>Policy comparison</h3>
-                  </div>
-                  <span className="chip">NOT CALCULATED</span>
-                </div>
-                <p>Compare the unconstrained and projected policies.</p>
-                <div className="bar-row">
-                  <span>Unconstrained</span>
-                  <div>
-                    <i style={{ width: "63%" }} />
-                  </div>
-                  <b>—</b>
-                </div>
-                <div className="bar-row">
-                  <span>Projected</span>
-                  <div>
-                    <i className="alt" style={{ width: "48%" }} />
-                  </div>
-                  <b>—</b>
-                </div>
-                <div className="small-note">
-                  Illustrative only · run a simulation to compare
-                </div>
-              </article>
             )}
             {visuals.trajectories && (
               <article className="small-card">

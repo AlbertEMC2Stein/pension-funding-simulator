@@ -24,6 +24,7 @@ test("evaluation renders illustrative results and the main controls", () => {
   assert.match(html, /NOT CALCULATED/);
   assert.match(html, /YOUR SETUP/);
   assert.match(html, /Edit setup/);
+  assert.doesNotMatch(html, />Policy comparison</);
 });
 
 test("setup and data views retain the requested design elements", () => {

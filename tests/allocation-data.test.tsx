@@ -58,6 +58,7 @@ test("projected allocation remains unavailable until the projected policy exists
   );
 
   assert.match(html, /projected allocation is not implemented/);
+  assert.match(html, /PROJECTED CE POLICY/);
   assert.match(html, /disabled/);
 });
 
