@@ -13,12 +13,12 @@ Suggested order:
    in the receiving context. The validator checks market consistency and CE
    compatibility, but cannot verify mortality-fit provenance or freshness.
    Cross-version reproducibility remains to be specified.
-2. **`random.ts` and `matrix.ts`** generate seeded draws and transform them to
-   market increments. Calibration retains the covariance factor, so batches
-   reuse it without refactorization. The RNG uses a string hash, sfc32 and
-   Box–Muller. Full known-answer, statistical and stream-partition tests are
-   still needed.
-3. **`wealth-step.ts` and `wealth-path.ts`** advance and stop scalar reference
+2. **`random.ts`** generates seeded draws shared by the backends. Calibration
+   retains the covariance factor, so batches reuse it without refactorization.
+   The RNG uses a string hash, sfc32 and Box–Muller. Full known-answer,
+   statistical and stream-partition tests are still needed.
+3. **`legacy/`** contains the scalar reference's matrix, wealth-step and
+   wealth-path modules. These advance and stop scalar reference
    paths on grid-observed impoverishment. A batch prepares the time grid and
    safe-boundary coefficients once; its inner loop trusts those inputs and
    checks computed wealth for numerical failures. Standalone reference entry
@@ -29,7 +29,8 @@ Suggested order:
    entry point is a trusted test harness; `simulateTensorBatch` accepts a
    validated snapshot, actual batch size and caller-owned random stream.
    Initialize the backend first. Tensors are disposed internally; no financial
-   worker is connected yet.
+   worker is connected yet. `time-grid.ts` and `prepared-grid.ts` remain shared
+   between the reference and TensorFlow implementations.
 
 The TensorFlow batch draws seeded standard normals on the CPU into a flat
 Float32 buffer at each step. TensorFlow then applies the retained covariance

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { initializeTensorBackend } from "../src/lib/model/simulation/tensorflow/backend";
 import { simulateTensorWealthBatch } from "../src/lib/model/simulation/tensorflow/wealth-batch";
-import { simulateWealthPath } from "../src/lib/model/simulation/wealth-path";
+import { simulateWealthPath } from "../src/lib/model/simulation/legacy/wealth-path";
 
 // These parameters give x_safe(0) = 200,000 and x_safe(10) = 100,000.
 const rate = Math.LN2 / 10;

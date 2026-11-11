@@ -1,6 +1,6 @@
-import type { CompatiblePolicyInputs } from "../analytical/compatible-policy";
-import { safeBoundary } from "../analytical/safe-boundary";
-import type { PreparedWealthStep } from "./prepared-grid";
+import type { CompatiblePolicyInputs } from "../../analytical/compatible-policy";
+import { safeBoundary } from "../../analytical/safe-boundary";
+import type { PreparedWealthStep } from "../prepared-grid";
 
 /** One grid observation; time is in years and wealth is in real euros. */
 export interface WealthState {

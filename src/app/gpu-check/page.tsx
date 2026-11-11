@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { initializeTensorBackend } from "../../lib/model/simulation/tensorflow/backend";
 import { simulateTensorWealthBatch } from "../../lib/model/simulation/tensorflow/wealth-batch";
-import { simulateWealthPath } from "../../lib/model/simulation/wealth-path";
+import { simulateWealthPath } from "../../lib/model/simulation/legacy/wealth-path";
 
 /** Run a small WebGPU-versus-scalar comparison in the browser. */
 export default function GpuCheckPage() {

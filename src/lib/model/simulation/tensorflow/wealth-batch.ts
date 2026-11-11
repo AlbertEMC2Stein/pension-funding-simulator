@@ -1,7 +1,7 @@
 import * as tf from "@tensorflow/tfjs";
 import type { CompatiblePolicyInputs } from "../../analytical/compatible-policy";
 import { assertRunSnapshot, type RunSnapshot } from "../run-configuration";
-import { generateTimeGrid } from "../wealth-path";
+import { generateTimeGrid } from "../time-grid";
 import { prepareWealthGrid } from "../prepared-grid";
 import type { RandomStream } from "../random";
 

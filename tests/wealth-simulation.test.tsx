@@ -1,17 +1,17 @@
+import { generateTimeGrid } from "../src/lib/model/simulation/time-grid";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import * as tf from "@tensorflow/tfjs";
-import { advanceUnconstrainedWealth } from "../src/lib/model/simulation/wealth-step";
+import { advanceUnconstrainedWealth } from "../src/lib/model/simulation/legacy/wealth-step";
 import {
-  generateTimeGrid,
   simulateWealthBatch,
   simulateWealthPath,
-} from "../src/lib/model/simulation/wealth-path";
+} from "../src/lib/model/simulation/legacy/wealth-path";
 import {
   covarianceFactor,
   correlatedMarketIncrement,
   correlatePreparedIncrement,
-} from "../src/lib/model/simulation/matrix";
+} from "../src/lib/model/simulation/legacy/matrix";
 import {
   createRandomStream,
   standardNormalVector,
