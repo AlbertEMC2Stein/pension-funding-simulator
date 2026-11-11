@@ -2,9 +2,10 @@ import {
   compatiblePortfolio,
   type CompatiblePolicyInputs,
 } from "../../lib/model/analytical/compatible-policy";
+import { projectCovarianceSimplex } from "../../lib/model/analytical/simplex-projection";
 import { safeBoundary } from "../../lib/model/analytical/safe-boundary";
 
-/** Unconstrained CE portfolio fractions over the risky wealth interval. */
+/** Selected CE portfolio fractions over the risky wealth interval. */
 export interface AllocationData {
   impoverishmentLevel: number;
   safeLevel: number;
@@ -24,12 +25,14 @@ export function allocationTimeLimit(endpoint: number): number {
  * Sample the CE feedback for a fixed time and withdrawal. The first sample
  * approaches the impoverishment boundary from above: the portfolio stops at
  * the boundary itself. The mortality endpoint is excluded because the risky
- * interval collapses there and the feedback is undefined.
+ * interval collapses there and the feedback is undefined. If covariance is
+ * provided, project each allocation in its covariance metric onto the simplex.
  */
 export function makeAllocationData(
   model: CompatiblePolicyInputs,
   annualWithdrawal: number,
   time: number,
+  covariance?: readonly (readonly number[])[],
 ): AllocationData {
   const safeLevel = safeBoundary({
     realRiskFreeRate: model.market.realRiskFreeRate,
@@ -51,9 +54,18 @@ export function makeAllocationData(
       model.impoverishmentLevel +
       width * (index === 0 ? 0.000001 : index / 100),
   );
-  const allocations = wealth.map((amount) =>
-    compatiblePortfolio(model, annualWithdrawal, time, amount),
-  );
+  const allocations = wealth.map((amount) => {
+    const allocation = compatiblePortfolio(
+      model,
+      annualWithdrawal,
+      time,
+      amount,
+    );
+
+    return covariance
+      ? projectCovarianceSimplex({ allocation, covariance })
+      : allocation;
+  });
   const riskyFractions = model.market.mertonDirection.map((_, index) =>
     allocations.map((fractions) => fractions[index]),
   );

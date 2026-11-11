@@ -47,26 +47,62 @@ test("allocation retains borrowing and short positions rather than clipping them
   assert.ok(data.riskFreeFractions[0] < 0);
 });
 
-test("projected allocation remains unavailable until the projected policy exists", () => {
+test("projected allocation respects the simplex and uses covariance weighting", () => {
+  const leveraged = {
+    ...model,
+    market: { ...model.market, mertonDirection: [-1, 3] },
+  };
+  const covariance = [
+    [1, 0.5],
+    [0.5, 1],
+  ];
+  const data = makeAllocationData(leveraged, withdrawal, 0, covariance);
+
+  for (let i = 0; i < data.wealth.length; i += 1) {
+    assert.ok(data.riskyFractions.every((fractions) => fractions[i] >= -1e-9));
+    assert.ok(data.riskFreeFractions[i] >= -1e-9);
+  }
+
+  // At the first sample the input is approximately (-1, 3). The projection
+  // is (0, 1), whereas an unweighted componentwise clip is not sufficient.
+  assert.ok(Math.abs(data.riskyFractions[0][0]) < 1e-8);
+  assert.ok(Math.abs(data.riskyFractions[1][0] - 1) < 1e-8);
+});
+
+test("projected allocation is displayed with the time control enabled", () => {
   const data = makeChartData(model, 150000, { mode: "targetRisk", risk: 0.25 });
   const html = renderToStaticMarkup(
     <AllocationCard
-      result={{ model, data }}
+      result={{
+        model,
+        data,
+        covariance: [
+          [1, 0.5],
+          [0.5, 1],
+        ],
+      }}
       projected
       assetNames={["One", "Two"]}
     />,
   );
 
-  assert.match(html, /projected allocation is not implemented/);
   assert.match(html, /PROJECTED CE POLICY/);
-  assert.match(html, /disabled/);
+  assert.match(html, /Projected CE portfolio allocation by wealth/);
+  assert.doesNotMatch(html, /disabled/);
 });
 
 test("allocation identifies starting capital at retirement", () => {
   const data = makeChartData(model, 150000, { mode: "targetRisk", risk: 0.25 });
   const html = renderToStaticMarkup(
     <AllocationCard
-      result={{ model, data }}
+      result={{
+        model,
+        data,
+        covariance: [
+          [1, 0],
+          [0, 1],
+        ],
+      }}
       projected={false}
       assetNames={["One", "Two"]}
     />,

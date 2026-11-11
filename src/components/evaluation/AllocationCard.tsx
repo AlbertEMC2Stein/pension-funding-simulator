@@ -6,7 +6,7 @@ import {
   makeAllocationData,
   type AllocationData,
 } from "./allocation-data";
-import type { RiskWithdrawalResult } from "./RiskWithdrawalChart";
+import type { RiskWithdrawalWithCovariance } from "./RiskWithdrawalChart";
 import { StatusBadge } from "../StatusBadge";
 
 /** Render portfolio fractions without clipping short positions or borrowing. */
@@ -14,8 +14,10 @@ function AllocationPlot({
   data,
   assetNames,
   startingCapital,
+  projected,
 }: {
   data: AllocationData;
+  projected: boolean;
   assetNames: readonly string[];
   /** At retirement only, when starting capital is within the plotted interval. */
   startingCapital: number | null;
@@ -155,7 +157,7 @@ function AllocationPlot({
       <div
         ref={element}
         role="img"
-        aria-label="Unconstrained CE portfolio allocation by wealth"
+        aria-label={`${projected ? "Projected" : "Unconstrained"} CE portfolio allocation by wealth`}
       />
       <ul
         className="allocation-legend"
@@ -185,23 +187,18 @@ function AllocationPlot({
   );
 }
 
-/** Show the unconstrained CE feedback across wealth at an adjustable time. */
+/** Show the selected CE feedback across wealth at an adjustable time. */
 export function AllocationCard({
   result,
   projected,
   assetNames,
 }: {
-  result: RiskWithdrawalResult;
+  result: RiskWithdrawalWithCovariance;
   projected: boolean;
   assetNames: readonly string[];
 }) {
   const [timePercent, setTimePercent] = useState(0);
   const chart = useMemo((): { data: AllocationData } | { message: string } => {
-    if (projected)
-      return {
-        message:
-          "The projected allocation is not implemented yet. Turn off projection to view the unconstrained CE policy.",
-      };
     if ("message" in result) return { message: result.message };
 
     const time =
@@ -213,6 +210,7 @@ export function AllocationCard({
           result.model,
           result.data.selectedWithdrawal,
           time,
+          projected ? result.covariance : undefined,
         ),
       };
     } catch (error) {
@@ -262,7 +260,7 @@ export function AllocationCard({
           max={timeLimit ?? 0}
           step="any"
           value={selectedTime ?? 0}
-          disabled={projected || timeLimit === null || timeLimit === 0}
+          disabled={timeLimit === null || timeLimit === 0}
           onChange={(event) =>
             setTimePercent(
               timeLimit ? (Number(event.target.value) / timeLimit) * 100 : 0,
@@ -279,6 +277,7 @@ export function AllocationCard({
         <>
           <AllocationPlot
             data={chart.data}
+            projected={projected}
             assetNames={assetNames}
             startingCapital={startingCapitalVisible ? startingCapital : null}
           />
@@ -288,9 +287,11 @@ export function AllocationCard({
             </p>
           )}
           <p className="chart-disclaimer">
-            The policy stops when the impoverishment level is reached. Negative
-            fractions indicate short positions or borrowing. The slider ends one
-            day before the CE endpoint.
+            The policy stops when the impoverishment level is reached.{" "}
+            {projected
+              ? "The projected allocation prevents short positions and borrowing."
+              : "Negative fractions indicate short positions or borrowing."}{" "}
+            The slider ends one day before the CE endpoint.
             {timeLimit === 0 &&
               " The endpoint is at most one day away, so the slider is disabled."}
           </p>

@@ -32,6 +32,16 @@ export interface ChartData {
 export type RiskWithdrawalResult =
   { data: ChartData; model: CompatiblePolicyInputs } | { message: string };
 
+/** The shared result also exposes the calibrated covariance for allocation plots. */
+export type RiskWithdrawalWithCovariance =
+  | {
+      data: ChartData;
+      model: CompatiblePolicyInputs;
+      /** Covariance in the same asset order as the calibrated policy. */
+      covariance: readonly (readonly number[])[];
+    }
+  | { message: string };
+
 /**
  * Build a finite portion of the unconstrained CE curve, including its
  * zero-risk endpoint. For withdrawals below the safe withdrawal, the selected
@@ -275,10 +285,10 @@ function Plot({ data }: { data: ChartData }) {
 }
 
 /** Calculate the CE benchmark once for all evaluation views using current inputs. */
-export function useRiskWithdrawalResult(): RiskWithdrawalResult {
+export function useRiskWithdrawalResult(): RiskWithdrawalWithCovariance {
   const { draft, mortalityFits } = useSimulationDraft();
 
-  return useMemo((): RiskWithdrawalResult => {
+  return useMemo((): RiskWithdrawalWithCovariance => {
     const marketInput = buildMarketOptions(draft.market);
     if (!marketInput.ok)
       return { message: "Check the market inputs to calculate this curve." };
@@ -337,7 +347,11 @@ export function useRiskWithdrawalResult(): RiskWithdrawalResult {
         : { mode: "customAmount" as const, amount: simulation.withdrawalEuros };
 
     try {
-      return { data: makeChartData(model, capital, withdrawal), model };
+      return {
+        data: makeChartData(model, capital, withdrawal),
+        model,
+        covariance: market.market.covariance,
+      };
     } catch (error) {
       return {
         message:
