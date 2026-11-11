@@ -132,6 +132,9 @@ function Plot({ data }: { data: ChartData }) {
       );
       const lowerWithdrawal = Math.max(0, minimumWithdrawal * 0.95);
       const upperWithdrawal = maximumWithdrawal * 1.05;
+      // Padding makes the zero-risk endpoint visible without extending the curve.
+      const maximumRisk = data.risks[data.risks.length - 1];
+      const lowerRisk = -maximumRisk * 0.02;
       const traces: object[] = [
         {
           x: data.risks,
@@ -178,15 +181,16 @@ function Plot({ data }: { data: ChartData }) {
             title: { text: "CE lifetime impoverishment risk", standoff: 12 },
             tickformat: ".0%",
             gridcolor: grid,
-            range: [0, data.risks[data.risks.length - 1] * 1.02],
+            range: [lowerRisk, maximumRisk * 1.02],
             zeroline: false,
             showline: true,
             linecolor: text,
             automargin: true,
           },
           yaxis: {
-            title: { text: "Annual withdrawal (€)", standoff: 12 },
+            title: { text: "Annual withdrawal (€)", standoff: 10 },
             tickprefix: "€",
+            ticklabelstandoff: 8,
             separatethousands: true,
             gridcolor: grid,
             range: [lowerWithdrawal, upperWithdrawal],
@@ -209,7 +213,7 @@ function Plot({ data }: { data: ChartData }) {
               type: "line",
               xref: "x",
               yref: "y",
-              x0: 0,
+              x0: lowerRisk,
               x1: data.selectedRisk,
               y0: data.selectedWithdrawal,
               y1: data.selectedWithdrawal,
@@ -318,9 +322,9 @@ export function RiskWithdrawalChart() {
     const withdrawal =
       simulation.withdrawalMode === "targetRisk"
         ? {
-            mode: "targetRisk" as const,
-            risk: simulation.targetRiskPercent / 100,
-          }
+          mode: "targetRisk" as const,
+          risk: simulation.targetRiskPercent / 100,
+        }
         : { mode: "customAmount" as const, amount: simulation.withdrawalEuros };
 
     try {

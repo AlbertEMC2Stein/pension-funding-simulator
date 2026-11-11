@@ -121,10 +121,12 @@ function Plot({
             fixedrange: false,
           },
           yaxis: {
-            title: { text: "Survival probability" },
+            title: { text: "Survival probability", standoff: 8 },
             tickformat: ".0%",
+            ticklabelstandoff: 8,
             range: [0, 1.05],
             gridcolor: grid,
+            automargin: true,
           },
           showlegend: !!(gm || ce),
           legend: { orientation: "h", y: 1.12 },
@@ -284,9 +286,9 @@ export function CohortChart({
     return mortality === "custom"
       ? mixCohortSurvival(loaded.female!, loaded.male!, age, maleWeight)
       : cohortSurvival(
-          (mortality === "female" ? loaded.female : loaded.male)!,
-          age,
-        );
+        (mortality === "female" ? loaded.female : loaded.male)!,
+        age,
+      );
   }, [valid, loaded, key, mortality, age, maleWeight]);
 
   if (!valid)
