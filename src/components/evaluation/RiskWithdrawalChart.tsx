@@ -25,6 +25,9 @@ export interface ChartData {
   custom: boolean;
 }
 
+/** Either the current CE result or an explanation of why it is unavailable. */
+export type RiskWithdrawalResult = { data: ChartData } | { message: string };
+
 /**
  * Build a finite portion of the unconstrained CE curve, including its
  * zero-risk endpoint. For withdrawals below the safe withdrawal, the selected
@@ -266,10 +269,11 @@ function Plot({ data }: { data: ChartData }) {
   );
 }
 
-/** Calculate and display the current unconstrained CE benchmark when its fit is current. */
-export function RiskWithdrawalChart() {
+/** Calculate the CE benchmark once for all evaluation views using current inputs. */
+export function useRiskWithdrawalResult(): RiskWithdrawalResult {
   const { draft, mortalityFits } = useSimulationDraft();
-  const result = useMemo((): { data: ChartData } | { message: string } => {
+
+  return useMemo((): RiskWithdrawalResult => {
     const marketInput = buildMarketOptions(draft.market);
     if (!marketInput.ok)
       return { message: "Check the market inputs to calculate this curve." };
@@ -322,9 +326,9 @@ export function RiskWithdrawalChart() {
     const withdrawal =
       simulation.withdrawalMode === "targetRisk"
         ? {
-          mode: "targetRisk" as const,
-          risk: simulation.targetRiskPercent / 100,
-        }
+            mode: "targetRisk" as const,
+            risk: simulation.targetRiskPercent / 100,
+          }
         : { mode: "customAmount" as const, amount: simulation.withdrawalEuros };
 
     try {
@@ -345,7 +349,14 @@ export function RiskWithdrawalChart() {
     draft.simulation.withdrawalEuros,
     mortalityFits.ce,
   ]);
+}
 
+/** Display the shared unconstrained CE benchmark and its applicability message. */
+export function RiskWithdrawalChart({
+  result,
+}: {
+  result: RiskWithdrawalResult;
+}) {
   return (
     <div className="chart-card">
       <div className="card-top">

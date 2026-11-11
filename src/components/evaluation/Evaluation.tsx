@@ -2,7 +2,10 @@
 
 import { useRef, useState } from "react";
 import { useSimulationDraft } from "../SimulationDraftContext";
-import { RiskWithdrawalChart } from "./RiskWithdrawalChart";
+import {
+  RiskWithdrawalChart,
+  useRiskWithdrawalResult,
+} from "./RiskWithdrawalChart";
 import {
   MANUAL_BATCH_SIZES,
   type BatchSizeChoice,
@@ -505,6 +508,7 @@ function BorrowingCard() {
 export function Evaluation() {
   const { navigate } = useDraft();
   const { draft, setDraft, prepared, setPrepared } = useSimulationDraft();
+  const ceResult = useRiskWithdrawalResult();
   const simulation = draft.simulation;
   const [errors, setErrors] = useState<string[]>([]);
   /** Merge a partial control edit into the shared simulation draft while retaining the other settings. */
@@ -711,7 +715,7 @@ export function Evaluation() {
               </p>
             </div>
           )}
-          {visuals.withdrawal && <RiskWithdrawalChart />}
+          {visuals.withdrawal && <RiskWithdrawalChart result={ceResult} />}
           {visuals.gm && <GmRiskCard projected={projected} />}
           {visuals.capital && <CapitalCard />}
           <div className="lower-grid">
@@ -855,10 +859,17 @@ export function Evaluation() {
                     {custom ? "Model-implied risk" : "Model-derived withdrawal"}
                   </strong>
                   <div className="withdrawal-value">
-                    — <small>{custom ? "%" : "/ year"}</small>
+                    {"data" in ceResult
+                      ? custom
+                        ? (ceResult.data.selectedRisk * 100).toFixed(2)
+                        : `€${Math.round(ceResult.data.selectedWithdrawal).toLocaleString("en-US")}`
+                      : "—"}{" "}
+                    <small>{custom ? "%" : "/ year"}</small>
                   </div>
-                  <span className="withdrawal-status">
-                    ○ &nbsp; See CE chart
+                  <span className="withdrawal-status" role="status">
+                    {"data" in ceResult
+                      ? "Unconstrained CE model"
+                      : ceResult.message}
                   </span>
                 </div>
               </div>
