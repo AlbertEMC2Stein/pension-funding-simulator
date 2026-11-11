@@ -2,6 +2,10 @@
 
 import { useRef, useState } from "react";
 import { useSimulationDraft } from "../SimulationDraftContext";
+import {
+  MANUAL_BATCH_SIZES,
+  type BatchSizeChoice,
+} from "../../lib/options/batch-size";
 import { buildSimulationOptions } from "../../lib/options/simulation-options";
 import {
   Metric,
@@ -1035,6 +1039,28 @@ export function Evaluation() {
                 <option value="monthly">Monthly</option>
                 <option value="fortnightly">Fortnightly</option>
                 <option value="weekly">Weekly</option>
+              </select>
+              <label className="field-label" htmlFor="batch-size">
+                Batch size
+              </label>
+              <select
+                id="batch-size"
+                value={simulation.batchSize}
+                onChange={(event) =>
+                  updateSimulation({
+                    batchSize:
+                      event.target.value === "auto"
+                        ? "auto"
+                        : (Number(event.target.value) as BatchSizeChoice),
+                  })
+                }
+              >
+                <option value="auto">Automatic</option>
+                {MANUAL_BATCH_SIZES.map((size) => (
+                  <option key={size} value={size}>
+                    {size.toLocaleString("en-US")}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="settings-footer">

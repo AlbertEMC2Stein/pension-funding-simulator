@@ -4,6 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { calibrateMarket } from "../../lib/market/calibrate-market";
 import { mortalityFitKeys } from "../../lib/mortality/fit-status";
 import { buildSimulationOptions } from "../../lib/options/simulation-options";
+import {
+  MANUAL_BATCH_SIZES,
+  resolveBatchSize,
+  type BatchSizeChoice,
+} from "../../lib/options/batch-size";
 import type { RunConfigurationInput } from "../../lib/model/simulation/run-configuration";
 import type {
   RunProgress,
@@ -21,7 +26,7 @@ import styles from "./developer.module.css";
 interface CheckRun {
   signature: string;
   phase:
-  "starting" | "running" | "cancelling" | "complete" | "cancelled" | "error";
+    "starting" | "running" | "cancelling" | "complete" | "cancelled" | "error";
   backend?: TensorBackend;
   annualWithdrawal?: number;
   progress?: RunProgress;
@@ -49,11 +54,11 @@ function formatRemainingTime(milliseconds: number): string {
  * The worker owns the validated snapshot; later edits only mark its result old.
  */
 export function SimulationCheck() {
-  const { draft, mortalityFits } = useSimulationDraft();
+  const { draft, setDraft, mortalityFits } = useSimulationDraft();
   const [seed, setSeed] = useState("development-check");
   const [paths, setPaths] = useState("1000");
   const [horizon, setHorizon] = useState("10");
-  const [batch, setBatch] = useState("auto");
+  const batch = draft.simulation.batchSize;
   const [backend, setBackend] = useState<"auto" | TensorBackend>("auto");
   const [run, setRun] = useState<CheckRun | null>(null);
   const workerRef = useRef<Worker | null>(null);
@@ -75,7 +80,7 @@ export function SimulationCheck() {
   const remainingMs =
     run?.progress && run.batchElapsedMs !== undefined
       ? (run.batchElapsedMs / run.progress.completedPaths) *
-      (run.progress.totalPaths - run.progress.completedPaths)
+        (run.progress.totalPaths - run.progress.completedPaths)
       : null;
 
   useEffect(
@@ -130,12 +135,11 @@ export function SimulationCheck() {
       );
     if (!seed.trim()) return fail("Enter a seed for the development check.");
 
-    // Aim for four batches, capped at 2^15 paths to preserve progress updates.
-    const requestedBatch =
-      batch === "auto"
-        ? Math.min(2 ** 15, Math.ceil(pathCount / 4))
-        : Number(batch);
-    const batchSize = Math.min(pathCount, requestedBatch);
+    // The check uses the shared selection with its own development path count.
+    const batchSize = resolveBatchSize(
+      options.options.numerical.batchSize,
+      pathCount,
+    );
     const input: RunConfigurationInput = {
       options: {
         ...options.options,
@@ -320,10 +324,19 @@ export function SimulationCheck() {
           Batch size
           <select
             value={batch}
-            onChange={(event) => setBatch(event.target.value)}
+            onChange={(event) => {
+              const batchSize =
+                event.target.value === "auto"
+                  ? "auto"
+                  : (Number(event.target.value) as BatchSizeChoice);
+              setDraft((current) => ({
+                ...current,
+                simulation: { ...current.simulation, batchSize },
+              }));
+            }}
           >
             <option value="auto">Automatic (up to 32,768)</option>
-            {[4096, 8192, 16384, 32768].map((size) => (
+            {MANUAL_BATCH_SIZES.map((size) => (
               <option key={size} value={size}>
                 {size.toLocaleString("en-US")}
               </option>
@@ -346,9 +359,9 @@ export function SimulationCheck() {
         </label>
       </div>
       <p className={styles.hint}>
-        Uses the simulation time step from the evaluation settings. Automatic
-        batch size aims for four batches and is capped at 32,768 paths. Manual
-        batch sizes are capped at the requested path count.
+        Uses the shared time step and batch-size selection. Automatic batch size
+        aims for four batches and is capped at 32,768 paths. Manual batch sizes
+        are capped at the requested path count.
       </p>
       <div className={styles.actions}>
         <button

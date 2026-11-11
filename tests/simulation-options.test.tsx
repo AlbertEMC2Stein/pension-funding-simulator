@@ -5,6 +5,7 @@ import {
   initialSimulationDraft,
 } from "../src/lib/options/simulation-options";
 import { setCorrelation } from "../src/lib/market/market-calibration";
+import { resolveBatchSize } from "../src/lib/options/batch-size";
 
 test("builds a numerical, independent snapshot from current inputs", () => {
   const draft = initialSimulationDraft();
@@ -72,4 +73,25 @@ test("impoverishment level must be at least one euro and below initial capital",
   }
   draft.investor.impoverishmentLevel = "1";
   assert.equal(buildSimulationOptions(draft).ok, true);
+});
+
+test("batch-size preference is shared in options and resolved for the run's path count", () => {
+  const draft = initialSimulationDraft();
+  let result = buildSimulationOptions(draft);
+  assert.ok(result.ok);
+  assert.equal(result.options.numerical.batchSize, "auto");
+  assert.equal(
+    resolveBatchSize(result.options.numerical.batchSize, 100000),
+    25000,
+  );
+  assert.equal(resolveBatchSize("auto", 200000), 32768);
+
+  draft.simulation.batchSize = 8192;
+  result = buildSimulationOptions(draft);
+  assert.ok(result.ok);
+  assert.equal(result.options.numerical.batchSize, 8192);
+  assert.equal(
+    resolveBatchSize(result.options.numerical.batchSize, 1000),
+    1000,
+  );
 });

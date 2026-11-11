@@ -5,6 +5,7 @@ import {
   type MarketCalibrationDraft,
 } from "../market/market-calibration";
 import { validateCohortYears } from "../mortality/cohort-survival";
+import { MANUAL_BATCH_SIZES, type BatchSizeChoice } from "./batch-size";
 
 /** Editable values remain strings until a snapshot is prepared. Rates are percentages. */
 export interface SimulationDraft {
@@ -25,6 +26,7 @@ export interface SimulationDraft {
     projected: boolean;
     paths: number;
     timeStep: "monthly" | "fortnightly" | "weekly";
+    batchSize: BatchSizeChoice;
   };
 }
 
@@ -59,7 +61,11 @@ export interface SimulationOptions {
       | { mode: "targetRisk"; targetRisk: number }
       | { mode: "customAmount"; annualAmount: number };
   };
-  numerical: { paths: number; timeStep: "monthly" | "fortnightly" | "weekly" };
+  numerical: {
+    paths: number;
+    timeStep: "monthly" | "fortnightly" | "weekly";
+    batchSize: BatchSizeChoice;
+  };
 }
 
 /** Create the initial editable market, investor and numerical settings. Strings preserve incomplete input while editing. */
@@ -82,6 +88,7 @@ export function initialSimulationDraft(): SimulationDraft {
       projected: false,
       paths: 10000,
       timeStep: "monthly",
+      batchSize: "auto",
     },
   };
 }
@@ -178,6 +185,11 @@ export function buildSimulationOptions(
     errors.push("Annual withdrawal must be non-negative.");
   if (!Number.isSafeInteger(simulation.paths) || simulation.paths <= 0)
     errors.push("Number of paths must be a positive integer.");
+  if (
+    simulation.batchSize !== "auto" &&
+    !MANUAL_BATCH_SIZES.some((size) => size === simulation.batchSize)
+  )
+    errors.push("Select a supported batch size.");
   if (errors.length || !marketResult.ok) return { ok: false, errors };
 
   const maleWeight =
@@ -215,7 +227,11 @@ export function buildSimulationOptions(
                 annualAmount: simulation.withdrawalEuros,
               },
       },
-      numerical: { paths: simulation.paths, timeStep: simulation.timeStep },
+      numerical: {
+        paths: simulation.paths,
+        timeStep: simulation.timeStep,
+        batchSize: simulation.batchSize,
+      },
     },
   };
 }
