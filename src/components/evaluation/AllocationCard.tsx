@@ -12,9 +12,12 @@ import type { RiskWithdrawalResult } from "./RiskWithdrawalChart";
 function AllocationPlot({
   data,
   assetNames,
+  startingCapital,
 }: {
   data: AllocationData;
   assetNames: readonly string[];
+  /** At retirement only, when starting capital is within the plotted interval. */
+  startingCapital: number | null;
 }) {
   const element = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState("light");
@@ -94,6 +97,22 @@ function AllocationPlot({
             gridcolor: grid,
             automargin: true,
           },
+          shapes:
+            startingCapital === null
+              ? []
+              : [
+                  {
+                    type: "line",
+                    xref: "x",
+                    yref: "paper",
+                    x0: startingCapital,
+                    x1: startingCapital,
+                    y0: 0,
+                    y1: 1,
+                    layer: "between",
+                    line: { color: text, width: 1.5, dash: "dot" },
+                  },
+                ],
           showlegend: false,
         },
         {
@@ -125,7 +144,7 @@ function AllocationPlot({
       disposed = true;
       cleanup?.();
     };
-  }, [data, assetNames, theme]);
+  }, [data, assetNames, startingCapital, theme]);
 
   return (
     <>
@@ -154,6 +173,12 @@ function AllocationPlot({
           <span className="allocation-risk-free" aria-hidden="true" />
           Risk-free asset
         </li>
+        {startingCapital !== null && (
+          <li>
+            <span className="allocation-starting-capital" aria-hidden="true" />
+            Starting capital (t = 0)
+          </li>
+        )}
       </ul>
     </>
   );
@@ -203,6 +228,13 @@ export function AllocationCard({
   const timeLimit = endpoint === null ? null : allocationTimeLimit(endpoint);
   const selectedTime =
     timeLimit === null ? null : (timeLimit * timePercent) / 100;
+  const startingCapital =
+    "data" in result && selectedTime === 0 ? result.data.initialCapital : null;
+  const startingCapitalVisible =
+    startingCapital !== null &&
+    "data" in chart &&
+    startingCapital >= chart.data.impoverishmentLevel &&
+    startingCapital <= chart.data.safeLevel;
 
   return (
     <article className="small-card">
@@ -242,7 +274,16 @@ export function AllocationCard({
       </div>
       {"data" in chart ? (
         <>
-          <AllocationPlot data={chart.data} assetNames={assetNames} />
+          <AllocationPlot
+            data={chart.data}
+            assetNames={assetNames}
+            startingCapital={startingCapitalVisible ? startingCapital : null}
+          />
+          {startingCapital !== null && !startingCapitalVisible && (
+            <p className="chart-disclaimer">
+              Starting capital is outside the displayed wealth interval.
+            </p>
+          )}
           <p className="chart-disclaimer">
             The lines approach the impoverishment level from above; the policy
             stops at that level. Negative fractions indicate short positions or

@@ -60,3 +60,16 @@ test("projected allocation remains unavailable until the projected policy exists
   assert.match(html, /projected allocation is not implemented/);
   assert.match(html, /disabled/);
 });
+
+test("allocation identifies starting capital at retirement", () => {
+  const data = makeChartData(model, 150000, { mode: "targetRisk", risk: 0.25 });
+  const html = renderToStaticMarkup(
+    <AllocationCard
+      result={{ model, data }}
+      projected={false}
+      assetNames={["One", "Two"]}
+    />,
+  );
+
+  assert.match(html, /Starting capital \(t = 0\)/);
+});

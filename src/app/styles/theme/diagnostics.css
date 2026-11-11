@@ -131,6 +131,11 @@ table.capital-table {
   border-top: 2px dashed var(--text-secondary);
 }
 
+.allocation-legend .allocation-starting-capital {
+  height: 0;
+  border-top: 2px dotted var(--text-secondary);
+}
+
 .risk-section-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr));
