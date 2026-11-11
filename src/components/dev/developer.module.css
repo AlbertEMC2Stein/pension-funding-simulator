@@ -7,6 +7,51 @@
   align-items: start;
 }
 
+.wide {
+  grid-column: 1 / -1;
+}
+
+.simulationForm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 165px), 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.simulationForm label {
+  display: grid;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.simulationForm input,
+.simulationForm select {
+  width: 100%;
+  min-width: 0;
+}
+
+.hint {
+  margin-top: 14px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.runStatus {
+  margin-top: 20px;
+  color: var(--text-secondary);
+}
+
+.runStatus progress {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
 .code,
 .log {
   max-height: 380px;

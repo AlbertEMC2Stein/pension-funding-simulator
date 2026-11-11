@@ -5,7 +5,11 @@ import { useSimulationDraft } from "../SimulationDraftContext";
 import { buildMarketOptions } from "../../lib/options/simulation-options";
 import { calibrateMarket } from "../../lib/market/calibrate-market";
 import type { CeFit, GmFit } from "../../lib/mortality/mortality-fitting";
-import { ceFitStatus, type CeFitStatus } from "../../lib/mortality/fit-status";
+import {
+  ceFitStatus,
+  mortalityFitKeys,
+  type CeFitStatus,
+} from "../../lib/mortality/fit-status";
 import {
   cohortSurvival,
   loadCohort,
@@ -187,14 +191,9 @@ export function CohortChart({
   onCeFitStatusChange: (status: CeFitStatus) => void;
 }) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
-  const { draft } = useSimulationDraft();
+  const { draft, mortalityFits, setMortalityFits } = useSimulationDraft();
   const workerRef = useRef<Worker | null>(null);
-  const [gmResult, setGmResult] = useState<{ key: string; fit: GmFit } | null>(
-    null,
-  );
-  const [ceResult, setCeResult] = useState<{ key: string; fit: CeFit } | null>(
-    null,
-  );
+  const { gm: gmResult, ce: ceResult } = mortalityFits;
   const [fitErrors, setFitErrors] = useState<{ gm?: string; ce?: string }>({});
   const [running, setRunning] = useState<{
     gmKey: string;
@@ -210,7 +209,6 @@ export function CohortChart({
   const valid = years.valid;
   // A changed key immediately hides old data, even before the next effect runs.
   const key = `${birthYear}/${mortality}/${longevity}`;
-  const gmKey = `${key}/${retirementYear}/${mortality === "custom" ? maleWeight : "single"}`;
   const marketInput = buildMarketOptions(draft.market);
   const marketResult = marketInput.ok
     ? calibrateMarket(marketInput.market)
@@ -219,9 +217,14 @@ export function CohortChart({
     marketResult?.ok && marketResult.market.paperAssumptions.positiveRho
       ? marketResult.market
       : null;
-  const ceKey = market
-    ? `${gmKey}/${market.realRiskFreeRate}/${market.rho}`
-    : null;
+  const { gm: gmKey, ce: ceKey } = mortalityFitKeys({
+    birthYear,
+    retirementYear,
+    mortality,
+    longevity,
+    maleWeight,
+    market,
+  });
   // A completed CE fit is current only for the exact cohort and market inputs
   // it used. In particular, an older run finishing cannot clear a stale badge.
   useEffect(() => {
@@ -322,8 +325,7 @@ export function CohortChart({
 
     workerRef.current?.terminate();
     setFitErrors({});
-    setGmResult(null);
-    setCeResult(null);
+    setMortalityFits({ gm: null, ce: null });
     let worker: Worker;
 
     try {
@@ -360,9 +362,15 @@ export function CohortChart({
           total: message.total,
         });
       else if (message.type === "gm")
-        setGmResult({ key: capturedGmKey, fit: message.fit });
+        setMortalityFits((current) => ({
+          ...current,
+          gm: { key: capturedGmKey, fit: message.fit },
+        }));
       else if (message.type === "ce" && capturedCeKey)
-        setCeResult({ key: capturedCeKey, fit: message.fit });
+        setMortalityFits((current) => ({
+          ...current,
+          ce: { key: capturedCeKey, fit: message.fit },
+        }));
       else if (message.type === "error")
         setFitErrors((previous) => ({
           ...previous,

@@ -6,6 +6,13 @@ import {
   type SimulationDraft,
   type SimulationOptions,
 } from "../lib/options/simulation-options";
+import type { CeFit, GmFit } from "../lib/mortality/mortality-fitting";
+
+/** Completed fits and their captured input keys; null means no fit is stored. */
+export interface SharedMortalityFits {
+  gm: { key: string; fit: GmFit } | null;
+  ce: { key: string; fit: CeFit } | null;
+}
 
 /** Shared editable inputs; the eventual worker receives a separate validated snapshot. */
 const Context = createContext<{
@@ -18,6 +25,8 @@ const Context = createContext<{
       options: SimulationOptions;
     } | null>
   >;
+  mortalityFits: SharedMortalityFits;
+  setMortalityFits: React.Dispatch<React.SetStateAction<SharedMortalityFits>>;
 } | null>(null);
 
 /** Provide in-memory editable inputs and the most recently prepared options to descendant panels. Neither value is persisted across reloads. */
@@ -27,9 +36,22 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
     draft: SimulationDraft;
     options: SimulationOptions;
   } | null>(null);
+  const [mortalityFits, setMortalityFits] = useState<SharedMortalityFits>({
+    gm: null,
+    ce: null,
+  });
 
   return (
-    <Context.Provider value={{ draft, setDraft, prepared, setPrepared }}>
+    <Context.Provider
+      value={{
+        draft,
+        setDraft,
+        prepared,
+        setPrepared,
+        mortalityFits,
+        setMortalityFits,
+      }}
+    >
       {children}
     </Context.Provider>
   );

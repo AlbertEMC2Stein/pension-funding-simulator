@@ -16,6 +16,8 @@ export interface RunProgress {
 export interface RunSchedulerOptions {
   /** Backends to try in order; defaults to WebGPU, WebGL, then CPU. */
   backendOrder?: readonly TensorBackend[];
+  /** Called once after the TensorFlow backend has initialized. */
+  onBackendReady?: (backend: TensorBackend) => void;
   /** Called after each completed batch; callback errors stop the run. */
   onProgress?: (progress: RunProgress) => void;
   /** Cancellation is observed between batches, not during a batch. */
@@ -71,6 +73,7 @@ export async function runScheduler(
 
   const backend = await initializeTensorBackend(options.backendOrder);
   checkCancellation(options.signal);
+  options.onBackendReady?.(backend);
 
   const totalPaths = snapshot.options.numerical.paths;
   const batchSize = snapshot.numerical.batchSize;

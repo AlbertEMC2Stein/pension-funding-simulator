@@ -9,6 +9,7 @@ import {
 } from "../../lib/options/simulation-options";
 import { calibrateMarket } from "../../lib/market/calibrate-market";
 import styles from "./developer.module.css";
+import { SimulationCheck } from "./SimulationCheck";
 
 /** One local developer event displayed in the bounded in-memory activity log. */
 interface Activity {
@@ -64,6 +65,7 @@ export default function DeveloperView() {
         description="Inspect the current inputs and recent activity during local development."
       />
       <div className={styles.grid}>
+        <SimulationCheck />
         <article className="form-card">
           <div className="card-heading">
             <div>
@@ -80,7 +82,7 @@ export default function DeveloperView() {
           </div>
           <p>
             Real annual parameters, covariance, Merton direction and rho. These
-            values are not yet connected to simulation or mortality results.
+            The mortality fit and worker check use the calibrated market.
           </p>
           {!marketInput.ok ? (
             <ul className={styles.errors}>
@@ -163,7 +165,8 @@ export default function DeveloperView() {
             <>
               <p>
                 Captured when Run simulation was last requested. This snapshot
-                does not change as you edit inputs; no simulation has run yet.
+                does not change as you edit inputs. The worker check above uses
+                its own captured settings.
               </p>
               <pre className={styles.code}>
                 {JSON.stringify(prepared.options, null, 2)}
@@ -189,8 +192,8 @@ export default function DeveloperView() {
             </button>
           </div>
           <p>
-            In memory only; the most recent 100 events are kept. Worker events
-            will be added when simulations are implemented.
+            In memory only; the most recent 100 interface events are kept. The
+            worker check displays its own status above.
           </p>
           {activity.length === 0 ? (
             <p>No events recorded yet.</p>
