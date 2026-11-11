@@ -37,6 +37,7 @@ Stop iterating once requirements are met, appropriate verification passes, and n
 - Keep theme colors easy to change by hand, and design interfaces and text organization with future English/German language support in mind.
 - In mathematical notation, write the exponential base upright as `\mathrm{e}` and use `\ln` for the natural logarithm.
 - Develop the mathematical backend in small, reviewable steps so each feature and its results can be checked before building on it.
+- Design interfaces and implementations around the intended product and its requirements. Tests should exercise that design, not introduce production complexity solely for test convenience.
 - Draft and demonstration code may be more disposable, but production code should meet the readability, structure and documentation requirements above.
 
 ## Research project boundary
