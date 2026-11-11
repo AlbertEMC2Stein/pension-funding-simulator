@@ -81,6 +81,56 @@ table.capital-table {
   color: var(--text-muted);
 }
 
+.allocation-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 4px 0 12px;
+  padding: 0;
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.allocation-time-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.allocation-time-control input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 4px;
+  accent-color: var(--accent);
+}
+
+.allocation-time-control output {
+  flex: none;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.allocation-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.allocation-legend span {
+  width: 18px;
+  height: 2px;
+  flex: none;
+}
+
+.allocation-legend .allocation-risk-free {
+  height: 0;
+  border-top: 2px dashed var(--text-secondary);
+}
+
 .risk-section-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr));

@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { AllocationCard } from "./AllocationCard";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import {
   RiskWithdrawalChart,
@@ -44,33 +45,33 @@ const visualGroups: {
   title: string;
   entries: { id: Visual; label: string }[];
 }[] = [
-    {
-      title: "Withdrawal & capital",
-      entries: [
-        { id: "withdrawal", label: "Withdrawal & risk" },
-        { id: "gm", label: "Estimated GM risk" },
-        { id: "capital", label: "Value of risk-taking" },
-      ],
-    },
-    {
-      title: "Portfolio & policies",
-      entries: [
-        { id: "allocation", label: "Portfolio allocation" },
-        { id: "comparison", label: "Policy comparison" },
-      ],
-    },
-    {
-      title: "Impoverishment & borrowing",
-      entries: [
-        { id: "timing", label: "Impoverishment timing" },
-        { id: "borrowing", label: "Borrowing exposure" },
-      ],
-    },
-    {
-      title: "Other",
-      entries: [{ id: "trajectories", label: "Illustrative trajectories" }],
-    },
-  ];
+  {
+    title: "Withdrawal & capital",
+    entries: [
+      { id: "withdrawal", label: "Withdrawal & risk" },
+      { id: "gm", label: "Estimated GM risk" },
+      { id: "capital", label: "Value of risk-taking" },
+    ],
+  },
+  {
+    title: "Portfolio & policies",
+    entries: [
+      { id: "allocation", label: "Portfolio allocation" },
+      { id: "comparison", label: "Policy comparison" },
+    ],
+  },
+  {
+    title: "Impoverishment & borrowing",
+    entries: [
+      { id: "timing", label: "Impoverishment timing" },
+      { id: "borrowing", label: "Borrowing exposure" },
+    ],
+  },
+  {
+    title: "Other",
+    entries: [{ id: "trajectories", label: "Illustrative trajectories" }],
+  },
+];
 
 /**
  * Placeholder GM-risk comparison. `projected` only reveals the additional
@@ -302,53 +303,6 @@ export function CapitalCard({ comparison }: { comparison: CapitalComparison }) {
   );
 }
 
-/** Draw the example allocation graphic, independent of market editor inputs. */
-function AllocationCard() {
-  return (
-    <article className="small-card">
-      <div className="card-heading">
-        <div>
-          <span className="tiny-label">AT A GLANCE</span>
-          <h3>Portfolio allocation</h3>
-        </div>
-        <span className="chip">NOT CALCULATED</span>
-      </div>
-      <p>How the allocation may change with wealth.</p>
-      <svg
-        className="mini-chart"
-        viewBox="0 0 350 95"
-        role="img"
-        aria-label="Illustrative allocation chart"
-      >
-        <path
-          d="M0 18 H350 M0 48 H350 M0 78 H350"
-          stroke="#e8eeea"
-          fill="none"
-        />
-        <path
-          d="M0 80 C75 79 115 69 170 58 S275 34 350 22 L350 80Z"
-          fill="#82b8aa"
-        />
-        <path
-          d="M0 80 C85 79 130 75 190 66 S290 53 350 49 L350 80Z"
-          fill="#275e59"
-        />
-      </svg>
-      <div className="legend">
-        <span>
-          <i className="teal" /> Equities
-        </span>
-        <span>
-          <i className="sage" /> Bonds
-        </span>
-        <span>
-          <i className="pale" /> Risk-free
-        </span>
-      </div>
-    </article>
-  );
-}
-
 /**
  * Demonstrate the age, perspective and chart-type controls using fixed SVG
  * shapes. The conditional curve and probabilities are not calculated yet.
@@ -576,6 +530,10 @@ export function Evaluation() {
   const { draft, setDraft, prepared, setPrepared } = useSimulationDraft();
   const ceResult = useRiskWithdrawalResult();
   const feasibility = evaluateGlobalFeasibility(ceResult);
+  const assetNames = useMemo(
+    () => draft.market.assets.map((asset) => asset.name.trim()),
+    [draft.market.assets],
+  );
   const feasibilityThreshold = findFeasibilityThreshold(ceResult);
   const simulation = draft.simulation;
   const [errors, setErrors] = useState<string[]>([]);
@@ -669,8 +627,8 @@ export function Evaluation() {
       </PageHeading>
       <PreviewBanner>
         <strong>You&apos;re exploring a design draft.</strong> The CE withdrawal
-        chart, capital comparison and global feasibility diagnostic use your
-        current inputs and fitted model. Other results remain illustrative
+        chart, allocation, capital comparison and feasibility diagnostic use
+        your current inputs and fitted model. Other results remain illustrative
         placeholders.
       </PreviewBanner>
       {errors.length > 0 && (
@@ -706,9 +664,9 @@ export function Evaluation() {
               <span>Retirement age</span>
               <strong>
                 {/^\d{4}$/.test(draft.investor.birthYear) &&
-                  /^\d{4}$/.test(draft.investor.retirementYear)
+                /^\d{4}$/.test(draft.investor.retirementYear)
                   ? Number(draft.investor.retirementYear) -
-                  Number(draft.investor.birthYear)
+                    Number(draft.investor.birthYear)
                   : "—"}{" "}
                 <small>years</small>
               </strong>
@@ -780,8 +738,9 @@ export function Evaluation() {
               </div>
               <p className="visual-picker-note">
                 Mortality fit is shown in Investor & mortality. The CE chart,
-                capital comparison and global feasibility are calculated when
-                available. Other results remain illustrative placeholders.
+                allocation, capital comparison and global feasibility are
+                calculated when available. Other results remain illustrative
+                placeholders.
               </p>
             </div>
           )}
@@ -793,7 +752,13 @@ export function Evaluation() {
             />
           )}
           <div className="lower-grid">
-            {visuals.allocation && <AllocationCard />}
+            {visuals.allocation && (
+              <AllocationCard
+                result={ceResult}
+                projected={projected}
+                assetNames={assetNames}
+              />
+            )}
             {visuals.comparison && (
               <article className="small-card">
                 <div className="card-heading">
@@ -917,11 +882,11 @@ export function Evaluation() {
                 onChange={(event) =>
                   custom
                     ? updateSimulation({
-                      withdrawalEuros: Number(event.target.value),
-                    })
+                        withdrawalEuros: Number(event.target.value),
+                      })
                     : updateSimulation({
-                      targetRiskPercent: Number(event.target.value),
-                    })
+                        targetRiskPercent: Number(event.target.value),
+                      })
                 }
               />
               <div className="range-ends">
