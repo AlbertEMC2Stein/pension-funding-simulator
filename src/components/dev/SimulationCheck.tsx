@@ -50,7 +50,7 @@ function formatRemainingTime(milliseconds: number): string {
 }
 
 /**
- * Run the grid-only prototype from current inputs and current mortality fits.
+ * Run the bridge-corrected prototype from current inputs and current mortality fits.
  * The worker owns the validated snapshot; later edits only mark its result old.
  */
 export function SimulationCheck() {
@@ -150,9 +150,9 @@ export function SimulationCheck() {
       numerical: { seed, horizonYears, batchSize, recordTrajectories: false },
       versions: {
         schema: "prototype-1",
-        model: "compatible-ce-grid-1",
+        model: "compatible-ce-1",
         randomGenerator: "cyrb128-sfc32-box-muller-1",
-        simulationAlgorithm: "tensorflow-grid-1",
+        simulationAlgorithm: "tensorflow-bridge-1",
       },
       provenance: {
         mortalityData: `Current cohort fit: ${keys.gm}`,
@@ -277,7 +277,7 @@ export function SimulationCheck() {
     <article className={`form-card ${styles.wide}`}>
       <div className="card-heading">
         <div>
-          <span className="tiny-label">DEVELOPMENT · GRID-ONLY PROTOTYPE</span>
+          <span className="tiny-label">DEVELOPMENT · BRIDGE PROTOTYPE</span>
           <h3>Simulation worker check</h3>
         </div>
         {run && (
@@ -288,8 +288,8 @@ export function SimulationCheck() {
       </div>
       <p>
         Runs the current market and investor settings with their current GM and
-        CE fits. Grid hits ignore mortality and between-step crossings; they are
-        not lifetime-risk estimates.
+        CE fits. Approximate bridge hits include between-step crossings but
+        ignore mortality; they are not lifetime-risk estimates.
       </p>
       <div className={styles.simulationForm}>
         <label>
@@ -435,9 +435,10 @@ export function SimulationCheck() {
           {run.result && (
             <p>
               {run.result.completedPaths.toLocaleString("en-US")} paths
-              completed · {run.result.observedGridHits.toLocaleString("en-US")}{" "}
-              observed grid hits · {((run.elapsedMs ?? 0) / 1000).toFixed(2)}{" "}
-              seconds. This count is not a lifetime-risk estimate.
+              completed · {run.result.observedHits.toLocaleString("en-US")}{" "}
+              approximate bridge hits ·{" "}
+              {((run.elapsedMs ?? 0) / 1000).toFixed(2)} seconds. This count is
+              not a lifetime-risk estimate.
             </p>
           )}
         </div>

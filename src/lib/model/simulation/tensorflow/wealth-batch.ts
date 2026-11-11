@@ -4,6 +4,9 @@ import { assertRunSnapshot, type RunSnapshot } from "../run-configuration";
 import { generateTimeGrid } from "../time-grid";
 import { prepareWealthGrid } from "../prepared-grid";
 import type { RandomStream } from "../random";
+import { detectCeImpoverishment } from "./ce-impoverishment-bridge";
+import { createTensorBridgeDraws } from "./bridge-random";
+import type { BridgeDraws } from "./bridge-hit";
 
 /** Deterministic grid experiment; each step supplies asset noise for all paths. */
 export interface TensorWealthBatchInput {
@@ -31,20 +34,24 @@ export interface TensorWealthBatchInput {
         step: number,
         timeStepYears: number,
       ) => readonly number[] | tf.Tensor2D);
+  /** Create independent auxiliary bridge draws inside each step's tensor scope. */
+  bridgeDraws: (step: number) => BridgeDraws;
 }
 
-/** Final Float32 grid states and the first observed grid-hit indices for one supplied-increment batch. */
+/** Final stopped wealth and approximate first-passage observations for one batch. */
 export interface TensorWealthBatchResult {
-  /** Final grid wealth in real euros, retained at the observed hit if stopped. */
+  /** Final wealth in real euros, stopped at the impoverishment level after a hit. */
   finalWealth: Float32Array;
-  /** -1 means no observed hit; otherwise this is the first hit's grid index. */
-  firstGridHit: Int32Array;
+  /** -1 means no hit; otherwise the grid index at the end of the hit interval. */
+  firstHitStep: Int32Array;
+  /** Approximate years after retirement, or -1 when no hit occurred. */
+  firstHitTime: Float32Array;
 }
 
 /**
  * Internal batched counterpart of advanceUnconstrainedWealth. This accepts
  * supplied increments so it can be checked against the double-precision scalar
- * reference. It records grid hits only and performs no bridge detection.
+ * reference. A local bridge approximates within-step first-passage times.
  * This low-level test harness trusts its inputs; production callers must use
  * simulateTensorBatch. Initialize a backend before calling. The caller
  * owns the returned arrays; this function disposes all tensors it creates.
@@ -60,6 +67,7 @@ export async function simulateTensorWealthBatch(
     pathCount,
     times,
     increments,
+    bridgeDraws,
   } = input;
   const { initialCapital, impoverishmentLevel: threshold } = investor;
   const { realRiskFreeRate: r, mertonDirection } = market;
@@ -81,6 +89,7 @@ export async function simulateTensorWealthBatch(
   // Tensor state survives between steps; tidy releases each step's temporaries.
   let wealth: tf.Tensor1D = tf.fill([count], initialCapital, "float32");
   let firstHit: tf.Tensor1D = tf.fill([count], -1, "int32");
+  let firstHitTime: tf.Tensor1D = tf.fill([count], -1, "float32");
   const direction = tf.tensor2d([...mertonDirection], [assets, 1]);
 
   try {
@@ -96,9 +105,8 @@ export async function simulateTensorWealthBatch(
             ? increments(step, dt)
             : increments[step];
 
-        // `active` excludes paths that have already reached the impoverishment
-        // level on the grid; `risky` selects x < x_safe(t) for each path.
-        const active = firstHit.equal(-1);
+        // Previously stopped paths do not participate in another crossing.
+        const active = firstHit.equal(-1) as tf.Tensor1D;
         const risky = wealth.less(prepared.currentBoundary);
 
         // z has shape [paths, assets] and covariance Sigma * dt. Multiplying
@@ -138,53 +146,86 @@ export async function simulateTensorWealthBatch(
             .mul(prepared.riskFreeAnnuityFactor),
         );
 
-        // Choose the appropriate update and freeze paths with a prior grid hit.
-        const nextWealth = tf.where(
+        // Choose the appropriate update and freeze paths with a prior hit.
+        const proposedWealth = tf.where(
           active,
           tf.where(risky, riskyWealth, safeWealth),
           wealth,
         ) as tf.Tensor1D;
 
-        // Record only the first observed grid point with X <= x_imp. This is
-        // not a continuous-time first-passage or Brownian-bridge calculation.
+        // Apply the CE-specific coordinate adapter to the proposed step. The
+        // policy-independent primitive detects and times the first crossing.
+        const crossing = detectCeImpoverishment({
+          currentWealth: wealth,
+          proposedWealth,
+          active,
+          impoverishmentLevel: threshold,
+          currentSafeBoundary: prepared.currentBoundary,
+          nextSafeBoundary: prepared.nextBoundary,
+          timeStepYears: dt,
+          logGapVarianceRate: model.market.rho / (delta - 1) ** 2,
+          draws: bridgeDraws(step),
+        });
+        const nextWealth = tf.where(
+          crossing.hit,
+          tf.fill([count], threshold),
+          proposedWealth,
+        ) as tf.Tensor1D;
         const nextHit = tf.where(
-          active.logicalAnd(nextWealth.lessEqual(threshold)),
+          crossing.hit,
           tf.fill([count], step + 1, "int32"),
           firstHit,
         ) as tf.Tensor1D;
+        const nextHitTime = tf.where(
+          crossing.hit,
+          crossing.fraction.mul(dt).add(times[step]),
+          firstHitTime,
+        ) as tf.Tensor1D;
 
-        return { wealth: nextWealth, firstHit: nextHit };
+        return {
+          wealth: nextWealth,
+          firstHit: nextHit,
+          firstHitTime: nextHitTime,
+        };
       });
 
       // Retain only the new states; all intermediate tensors were released by tidy.
       wealth.dispose();
       firstHit.dispose();
+      firstHitTime.dispose();
       wealth = next.wealth;
       firstHit = next.firstHit;
+      firstHitTime = next.firstHitTime;
     }
 
     // Read back once after the batch; the returned arrays are caller-owned.
-    const [wealthData, hitData] = await Promise.all([
+    const [wealthData, hitData, hitTimeData] = await Promise.all([
       wealth.data(),
       firstHit.data(),
+      firstHitTime.data(),
     ]);
 
-    if (Array.from(wealthData).some((value) => !Number.isFinite(value)))
+    if (
+      Array.from(wealthData).some((value) => !Number.isFinite(value)) ||
+      Array.from(hitTimeData).some((value) => !Number.isFinite(value))
+    )
       throw new RangeError("Tensor simulation produced a non-finite result.");
 
     return {
       finalWealth: Float32Array.from(wealthData),
-      firstGridHit: Int32Array.from(hitData),
+      firstHitStep: Int32Array.from(hitData),
+      firstHitTime: Float32Array.from(hitTimeData),
     };
   } finally {
     wealth.dispose();
     firstHit.dispose();
+    firstHitTime.dispose();
     direction.dispose();
   }
 }
 
 /**
- * Simulate one grid-only batch from a validated snapshot, consuming the supplied
+ * Simulate one bridge-corrected batch from a validated snapshot, consuming the supplied
  * random stream in time-major, path-major, asset-major order. The run coordinator
  * owns the stream and must initialize it once from the snapshot seed; this
  * function never resets it. `pathCount` is the actual size of this batch, which
@@ -240,6 +281,7 @@ export async function simulateTensorBatch(
           .matMul(factor, false, true)
           .mul(Math.sqrt(dt)) as tf.Tensor2D;
       },
+      bridgeDraws: () => createTensorBridgeDraws(pathCount, stream),
     });
   } finally {
     factor.dispose();

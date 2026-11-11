@@ -24,16 +24,18 @@ export interface RunSchedulerOptions {
   signal?: AbortSignal;
 }
 
-/** Aggregated grid observations; these are not mortality-weighted risk estimates. */
+/** Approximate bridge observations; these are not mortality-weighted risk estimates. */
 export interface RunSchedulerResult {
   backend: TensorBackend;
   completedPaths: number;
   completedBatches: number;
   /** Years after retirement, including time zero. */
   times: readonly number[];
-  /** Number of paths first observed impoverished at each corresponding grid time. */
-  firstGridHitCounts: readonly number[];
-  observedGridHits: number;
+  /** First hits in each interval, assigned to its ending grid index. */
+  firstHitCounts: readonly number[];
+  observedHits: number;
+  /** Approximate first-hit times in years; -1 denotes no hit by the horizon. */
+  firstHitTimes: Float32Array;
 }
 
 /** Throw a recognizable cancellation error before starting another batch. */
@@ -52,8 +54,8 @@ function yieldToEventLoop(): Promise<void> {
  * One caller-owned stream is seeded once and consumed across batches; the last
  * batch contains only the remaining paths. Progress is reported after completed
  * batches. Cancellation and errors reject the run rather than return partial
- * results. This grid-only prototype does not retain trajectories, detect
- * between-step crossings or calculate mortality-weighted probabilities.
+ * results. This prototype retains approximate first-hit times, but not full
+ * trajectories, and does not calculate mortality-weighted probabilities.
  *
  * Repeating the same snapshot with the same backend and batch sequence uses
  * the same random draws. Changing batch size can change their path assignment;
@@ -82,11 +84,12 @@ export async function runScheduler(
     snapshot.numerical.horizonYears,
     snapshot.options.numerical.timeStep,
   );
-  const firstGridHitCounts = Array<number>(times.length).fill(0);
+  const firstHitCounts = Array<number>(times.length).fill(0);
+  const firstHitTimes = new Float32Array(totalPaths);
   const stream = createRandomStream(snapshot.numerical.seed);
   let completedPaths = 0;
   let completedBatches = 0;
-  let observedGridHits = 0;
+  let observedHits = 0;
 
   while (completedPaths < totalPaths) {
     checkCancellation(options.signal);
@@ -94,10 +97,12 @@ export async function runScheduler(
     const batch = await simulateTensorBatch(snapshot, pathCount, stream);
     checkCancellation(options.signal);
 
-    for (const hitIndex of batch.firstGridHit) {
+    firstHitTimes.set(batch.firstHitTime, completedPaths);
+
+    for (const hitIndex of batch.firstHitStep) {
       if (hitIndex >= 0) {
-        firstGridHitCounts[hitIndex] += 1;
-        observedGridHits += 1;
+        firstHitCounts[hitIndex] += 1;
+        observedHits += 1;
       }
     }
 
@@ -122,7 +127,8 @@ export async function runScheduler(
     completedPaths,
     completedBatches,
     times,
-    firstGridHitCounts,
-    observedGridHits,
+    firstHitCounts,
+    observedHits,
+    firstHitTimes,
   };
 }

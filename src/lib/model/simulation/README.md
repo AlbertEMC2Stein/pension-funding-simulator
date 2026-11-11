@@ -2,9 +2,9 @@
 
 This directory contains an initial scalar reference and a TensorFlow.js batch
 prototype for the unconstrained CE wealth process. The TensorFlow prototype is
-available through a worker in the developer panel. It reports impoverishment
-observed at grid points, not continuous first-passage events, and does not
-compute mortality-weighted risk.
+available through a worker in the developer panel. It estimates first-passage
+times with a local bridge approximation and does not yet compute
+mortality-weighted risk.
 
 Suggested order:
 
@@ -33,23 +33,25 @@ Suggested order:
    and `prepared-grid.ts` remain shared
    between the reference and TensorFlow implementations.
 5. **`tensorflow/run-scheduler.ts`** initializes a backend and runs the whole
-   snapshot in batches using one seeded stream. It aggregates first observed
-   grid-hit counts, reports progress after each batch, and can cancel between
-   batches. It currently rejects trajectory recording and does not calculate
-   mortality-weighted risk or continuous-time first-passage probabilities.
-6. **`tensorflow/bridge-hit.ts`** is a standalone, policy-independent
+   snapshot in batches using one seeded stream. It retains approximate
+   first-hit times, aggregates counts by hit interval, reports progress after
+   each batch, and can cancel between batches. It currently rejects trajectory
+   recording and does not calculate mortality-weighted risk.
+6. **`tensorflow/bridge-hit.ts`** is a policy-independent
    single-boundary bridge primitive. It accepts signed endpoint distances,
    step variance and caller-supplied draws, and returns hit masks and
    first-hit fractions. Inputs and outputs are caller-owned tensors; temporary
-   tensors are disposed inside the primitive. It is not connected to the wealth
-   simulator yet. Curved boundaries and policy-specific coordinate conversions
-   require separate approximations and validation.
+   tensors are disposed inside the primitive. The CE-specific adapter
+   `tensorflow/ce-impoverishment-bridge.ts` converts each wealth step into
+   bridge coordinates, using a linearized log boundary or a frozen wealth
+   diffusion at the CE endpoint. These are local approximations.
 
 The TensorFlow batch draws seeded standard normals on the CPU into a flat
 Float32 buffer at each step. TensorFlow then applies the retained covariance
 factor to all paths with a batched matrix multiplication on the selected
-backend. This preserves the existing random stream but still requires a CPU
-loop and one upload per step; GPU random generation is not implemented.
+backend. Auxiliary bridge draws use fresh values from the same stream. This
+still requires CPU loops and uploads per step; GPU random generation is not
+implemented.
 
 The provisional increment convention is asset-ordered return noise with
 covariance `Σ × dt`: its volatility and time-step scaling have already been
@@ -60,11 +62,11 @@ the validated snapshot; the analytical model's threshold is derived from that
 same investor input rather than maintained as a separate editable value.
 All paths in a batch share one investor's initial capital. The tensor backend
 creates the path-state vector internally from that amount and the batch size.
-The snapshot and batch result format are not stable. A finite grid alone does
-not detect all within-step crossings; first-passage and mortality estimates,
-projection and Monte Carlo intervals are later work. CPU
-TensorFlow has a small deterministic comparison against the scalar reference;
-WebGPU, browser fallback, GPU precision and performance have not been verified.
+The snapshot and batch result format are not stable. Bridge-detected times
+remain approximate for a curved boundary. Mortality-weighted estimates,
+projection and Monte Carlo intervals are later work. CPU TensorFlow has
+deterministic bridge checks and an analytical CE risk sanity check; the new
+bridge integration has not been verified on WebGPU.
 
 The TensorFlow scheduler creates one stream from the snapshot seed; each batch
 consumes it without resetting it. Reproducibility currently depends on keeping

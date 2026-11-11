@@ -17,6 +17,7 @@ import {
   standardNormalVector,
 } from "../src/lib/model/simulation/random";
 import { initializeTensorBackend } from "../src/lib/model/simulation/tensorflow/backend";
+import { createTensorBridgeDraws } from "../src/lib/model/simulation/tensorflow/bridge-random";
 import {
   simulateTensorBatch,
   simulateTensorWealthBatch,
@@ -180,6 +181,11 @@ test("TensorFlow CPU batch matches scalar paths with the same supplied increment
       pathCount,
       times,
       increments,
+      bridgeDraws: () => ({
+        hitThreshold: tf.zeros<tf.Rank.R1>([pathCount]),
+        timeNormal: tf.ones<tf.Rank.R1>([pathCount]),
+        timeUniform: tf.zeros<tf.Rank.R1>([pathCount]),
+      }),
     };
     const result = await simulateTensorWealthBatch(input);
 
@@ -198,9 +204,13 @@ test("TensorFlow CPU batch matches scalar paths with the same supplied increment
         },
         () => increments[step++].slice(2 * i, 2 * i + 2),
       );
-      assert.ok(Math.abs(result.finalWealth[i] - path.finalState.wealth) < 0.1);
+      const expectedWealth =
+        path.status === "completed"
+          ? path.finalState.wealth
+          : model.impoverishmentLevel;
+      assert.ok(Math.abs(result.finalWealth[i] - expectedWealth) < 0.1);
       assert.equal(
-        result.firstGridHit[i] < 0 ? "completed" : "impoverished-on-grid",
+        result.firstHitStep[i] < 0 ? "completed" : "impoverished-on-grid",
         path.status,
       );
     }
@@ -210,7 +220,7 @@ test("TensorFlow CPU batch matches scalar paths with the same supplied increment
       increments: (step) => increments[step],
     });
     assert.deepEqual(streamed.finalWealth, result.finalWealth);
-    assert.deepEqual(streamed.firstGridHit, result.firstGridHit);
+    assert.deepEqual(streamed.firstHitStep, result.firstHitStep);
   }
 
   assert.equal(tf.memory().numTensors, before);
@@ -318,10 +328,11 @@ test("snapshot copies and freezes inputs and rejects changed markets and unsuppo
 
       return draws;
     },
+    bridgeDraws: () => createTensorBridgeDraws(3, referenceStream),
   });
   firstBatch.finalWealth.forEach((wealth, i) => {
     assert.ok(Math.abs(wealth - scalarCorrelation.finalWealth[i]) < 0.1);
-    assert.equal(firstBatch.firstGridHit[i], scalarCorrelation.firstGridHit[i]);
+    assert.equal(firstBatch.firstHitStep[i], scalarCorrelation.firstHitStep[i]);
   });
 
   const replay = createRandomStream(tiny.numerical.seed);

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import * as tf from "@tensorflow/tfjs";
 import { initializeTensorBackend } from "../src/lib/model/simulation/tensorflow/backend";
 import { simulateTensorWealthBatch } from "../src/lib/model/simulation/tensorflow/wealth-batch";
 import { simulateWealthPath } from "../src/lib/model/simulation/legacy/wealth-path";
@@ -33,6 +34,11 @@ async function evaluate(
     pathCount,
     times,
     increments,
+    bridgeDraws: () => ({
+      hitThreshold: tf.zeros([pathCount]),
+      timeNormal: tf.ones([pathCount]),
+      timeUniform: tf.zeros([pathCount]),
+    }),
   });
 }
 
@@ -52,17 +58,17 @@ test("TensorFlow matches independently calculated risky and safe one-step values
   const risky = await evaluate(150000, [0, 1], [[0.1, -0.2]]);
   const expectedGap = 50000 * Math.exp(rate - 0.03 + 0.05);
   assertEuros(risky.finalWealth[0], nextBoundary - expectedGap);
-  assert.equal(risky.firstGridHit[0], -1);
+  assert.equal(risky.firstHitStep[0], -1);
 
   // x = 250,000 starts above the boundary and follows the risk-free ODE.
   const safe = await evaluate(250000, [0, 1], [[-2, -2]]);
   assertEuros(safe.finalWealth[0], 300000 - 50000 * Math.exp(rate));
-  assert.equal(safe.firstGridHit[0], -1);
+  assert.equal(safe.firstHitStep[0], -1);
 
   // At the boundary both formulas agree; the implementation chooses risk-free.
   const boundary = await evaluate(200000, [0, 1], [[-2, -2]]);
   assertEuros(boundary.finalWealth[0], nextBoundary);
-  assert.equal(boundary.firstGridHit[0], -1);
+  assert.equal(boundary.firstHitStep[0], -1);
 });
 
 test("TensorFlow freezes only the path with the first observed grid hit", async () => {
@@ -75,10 +81,38 @@ test("TensorFlow freezes only the path with the first observed grid hit", async 
   const afterFirst = await evaluate(150000, [0, 1], [increments[0]], 2);
   const afterSecond = await evaluate(150000, [0, 1, 2], increments, 2);
 
-  assert.deepEqual(Array.from(afterFirst.firstGridHit), [-1, 1]);
-  assert.deepEqual(Array.from(afterSecond.firstGridHit), [-1, 1]);
+  assert.deepEqual(Array.from(afterFirst.firstHitStep), [-1, 1]);
+  assert.deepEqual(Array.from(afterSecond.firstHitStep), [-1, 1]);
   assert.equal(afterSecond.finalWealth[1], afterFirst.finalWealth[1]);
   assert.notEqual(afterSecond.finalWealth[0], afterFirst.finalWealth[0]);
+});
+
+test("batch detects an unobserved crossing, records its time and stops at the threshold", async () => {
+  await initializeTensorBackend(["cpu"]);
+  const base = {
+    market,
+    mortality,
+    annualWithdrawal: withdrawal,
+    investor: { initialCapital: 150000, impoverishmentLevel: threshold },
+    pathCount: 1,
+    times: [0, 1, 2],
+    increments: [
+      [0, 0],
+      [0, 0],
+    ],
+  };
+  const result = await simulateTensorWealthBatch({
+    ...base,
+    bridgeDraws: () => ({
+      hitThreshold: tf.fill([1], 1e6),
+      timeNormal: tf.ones([1]),
+      timeUniform: tf.zeros([1]),
+    }),
+  });
+
+  assert.equal(result.firstHitStep[0], 1);
+  assert.ok(result.firstHitTime[0] > 0 && result.firstHitTime[0] < 1);
+  assertEuros(result.finalWealth[0], threshold);
 });
 
 test("TensorFlow agrees with reference at each grid time with supplied increments", async () => {
@@ -116,7 +150,7 @@ test("TensorFlow agrees with reference at each grid time with supplied increment
       increments.slice(0, end),
     );
     assertEuros(result.finalWealth[0], reference.trajectory![end].wealth);
-    assert.equal(result.firstGridHit[0], -1);
+    assert.equal(result.firstHitStep[0], -1);
   }
 });
 
@@ -126,11 +160,11 @@ test("TensorFlow handles the mortality endpoint for risky and safe starting weal
   // At T the safe boundary equals x_imp. The gap update is evaluated at the
   // endpoint; this does not determine the earlier continuous hit time.
   const risky = await evaluate(150000, [0, 10], [[0, 0]]);
-  const endpointGap = 50000 * Math.exp((rate - 0.03) * 10);
-  assertEuros(risky.finalWealth[0], threshold - endpointGap);
-  assert.equal(risky.firstGridHit[0], 1);
+  assertEuros(risky.finalWealth[0], threshold);
+  assert.equal(risky.firstHitStep[0], 1);
+  assert.ok(risky.firstHitTime[0] >= 0 && risky.firstHitTime[0] <= 10);
 
   const safe = await evaluate(250000, [0, 10], [[0, 0]]);
   assertEuros(safe.finalWealth[0], 200000);
-  assert.equal(safe.firstGridHit[0], -1);
+  assert.equal(safe.firstHitStep[0], -1);
 });

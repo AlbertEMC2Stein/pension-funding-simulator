@@ -1,101 +1,107 @@
 "use client";
 
 import { useState } from "react";
+import * as tf from "@tensorflow/tfjs";
 import { initializeTensorBackend } from "../../lib/model/simulation/tensorflow/backend";
 import { simulateTensorWealthBatch } from "../../lib/model/simulation/tensorflow/wealth-batch";
 import { simulateWealthPath } from "../../lib/model/simulation/legacy/wealth-path";
 
 /** Run a small WebGPU-versus-scalar comparison in the browser. */
 export default function GpuCheckPage() {
-    const [output, setOutput] = useState("Not run yet.");
+  const [output, setOutput] = useState("Not run yet.");
 
-    /** Run both implementations with the same fixed market increments. */
-    async function runCheck() {
-        try {
-            // Supplying only "webgpu" prevents a silent CPU fallback in this check.
-            const backend = await initializeTensorBackend(["webgpu"]);
+  /** Run both implementations with the same fixed market increments. */
+  async function runCheck() {
+    try {
+      // Supplying only "webgpu" prevents a silent CPU fallback in this check.
+      const backend = await initializeTensorBackend(["webgpu"]);
 
-            const r = Math.LN2 / 10;
-            const market = {
-                realRiskFreeRate: r,
-                rho: 0.01,
-                mertonDirection: [0.5, 0.5],
-            };
-            const mortality = {
-                tau: 10,
-                p: 2,
-                kappa: r,
-                lambda: 2 * (2 * r - 0.01),
-            };
-            const investor = {
-                initialCapital: 150_000,
-                impoverishmentLevel: 100_000,
-            };
-            const annualWithdrawal = 300_000 * r;
-            const times = [0, 1, 2];
+      const r = Math.LN2 / 10;
+      const market = {
+        realRiskFreeRate: r,
+        rho: 0.01,
+        mertonDirection: [0.5, 0.5],
+      };
+      const mortality = {
+        tau: 10,
+        p: 2,
+        kappa: r,
+        lambda: 2 * (2 * r - 0.01),
+      };
+      const investor = {
+        initialCapital: 150_000,
+        impoverishmentLevel: 100_000,
+      };
+      const annualWithdrawal = 300_000 * r;
+      const times = [0, 1, 2];
 
-            // One path, two assets, and one increment vector per step.
-            const increments = [
-                [0.1, -0.2],
-                [0.05, 0.02],
-            ];
+      // One path, two assets, and one increment vector per step.
+      const increments = [
+        [0.1, -0.2],
+        [0.05, 0.02],
+      ];
 
-            const gpu = await simulateTensorWealthBatch({
-                market,
-                mortality,
-                investor,
-                annualWithdrawal,
-                pathCount: 1,
-                times,
-                increments,
-            });
+      const gpu = await simulateTensorWealthBatch({
+        market,
+        mortality,
+        investor,
+        annualWithdrawal,
+        pathCount: 1,
+        times,
+        increments,
+        bridgeDraws: () => ({
+          hitThreshold: tf.zeros([1]),
+          timeNormal: tf.zeros([1]),
+          timeUniform: tf.zeros([1]),
+        }),
+      });
 
-            let step = 0;
+      let step = 0;
 
-            const scalar = simulateWealthPath(
-                {
-                    initialStep: {
-                        market,
-                        mortality,
-                        annualWithdrawal,
-                        investor: {
-                            impoverishmentLevel: investor.impoverishmentLevel,
-                            current: {
-                                time: 0,
-                                wealth: investor.initialCapital,
-                            },
-                        },
-                    },
-                    times,
-                    recordTrajectory: false,
-                },
-                () => increments[step++],
-            );
+      const scalar = simulateWealthPath(
+        {
+          initialStep: {
+            market,
+            mortality,
+            annualWithdrawal,
+            investor: {
+              impoverishmentLevel: investor.impoverishmentLevel,
+              current: {
+                time: 0,
+                wealth: investor.initialCapital,
+              },
+            },
+          },
+          times,
+          recordTrajectory: false,
+        },
+        () => increments[step++],
+      );
 
-            const difference = gpu.finalWealth[0] - scalar.finalState.wealth;
+      const difference = gpu.finalWealth[0] - scalar.finalState.wealth;
 
-            setOutput(
-                [
-                    `Backend: ${backend}`,
-                    `Scalar final wealth: ${scalar.finalState.wealth}`,
-                    `WebGPU final wealth: ${gpu.finalWealth[0]}`,
-                    `Difference: ${difference}`,
-                    `Scalar status: ${scalar.status}`,
-                    `WebGPU first grid hit: ${gpu.firstGridHit[0]}`,
-                ].join("\n"),
-            );
-        } catch (error) {
-            setOutput(error instanceof Error ? error.message : String(error));
-        }
+      setOutput(
+        [
+          `Backend: ${backend}`,
+          `Scalar final wealth: ${scalar.finalState.wealth}`,
+          `WebGPU final wealth: ${gpu.finalWealth[0]}`,
+          `Difference: ${difference}`,
+          `Scalar status: ${scalar.status}`,
+          `WebGPU first hit interval: ${gpu.firstHitStep[0]}`,
+        ].join("\n"),
+      );
+    } catch (error) {
+      setOutput(error instanceof Error ? error.message : String(error));
     }
+  }
 
-    return (
-        <main>
-            <h1>WebGPU simulation check</h1>
-            <button type="button" onClick={runCheck}>
-                Run check
-            </button>
-            <pre>{output}</pre>
-        </main>
-    );
+  return (
+    <main>
+      <h1>WebGPU simulation check</h1>
+      <button type="button" onClick={runCheck}>
+        Run check
+      </button>
+      <pre>{output}</pre>
+    </main>
+  );
 }

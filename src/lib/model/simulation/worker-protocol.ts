@@ -15,7 +15,7 @@ export type SimulationWorkerRequest =
     }
   | { type: "cancel"; runId: number };
 
-/** Worker lifecycle messages; results are grid observations, not lifetime risk. */
+/** Worker lifecycle messages; bridge observations are not lifetime risk. */
 export type SimulationWorkerResponse =
   | { type: "prepared"; runId: number; annualWithdrawal: number }
   | { type: "backend"; runId: number; backend: TensorBackend }

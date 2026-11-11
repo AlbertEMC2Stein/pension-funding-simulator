@@ -17,7 +17,7 @@ import {
   type RunProgress,
 } from "../src/lib/model/simulation/tensorflow/run-scheduler";
 
-/** Create a small valid grid-only run with a final partial batch. */
+/** Create a small valid CE run with a final partial batch. */
 function exampleSnapshot(recordTrajectories = false) {
   const draft = initialSimulationDraft();
   draft.simulation.paths = 5;
@@ -73,7 +73,7 @@ function exampleSnapshot(recordTrajectories = false) {
   return createRunSnapshot(input);
 }
 
-test("scheduler runs all paths, reports partial-batch progress and aggregates grid hits", async () => {
+test("scheduler runs all paths, reports partial-batch progress and aggregates bridge hits", async () => {
   const snapshot = exampleSnapshot();
   const progress: RunProgress[] = [];
   const before = tf.memory().numTensors;
@@ -102,16 +102,16 @@ test("scheduler runs all paths, reports partial-batch progress and aggregates gr
 
   for (const count of [2, 2, 1]) {
     const batch = await simulateTensorBatch(snapshot, count, stream);
-    for (const index of batch.firstGridHit)
+    for (const index of batch.firstHitStep)
       if (index >= 0) expected[index] += 1;
   }
 
-  assert.deepEqual(result.firstGridHitCounts, expected);
+  assert.deepEqual(result.firstHitCounts, expected);
   assert.equal(
-    result.observedGridHits,
+    result.observedHits,
     expected.reduce((sum, count) => sum + count, 0),
   );
-  assert.equal(result.observedGridHits, 5);
+  assert.equal(result.observedHits, 5);
   assert.equal(tf.memory().numTensors, before);
 });
 
