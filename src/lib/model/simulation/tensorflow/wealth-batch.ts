@@ -7,7 +7,7 @@ import {
   correlatePreparedIncrement,
   factorPreparedCovariance,
 } from "../matrix";
-import { createRandomStream } from "../random";
+import type { RandomStream } from "../random";
 
 /** Deterministic grid experiment; each step supplies asset noise for all paths. */
 export interface TensorWealthBatchInput {
@@ -29,8 +29,8 @@ export interface TensorWealthBatchInput {
    * [number of paths, number of assets]. A callback avoids retaining all steps.
    */
   increments:
-  | readonly (readonly number[])[]
-  | ((step: number, timeStepYears: number) => readonly number[]);
+    | readonly (readonly number[])[]
+    | ((step: number, timeStepYears: number) => readonly number[]);
 }
 
 /** Final Float32 grid states and the first observed grid-hit indices for one supplied-increment batch. */
@@ -46,7 +46,7 @@ export interface TensorWealthBatchResult {
  * supplied increments so it can be checked against the double-precision scalar
  * reference. It records grid hits only and performs no bridge detection.
  * This low-level test harness trusts its inputs; production callers must use
- * simulateTensorSnapshotBatch. Initialize a backend before calling. The caller
+ * simulateTensorBatch. Initialize a backend before calling. The caller
  * owns the returned arrays; this function disposes all tensors it creates.
  */
 export async function simulateTensorWealthBatch(
@@ -178,12 +178,21 @@ export async function simulateTensorWealthBatch(
 }
 
 /**
- * Simulate one trusted snapshot batch using internal seeded market increments.
- * This is an initial grid-only prototype; separate calls restart the seed and
- * therefore must not yet be combined as independent batches of a larger run.
+ * Simulate one grid-only batch from a validated snapshot, consuming the supplied
+ * random stream in time-major, path-major, asset-major order. The run coordinator
+ * owns the stream and must initialize it once from the snapshot seed; this
+ * function never resets it. `pathCount` is the actual size of this batch, which
+ * can be smaller than the configured batch size for the final batch. As an
+ * internal entry point it trusts the coordinator to supply a valid count and
+ * stream. Initialize a TensorFlow backend before calling.
+ *
+ * Reproducibility currently requires the same seed, batch sizes and call order;
+ * changing batch size can assign different draws to individual paths.
  */
-export async function simulateTensorSnapshotBatch(
+export async function simulateTensorBatch(
   snapshot: RunSnapshot,
+  pathCount: number,
+  stream: RandomStream,
 ): Promise<TensorWealthBatchResult> {
   assertRunSnapshot(snapshot);
   const { market, options, mortality, numerical } = snapshot;
@@ -196,7 +205,6 @@ export async function simulateTensorSnapshotBatch(
   // Factor Sigma = L L^T once. Every step draws independent standard normals
   // and transforms them to Delta Z = L * xi * sqrt(dt) for each path.
   const factor = factorPreparedCovariance(market.covariance);
-  const stream = createRandomStream(numerical.seed);
 
   return simulateTensorWealthBatch({
     market,
@@ -206,12 +214,12 @@ export async function simulateTensorSnapshotBatch(
       impoverishmentLevel: options.investor.impoverishmentLevel,
       initialCapital: options.investor.initialCapital,
     },
-    pathCount: numerical.batchSize,
+    pathCount,
     times,
     increments: (_step, dt) => {
       const batch: number[] = [];
 
-      for (let path = 0; path < numerical.batchSize; path += 1) {
+      for (let path = 0; path < pathCount; path += 1) {
         const normals = Array.from({ length: factor.length }, () =>
           stream.nextStandardNormal(),
         );

@@ -17,7 +17,7 @@ import {
 } from "../src/lib/model/simulation/random";
 import { initializeTensorBackend } from "../src/lib/model/simulation/tensorflow/backend";
 import {
-  simulateTensorSnapshotBatch,
+  simulateTensorBatch,
   simulateTensorWealthBatch,
 } from "../src/lib/model/simulation/tensorflow/wealth-batch";
 import {
@@ -279,10 +279,25 @@ test("snapshot copies and freezes inputs and rejects changed markets and unsuppo
     numerical: { ...input.numerical, horizonYears: 0.25, batchSize: 3 },
   });
   assert.equal(simulateWealthBatch(tiny).paths.length, 3);
-  assert.equal((await simulateTensorSnapshotBatch(tiny)).finalWealth.length, 3);
+  const stream = createRandomStream(tiny.numerical.seed);
+  const firstBatch = await simulateTensorBatch(tiny, 3, stream);
+  const secondBatch = await simulateTensorBatch(tiny, 2, stream);
+  assert.equal(firstBatch.finalWealth.length, 3);
+  assert.equal(secondBatch.finalWealth.length, 2);
+  assert.notEqual(firstBatch.finalWealth[0], secondBatch.finalWealth[0]);
+
+  const replay = createRandomStream(tiny.numerical.seed);
+  assert.deepEqual(
+    (await simulateTensorBatch(tiny, 3, replay)).finalWealth,
+    firstBatch.finalWealth,
+  );
+  assert.deepEqual(
+    (await simulateTensorBatch(tiny, 2, replay)).finalWealth,
+    secondBatch.finalWealth,
+  );
   assert.throws(() => simulateWealthBatch(structuredClone(tiny)), /validated/);
   await assert.rejects(
-    simulateTensorSnapshotBatch(structuredClone(tiny)),
+    simulateTensorBatch(structuredClone(tiny), 1, createRandomStream("test")),
     /validated/,
   );
   assert.throws(

@@ -24,9 +24,10 @@ Suggested order:
 4. **`tensorflow/`** contains backend selection and a batched Float32 analogue
    using supplied increments. Each step's increments may be provided by a
    callback to avoid retaining all time steps. The low-level supplied-increment
-   entry point is a trusted test harness; `simulateTensorSnapshotBatch` accepts
-   a validated snapshot. Initialize the backend first. Tensors are disposed
-   internally; no financial worker is connected yet.
+   entry point is a trusted test harness; `simulateTensorBatch` accepts a
+   validated snapshot, actual batch size and caller-owned random stream.
+   Initialize the backend first. Tensors are disposed internally; no financial
+   worker is connected yet.
 
 The provisional increment convention is asset-ordered return noise with
 covariance `Σ × dt`: its volatility and time-step scaling have already been
@@ -43,9 +44,12 @@ projection, worker execution and Monte Carlo intervals are later work. CPU
 TensorFlow has a small deterministic comparison against the scalar reference;
 WebGPU, browser fallback, GPU precision and performance have not been verified.
 
-Both current batch entry points restart the random stream from the snapshot seed
-on each call. Repeated calls therefore repeat draws and must not yet be combined
-as independent batches. Full-run stream partitioning remains to be specified.
+The TensorFlow batch consumes its caller-owned stream without resetting it. A
+future run coordinator must create that stream once from the snapshot seed and
+use it for successive batches. Reproducibility currently depends on keeping the
+same batch sizes and call order; changing batch size can change which draws are
+assigned to a path. The scalar reference batch still restarts from the snapshot
+seed on each call and must not be combined as independent batches.
 
 Research references for the step are `sections/5_first_passage.tex` and
 `code/utils/+wealthSimulation/advanceWealthStep.m` in the separate research
