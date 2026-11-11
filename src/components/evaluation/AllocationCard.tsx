@@ -285,8 +285,8 @@ export function AllocationCard({
             </p>
           )}
           <p className="chart-disclaimer">
-            The lines approach the impoverishment level from above; the policy
-            stops at that level. Negative fractions indicate short positions or
+            The policy stops when the impoverishment level is reached.
+            Negative fractions indicate short positions or
             borrowing. The slider ends one day before the CE endpoint.
             {timeLimit === 0 &&
               " The endpoint is at most one day away, so the slider is disabled."}
