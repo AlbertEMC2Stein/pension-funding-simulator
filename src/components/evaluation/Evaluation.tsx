@@ -10,6 +10,7 @@ import {
   evaluateGlobalFeasibility,
   type FeasibilityResult,
 } from "./global-feasibility";
+import { findFeasibilityThreshold } from "./feasibility-threshold";
 import {
   calculateCapitalComparison,
   type CapitalComparison,
@@ -43,33 +44,33 @@ const visualGroups: {
   title: string;
   entries: { id: Visual; label: string }[];
 }[] = [
-  {
-    title: "Withdrawal & capital",
-    entries: [
-      { id: "withdrawal", label: "Withdrawal & risk" },
-      { id: "gm", label: "Estimated GM risk" },
-      { id: "capital", label: "Value of risk-taking" },
-    ],
-  },
-  {
-    title: "Portfolio & policies",
-    entries: [
-      { id: "allocation", label: "Portfolio allocation" },
-      { id: "comparison", label: "Policy comparison" },
-    ],
-  },
-  {
-    title: "Impoverishment & borrowing",
-    entries: [
-      { id: "timing", label: "Impoverishment timing" },
-      { id: "borrowing", label: "Borrowing exposure" },
-    ],
-  },
-  {
-    title: "Other",
-    entries: [{ id: "trajectories", label: "Illustrative trajectories" }],
-  },
-];
+    {
+      title: "Withdrawal & capital",
+      entries: [
+        { id: "withdrawal", label: "Withdrawal & risk" },
+        { id: "gm", label: "Estimated GM risk" },
+        { id: "capital", label: "Value of risk-taking" },
+      ],
+    },
+    {
+      title: "Portfolio & policies",
+      entries: [
+        { id: "allocation", label: "Portfolio allocation" },
+        { id: "comparison", label: "Policy comparison" },
+      ],
+    },
+    {
+      title: "Impoverishment & borrowing",
+      entries: [
+        { id: "timing", label: "Impoverishment timing" },
+        { id: "borrowing", label: "Borrowing exposure" },
+      ],
+    },
+    {
+      title: "Other",
+      entries: [{ id: "trajectories", label: "Illustrative trajectories" }],
+    },
+  ];
 
 /**
  * Placeholder GM-risk comparison. `projected` only reveals the additional
@@ -575,6 +576,7 @@ export function Evaluation() {
   const { draft, setDraft, prepared, setPrepared } = useSimulationDraft();
   const ceResult = useRiskWithdrawalResult();
   const feasibility = evaluateGlobalFeasibility(ceResult);
+  const feasibilityThreshold = findFeasibilityThreshold(ceResult);
   const simulation = draft.simulation;
   const [errors, setErrors] = useState<string[]>([]);
   /** Merge a partial control edit into the shared simulation draft while retaining the other settings. */
@@ -704,9 +706,9 @@ export function Evaluation() {
               <span>Retirement age</span>
               <strong>
                 {/^\d{4}$/.test(draft.investor.birthYear) &&
-                /^\d{4}$/.test(draft.investor.retirementYear)
+                  /^\d{4}$/.test(draft.investor.retirementYear)
                   ? Number(draft.investor.retirementYear) -
-                    Number(draft.investor.birthYear)
+                  Number(draft.investor.birthYear)
                   : "—"}{" "}
                 <small>years</small>
               </strong>
@@ -915,11 +917,11 @@ export function Evaluation() {
                 onChange={(event) =>
                   custom
                     ? updateSimulation({
-                        withdrawalEuros: Number(event.target.value),
-                      })
+                      withdrawalEuros: Number(event.target.value),
+                    })
                     : updateSimulation({
-                        targetRiskPercent: Number(event.target.value),
-                      })
+                      targetRiskPercent: Number(event.target.value),
+                    })
                 }
               />
               <div className="range-ends">
@@ -989,6 +991,31 @@ export function Evaluation() {
                   For the unconstrained CE policy. The Merton vector must be
                   componentwise non-negative, with at least one positive entry.
                   Selecting projection does not change this diagnostic.
+                </small>
+              </div>
+              <div className="feasibility-action">
+                <button
+                  type="button"
+                  className="button button-light"
+                  disabled={"message" in feasibilityThreshold}
+                  onClick={() => {
+                    if ("message" in feasibilityThreshold) return;
+
+                    setDraft((current) => ({
+                      ...current,
+                      investor: {
+                        ...current.investor,
+                        impoverishmentLevel: feasibilityThreshold.value,
+                      },
+                    }));
+                  }}
+                >
+                  Make globally feasible
+                </button>
+                <small>
+                  {"message" in feasibilityThreshold
+                    ? feasibilityThreshold.message
+                    : `Approximately €${feasibilityThreshold.amount.toLocaleString("en-US", { maximumFractionDigits: 2 })}. Changes your impoverishment level; ${custom ? "the withdrawal stays fixed" : "the target risk stays fixed and the model-derived withdrawal may change"}.`}
                 </small>
               </div>
             </div>

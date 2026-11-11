@@ -237,6 +237,18 @@ table.capital-table {
   line-height: 1.5;
 }
 
+.feasibility-action {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.feasibility-action small {
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
 .feasibility-status p {
   margin: 7px 0;
 }
