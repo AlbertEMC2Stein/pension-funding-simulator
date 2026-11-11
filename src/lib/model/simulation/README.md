@@ -31,6 +31,11 @@ Suggested order:
    Initialize the backend first. Tensors are disposed internally; no financial
    worker is connected yet. `time-grid.ts` and `prepared-grid.ts` remain shared
    between the reference and TensorFlow implementations.
+5. **`tensorflow/run-scheduler.ts`** initializes a backend and runs the whole
+   snapshot in batches using one seeded stream. It aggregates first observed
+   grid-hit counts, reports progress after each batch, and can cancel between
+   batches. It currently rejects trajectory recording and does not calculate
+   mortality-weighted risk or continuous-time first-passage probabilities.
 
 The TensorFlow batch draws seeded standard normals on the CPU into a flat
 Float32 buffer at each step. TensorFlow then applies the retained covariance
@@ -53,12 +58,11 @@ projection, worker execution and Monte Carlo intervals are later work. CPU
 TensorFlow has a small deterministic comparison against the scalar reference;
 WebGPU, browser fallback, GPU precision and performance have not been verified.
 
-The TensorFlow batch consumes its caller-owned stream without resetting it. A
-future run coordinator must create that stream once from the snapshot seed and
-use it for successive batches. Reproducibility currently depends on keeping the
-same batch sizes and call order; changing batch size can change which draws are
-assigned to a path. The scalar reference batch still restarts from the snapshot
-seed on each call and must not be combined as independent batches.
+The TensorFlow scheduler creates one stream from the snapshot seed; each batch
+consumes it without resetting it. Reproducibility currently depends on keeping
+the same batch sizes and call order; changing batch size can change which draws
+are assigned to a path. The scalar reference batch still restarts from the
+snapshot seed on each call and must not be combined as independent batches.
 
 Research references for the step are `sections/5_first_passage.tex` and
 `code/utils/+wealthSimulation/advanceWealthStep.m` in the separate research
