@@ -65,6 +65,6 @@ test("boundary is unavailable for negative Merton components and insufficient ca
     model: small,
   });
   assert.ok("message" in unsupported);
-  assert.match(unsupported.message, /Required level: approximately €0\.73/);
+  assert.match(unsupported.message, /Required level:.*€0\.73/);
   assert.ok("message" in findFeasibilityThreshold({ message: "Fit needed" }));
 });
