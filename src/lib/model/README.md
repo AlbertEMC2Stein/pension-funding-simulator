@@ -10,8 +10,9 @@ source of truth.
   existing validated-options type. Amounts are euros, not percentages.
 - `analytical/` contains small, independently testable analytical
   calculations, beginning with the safe boundary.
-- `simulation/` is reserved for the financial-path engine and its numerical
-  building blocks. Its algorithms and run snapshot have not been specified.
+- `simulation/` contains the initial run snapshot, numerical foundations and
+  scalar and TensorFlow financial-path prototypes. See its README for their
+  current limitations.
 
 Add a calculation only after recording its definitions, units, domain and
 applicable assumptions against the research sources. Return or surface invalid
