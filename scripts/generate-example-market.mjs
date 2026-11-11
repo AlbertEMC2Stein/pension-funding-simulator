@@ -9,6 +9,7 @@
 // Mulberry32 supplies reproducible pseudo-random values; it is not a source
 // of cryptographic randomness. Box–Muller converts pairs to normal variates.
 let randomState = 20251108;
+/** Advance the seeded pseudo-random generator and return its next uniform draw. */
 function uniform() {
   randomState = (randomState + 0x6d2b79f5) | 0;
   let value = randomState;
@@ -17,6 +18,7 @@ function uniform() {
   return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
 }
 
+/** Transform uniform draws into a pair of independent standard normal samples. */
 function independentNormals() {
   // The first uniform must be nonzero for the natural logarithm.
   let first = 0;

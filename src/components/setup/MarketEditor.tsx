@@ -133,6 +133,7 @@ export function MarketEditor({
       correlations: value.correlations,
     });
   }
+  /** Read and calibrate a selected price CSV, then apply it to the latest market draft. Sequence numbers prevent older asynchronous imports from replacing newer ones. */
   async function importFile(file: File) {
     const sequence = ++importSequence.current;
     setImportError(null);

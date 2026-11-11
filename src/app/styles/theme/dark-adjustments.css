@@ -1,3 +1,5 @@
+/* Dark-theme overrides that need more than a palette substitution. */
+
 /* The original draft uses green text in several components. Give those
    elements explicit dark-theme colors rather than inheriting light-theme ink. */
 :root[data-theme="dark"] .setting-callout {

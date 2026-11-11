@@ -61,6 +61,7 @@ export function initialMarketCalibration(): MarketCalibrationDraft {
   };
 }
 
+/** Supported market-draft edits, including reset and undo actions handled by the parent tab. */
 export type MarketEditAction =
   | { type: "edit"; market: MarketCalibrationDraft }
   | { type: "replace"; market: MarketCalibrationDraft }

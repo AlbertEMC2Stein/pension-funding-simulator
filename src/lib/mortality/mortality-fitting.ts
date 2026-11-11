@@ -7,16 +7,23 @@ import {
 import { nelderMead } from "../numerics/nelder-mead";
 import { survivalKlDivergence } from "./survival-fit-loss";
 
+/** Fitted parameters, survival values and optimizer diagnostics for one mortality model. The selected best start may not have converged. */
 export interface MortalityFit<P> {
   parameters: P;
+  /** Model survival at each input time, in the same order as the target. */
   fittedSurvival: number[];
+  /** KL loss includes the remaining survival tail as a final bin. */
   klDivergence: number;
+  /** Maximum absolute difference between target and fitted survival probabilities. */
   maxSurvivalDifference: number;
+  /** Whether the selected lowest-loss optimizer start met its convergence criterion. */
   converged: boolean;
   starts: number;
   convergedStarts: number;
 }
+/** Gompertz–Makeham fit and its associated optimizer diagnostics. */
 export type GmFit = MortalityFit<GompertzMakehamParameters>;
+/** Market-compatible compactified-exponential fit; deltaMin records its elasticity lower bound. */
 export type CeFit = MortalityFit<
   CompactifiedExponentialParameters & { deltaMin: number }
 >;
@@ -25,6 +32,7 @@ export type CeFit = MortalityFit<
 const positive = (value: number) =>
   Math.exp(Math.max(-50, Math.min(50, value)));
 
+/** Run Nelder–Mead from each supplied starting point and retain the finite result with smallest KL loss. Report progress and convergence independently. */
 function runStarts<P>(
   times: number[],
   target: number[],
@@ -35,6 +43,7 @@ function runStarts<P>(
 ): MortalityFit<P> {
   // Validate target/grid before calling the optimizer.
   survivalKlDivergence(times, target, target);
+  /** Decode optimizer coordinates and evaluate survival KL loss; treat invalid parameter combinations as infinite loss. */
   const objective = (point: number[]) => {
     try {
       const params = decode(point);
@@ -73,7 +82,12 @@ function runStarts<P>(
   };
 }
 
-/** Fit GM to annual cohort survival; log coordinates keep parameters positive. */
+/**
+ * Fit Gompertz–Makeham survival to an annual cohort target using multistart
+ * KL minimization. Times are years after retirement; `target` is aligned with
+ * them. Log coordinates keep parameters positive, and `onProgress` reports
+ * completed optimizer starts. Returns fit quality and convergence diagnostics.
+ */
 export function fitGompertzMakeham(
   times: number[],
   target: number[],
@@ -117,7 +131,12 @@ export function fitGompertzMakeham(
   );
 }
 
-/** Fit the CE law with endpoint and elasticity constrained by the market. */
+/**
+ * Fit a compactified-exponential survival law to the annual target, subject
+ * to the supplied positive real rate `r` and market parameter `rho`. The fitted
+ * endpoint exceeds the last target time and the elasticity meets the market
+ * compatibility bound. Throws for invalid inputs or if every start fails.
+ */
 export function fitCompatibleCe(
   times: number[],
   target: number[],
@@ -137,6 +156,7 @@ export function fitCompatibleCe(
       Math.log(delta),
     ]),
   );
+  /** Convert unconstrained optimizer coordinates to a positive endpoint and CE elasticity compatible with the supplied market. */
   const decode = (point: number[]) => {
     const tau = horizon + positive(point[0]);
     const b0 = r / -Math.expm1(-r * tau);

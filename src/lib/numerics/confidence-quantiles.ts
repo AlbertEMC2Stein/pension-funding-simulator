@@ -50,6 +50,7 @@ function betaFraction(a: number, b: number, x: number): number {
   throw new Error("Could not calculate the Student-t confidence interval.");
 }
 
+/** Evaluate the regularized incomplete beta function, switching sides to improve numerical stability. */
 function regularizedBeta(x: number, a: number, b: number): number {
   if (x <= 0) return 0;
   if (x >= 1) return 1;
@@ -70,6 +71,7 @@ export function studentT95(degreesOfFreedom: number): number {
   if (!Number.isInteger(degreesOfFreedom) || degreesOfFreedom < 1)
     throw new RangeError("Degrees of freedom must be a positive integer.");
   // For t > 0, twice its upper-tail probability is I_{ν/(ν+t²)}(ν/2, 1/2).
+  /** Calculate the two-sided Student-t tail probability for a non-negative critical value. */
   const tail = (t: number) =>
     regularizedBeta(
       degreesOfFreedom / (degreesOfFreedom + t * t),
@@ -125,6 +127,7 @@ function gammaCdf(x: number, shape: number): number {
 export function chiSquare95(degreesOfFreedom: number): [number, number] {
   if (!Number.isInteger(degreesOfFreedom) || degreesOfFreedom < 1)
     throw new RangeError("Degrees of freedom must be a positive integer.");
+  /** Invert the chi-squared cumulative distribution by bracketing and bisection for the requested probability. */
   function quantile(probability: number): number {
     let low = 0;
     let high = Math.max(1, degreesOfFreedom);

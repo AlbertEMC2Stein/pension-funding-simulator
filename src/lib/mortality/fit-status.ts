@@ -1,3 +1,4 @@
+/** Whether the compatible mortality fit is absent, matches current dependencies, or needs review. */
 export type CeFitStatus = "not-fitted" | "current" | "needs-update";
 
 /** Compare a completed fit's captured inputs with the currently usable inputs. */

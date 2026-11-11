@@ -1,3 +1,5 @@
+/* Expandable details, diagnostics, status and small layout refinements. */
+
 @media (max-width: 850px) {
   .nav-label {
     display: none;

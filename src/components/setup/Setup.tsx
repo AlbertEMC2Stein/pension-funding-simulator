@@ -31,8 +31,8 @@ import {
 } from "../../lib/mortality/cohort-survival";
 
 /**
- * Market tab: owns the temporary editable market and shows calibration and
- * stress-test placeholders. Importing market data is not wired yet.
+ * Market tab: coordinates edits, CSV replacement and reset/undo through the
+ * shared draft. The historical stress-test display remains a placeholder.
  */
 function MarketSetup() {
   const [undo, setUndo] = useState<MarketCalibrationDraft | null>(null);
@@ -51,12 +51,14 @@ function MarketSetup() {
   // Enable only after a CSV time-series import has successfully been calibrated.
   // The import placeholder alone does not create a calibration.
   const hasHistoricalCsvCalibration = false;
+  /** Apply a market edit, reset, import or undo while keeping the matching undo state. */
   function applyMarketAction(action: MarketEditAction) {
     const next = updateMarketWithUndo(market, undo, action);
     setUndo(next.undo);
     if (next.market !== market)
       setDraft((current) => ({ ...current, market: next.market }));
   }
+  /** Route an edited market draft through the shared undo-aware action handler. */
   function editMarket(next: MarketCalibrationDraft) {
     applyMarketAction({ type: "edit", market: next });
   }
@@ -389,6 +391,7 @@ function InvestorSetup({
     threshold < initialCapital
       ? (threshold / initialCapital) * 100
       : null;
+  /** Merge a partial investor-input edit into the shared draft without changing the market or simulation settings. */
   function updateInvestor(change: Partial<typeof investor>) {
     setDraft((current) => ({
       ...current,

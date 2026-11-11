@@ -20,6 +20,7 @@ const Context = createContext<{
   >;
 } | null>(null);
 
+/** Provide in-memory editable inputs and the most recently prepared options to descendant panels. Neither value is persisted across reloads. */
 export function SimulationDraftProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft] = useState(initialSimulationDraft);
   const [prepared, setPrepared] = useState<{
@@ -33,6 +34,7 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** Read the shared simulation draft and prepared options. Throws when called outside SimulationDraftProvider. */
 export function useSimulationDraft() {
   const value = useContext(Context);
   if (!value)

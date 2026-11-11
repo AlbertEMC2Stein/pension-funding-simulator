@@ -8,6 +8,7 @@ import {
   SectionHeading,
 } from "./common";
 
+/** Available comparison-table layouts; each keeps separate editable example rows. */
 type TableType = "withdrawal" | "policy" | "feasibility";
 
 /** One local example row; it is not a simulation or an exported result. */

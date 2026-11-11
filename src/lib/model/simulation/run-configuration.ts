@@ -10,6 +10,7 @@ import {
 
 /** Provisional metadata: choose and document version conventions before use. */
 export interface RunVersions {
+  /** Versions of the snapshot representation, mathematical model and numerical methods. */
   schema: string;
   model: string;
   randomGenerator: string;
@@ -38,8 +39,10 @@ export interface RunNumerics {
 
 /** Candidate input to the snapshot builder; this is not yet validated. */
 export interface RunConfigurationInput {
+  /** Current validated inputs and the corresponding market calibration. */
   options: SimulationOptions;
   market: CalibratedMarket;
+  /** Supplied fit results; the builder cannot independently establish their provenance. */
   mortality: { gm: GmFit; ce: CeFit };
   numerical: RunNumerics;
   versions: RunVersions;
@@ -70,8 +73,11 @@ export function createRunSnapshot(input: RunConfigurationInput): RunSnapshot {
     throw new RangeError(
       "Risk-free rate and inflation do not match the real rate.",
     );
+
+  // Recalculate the market to detect a snapshot assembled from mismatched inputs.
   const calibrated = calibrateMarket(options.market);
   if (!calibrated.ok) throw new RangeError(calibrated.error);
+  /** Compare two numerical vectors element by element in their existing asset order. */
   const sameVector = (left: readonly number[], right: readonly number[]) =>
     left.length === right.length &&
     left.every((value, i) => value === right[i]);
@@ -101,6 +107,8 @@ export function createRunSnapshot(input: RunConfigurationInput): RunSnapshot {
   if (!mortality.gm.converged || !mortality.ce.converged)
     throw new RangeError("Both mortality fits must have converged.");
   gompertzMakehamSurvival(0, mortality.gm.parameters);
+
+  // Check that the selected policy can be constructed from the supplied fit.
   const { initialCapital, impoverishmentLevel } = options.investor;
   if (
     !Number.isFinite(initialCapital) ||

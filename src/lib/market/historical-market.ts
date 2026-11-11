@@ -5,8 +5,16 @@ import {
 } from "./market-calibration";
 import { chiSquare95, studentT95 } from "../numerics/confidence-quantiles";
 
+/** One observed positive price at its UTC calendar-day index. */
 type Observation = { day: number; price: number };
+
+/** Log return and elapsed calendar time in years between two observed prices. */
 type Interval = { dt: number; logReturn: number };
+
+/**
+ * Unrounded imported-price estimates and coverage diagnostics in asset order.
+ * Confidence intervals describe estimation uncertainty, not future returns.
+ */
 export interface HistoricalMarketEstimate {
   firstDate: string;
   lastDate: string;
@@ -14,22 +22,29 @@ export interface HistoricalMarketEstimate {
   missingCells: number;
   assets: {
     name: string;
+    /** Calendar-time log-price drift per year. */
     annualLogGrowth: number;
+    /** Annual compounded log growth, exp(annualLogGrowth) - 1. */
     compoundedGrowth: number;
+    /** 95% bounds in decimal fractions for compounded growth and volatility. */
     growthInterval: { lower: number; upper: number };
     volatilityInterval: { lower: number; upper: number };
+    /** Annualized log-return standard deviation. */
     volatility: number;
+    /** Number of observed return intervals and their elapsed calendar years. */
     intervals: number;
     years: number;
     maxGapDays: number;
   }[];
   correlation: number[][];
+  /** Pairwise estimates use only intervals with matching observed endpoints. */
   pairs: {
     first: string;
     second: string;
     intervals: number;
     years: number;
     maxGapDays: number;
+    /** Approximate Fisher interval; null for insufficient or perfect-correlation data. */
     correlationInterval: { lower: number; upper: number } | null;
   }[];
 }
@@ -76,6 +91,7 @@ function parseCsv(text: string): string[][] {
   return rows;
 }
 
+/** Parse a strict ISO calendar date into a UTC day index, rejecting invalid or normalized dates. */
 function parseDay(value: string): number {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value))
     throw new Error(`Invalid date: ${value}. Use YYYY-MM-DD.`);
@@ -88,6 +104,7 @@ function parseDay(value: string): number {
   return time / 86_400_000;
 }
 
+/** Create calendar-time log-return intervals between consecutive observed prices; missing observations are not filled. */
 function intervals(observations: Observation[]): Interval[] {
   return observations.slice(1).map((current, i) => ({
     dt: (current.day - observations[i].day) / 365.25,
@@ -281,6 +298,7 @@ export function historicalMarketToDraft(
   estimate: HistoricalMarketEstimate,
   current: MarketCalibrationDraft,
 ): MarketCalibrationDraft {
+  /** Round a finite imported percentage or correlation to two editable decimal places, normalizing negative zero. */
   const format = (value: number) => {
     if (!Number.isFinite(value) || Math.abs(value) >= 1e21)
       throw new Error(

@@ -1,3 +1,5 @@
+/* Responsive adjustments for theme-layer components. */
+
 @media (max-width:550px) {
   .capital-summary {
     grid-template-columns: 1fr;

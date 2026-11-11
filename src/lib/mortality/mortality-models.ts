@@ -13,16 +13,19 @@ export interface CompactifiedExponentialParameters {
   tau: number;
 }
 
+/** Reject a non-finite or negative model parameter with its field name. */
 function nonnegativeFinite(value: number, name: string) {
   if (!Number.isFinite(value) || value < 0)
     throw new RangeError(`${name} must be finite and non-negative.`);
 }
 
+/** Reject a non-finite or non-positive model parameter with its field name. */
 function positiveFinite(value: number, name: string) {
   if (!Number.isFinite(value) || value <= 0)
     throw new RangeError(`${name} must be finite and positive.`);
 }
 
+/** Check the parameter domain required by the Gompertz–Makeham survival law. */
 function validateGompertzMakeham(params: GompertzMakehamParameters) {
   positiveFinite(params.alpha, "alpha");
   positiveFinite(params.beta, "beta");

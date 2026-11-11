@@ -51,6 +51,7 @@ function validateModel({
       "The CE elasticity does not satisfy the compatibility condition.",
     );
   const expectedLambda = delta * (b0 - rho / (delta - 1));
+  /** Compare compatible mortality parameters using a relative tolerance to account for floating-point rounding. */
   const close = (a: number, b: number) =>
     Math.abs(a - b) <=
     1e-10 * Math.max(Math.abs(a), Math.abs(b), Number.MIN_VALUE);
@@ -64,6 +65,7 @@ function validateModel({
     );
 }
 
+/** Require finite initial wealth strictly above the impoverishment threshold. */
 function validateWealth(initialCapital: number, threshold: number): void {
   if (!Number.isFinite(initialCapital) || initialCapital <= threshold)
     throw new RangeError(
@@ -71,7 +73,12 @@ function validateWealth(initialCapital: number, threshold: number): void {
     );
 }
 
-/** Sustainable annual withdrawal under the unconstrained compatible CE model. */
+/**
+ * Calculate the sustainable real annual withdrawal for a target lifetime
+ * impoverishment probability under the unconstrained compatible CE model.
+ * Requires capital above the threshold and a target strictly between 0 and 1;
+ * rejects market/mortality combinations outside the compatibility conditions.
+ */
 export function compatibleWithdrawal(
   model: CompatiblePolicyInputs,
   initialCapital: number,
@@ -96,7 +103,11 @@ export function compatibleWithdrawal(
   return result;
 }
 
-/** CE model risk at retirement for a specified withdrawal, under no projection. */
+/**
+ * Calculate CE-model impoverishment probability at retirement for a fixed
+ * annual withdrawal under the unconstrained policy. Returns zero when initial
+ * capital is at or above the safe boundary; this is not estimated GM risk.
+ */
 export function compatibleRisk(
   model: CompatiblePolicyInputs,
   initialCapital: number,
@@ -149,7 +160,11 @@ export function compatibleRequiredCapital(
   return result;
 }
 
-/** Unconstrained risky-asset fractions at a state; the rule is zero outside the risky region. */
+/**
+ * Calculate unconstrained risky-asset fractions at a time and wealth state in
+ * the calibrated asset order. The compatible feedback is zero outside the
+ * risky region. Time must be strictly before the finite mortality endpoint.
+ */
 export function compatiblePortfolio(
   model: CompatiblePolicyInputs,
   annualWithdrawal: number,
@@ -181,6 +196,7 @@ export function compatiblePortfolio(
   return fractions;
 }
 
+/** Result of the global simplex test; negative Merton components are reported separately from borrowing. */
 export type GlobalFeasibility =
   | {
       feasible: false;
@@ -193,7 +209,12 @@ export type GlobalFeasibility =
       relativeBandwidthExcess: number;
     };
 
-/** Global simplex test for the unconstrained CE policy over its risky region. */
+/**
+ * Test whether the unconstrained compatible CE policy is simplex-valued over
+ * its entire risky region. Reports negative Merton components separately;
+ * otherwise returns the relative bandwidth excess and whether borrowing is
+ * possible somewhere in the region. This is not a borrowing probability.
+ */
 export function compatibleGlobalFeasibility(
   model: CompatiblePolicyInputs,
   annualWithdrawal: number,

@@ -18,6 +18,7 @@ export interface WealthPathInput {
   recordTrajectory: boolean;
 }
 
+/** Final grid observation and stop status for one reference path, with an optional trajectory. */
 export interface WealthPathResult {
   finalState: WealthState;
   /** Only grid observations are checked; this is not a continuous hit test. */
@@ -133,6 +134,7 @@ export function simulateWealthBatch(_snapshot: RunSnapshot): WealthBatchResult {
     }
   })();
 
+  /** Draw one vector of independent normals and apply the covariance factor and square-root time scaling. */
   const incrementGenerator = (timeStepYears: number) => {
     const standardNormals = standardNormalVector(
       rng,

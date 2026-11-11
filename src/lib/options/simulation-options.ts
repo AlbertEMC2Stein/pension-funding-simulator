@@ -28,7 +28,11 @@ export interface SimulationDraft {
   };
 }
 
-/** A validated snapshot; annual rates are decimal fractions and amounts are EUR. */
+/**
+ * Validated UI options ready for model preparation. Annual rates and risk are
+ * decimal fractions, amounts are real EUR where applicable, and correlations
+ * use the same order as assets. This is not the full reproducible run snapshot.
+ */
 export interface SimulationOptions {
   market: {
     currency: "EUR";
@@ -58,6 +62,7 @@ export interface SimulationOptions {
   numerical: { paths: number; timeStep: "monthly" | "fortnightly" | "weekly" };
 }
 
+/** Create the initial editable market, investor and numerical settings. Strings preserve incomplete input while editing. */
 export function initialSimulationDraft(): SimulationDraft {
   return {
     market: initialMarketCalibration(),
@@ -117,7 +122,11 @@ export function buildMarketOptions(
   };
 }
 
-/** Validate before conversion; no model-specific calculations are performed. */
+/**
+ * Validate the editable draft and construct independent numerical options.
+ * Returns all detected input errors instead of a partial result. This converts
+ * UI percentages to fractions but does not fit mortality or run the model.
+ */
 export function buildSimulationOptions(
   draft: SimulationDraft,
 ): { ok: true; options: SimulationOptions } | { ok: false; errors: string[] } {

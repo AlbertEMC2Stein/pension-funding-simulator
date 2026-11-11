@@ -7,6 +7,7 @@ export interface WealthState {
   wealth: number;
 }
 
+/** Model, withdrawal, current state and asset-ordered market increment for one reference wealth step. */
 export interface WealthStepInput {
   model: CompatiblePolicyInputs;
   annualWithdrawal: number;

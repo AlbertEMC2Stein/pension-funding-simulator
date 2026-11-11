@@ -1,22 +1,29 @@
 import type { SimulationOptions } from "../options/simulation-options";
 
+/** Numerical market options required for calibration; the already-derived real rate is used instead of the nominal rate. */
 type MarketInput = Omit<SimulationOptions["market"], "nominalRiskFreeRate">;
 
 /** Annual real model parameters, in the same asset order as the input. */
 export interface CalibratedMarket {
+  /** Asset names and all vector/matrix entries share this ordering. */
   assetNames: string[];
+  /** Continuously compounded real rate per year and effective annual inflation. */
   realRiskFreeRate: number;
   inflationRate: number;
   realLogGrowth: number[];
+  /** Arithmetic SDE drift and its excess over the real risk-free rate. */
   realDrift: number[];
   excessReturn: number[];
   covariance: number[][];
+  /** Sigma-inverse times excess drift; not itself an allocation. */
   mertonDirection: number[];
+  /** One half of the excess-drift quadratic form, as defined in the manuscript. */
   rho: number;
   /** Zero premium is calculable but outside the paper's analytical scope. */
   paperAssumptions: { positiveRho: boolean; nonnegativeMerton: boolean };
 }
 
+/** Successful calibrated market or an explanatory validation/numerical failure. */
 type Result =
   { ok: true; market: CalibratedMarket } | { ok: false; error: string };
 
@@ -30,6 +37,7 @@ type Result =
  * the editor's existing positive-definiteness guard.
  */
 export function calibrateMarket(input: MarketInput): Result {
+  /** Construct a failed calibration result without throwing from normal validation paths. */
   const fail = (error: string): Result => ({ ok: false, error });
   const n = input.assets.length;
   if (n < 1 || n > 10 || input.currency !== "EUR")

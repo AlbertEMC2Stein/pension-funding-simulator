@@ -1,6 +1,8 @@
 /** A private, reproducible stream; never use shared mutable global RNG state. */
 export interface RandomStream {
+  /** Draw a uniform value on [0, 1). */
   nextUniform(): number;
+  /** Draw a standard normal from two uniforms, rejecting a zero first draw. */
   nextStandardNormal(): number;
 }
 
@@ -13,9 +15,12 @@ export function createRandomStream(_seed: string): RandomStream {
   const [a, b, c, d] = cyrb128(_seed);
   const sfc32 = createSfc32(a, b, c, d);
 
+  /** Draw the next seeded uniform value on the generator’s half-open interval [0, 1). */
   function nextUniform(): number {
     return sfc32();
   }
+
+  /** Transform two uniform draws into one standard normal using Box–Muller; resample a zero logarithm input. */
   function nextStandardNormal(): number {
     // Box-Muller transform
     // sfc32 includes zero; reject it because ln(0) is not finite.
@@ -28,9 +33,10 @@ export function createRandomStream(_seed: string): RandomStream {
 }
 
 /**
- * Draw `dimension` independent N(0, 1) values in a fixed, documented
- * order. Validate the dimension; document stream advancement and any antithetic
- * sampling separately. This does not yet scale draws by the time step.
+ * Draw `dimension` standard normals in order from the supplied stream. Each
+ * normal consumes two uniforms, plus a replacement if the logarithm input is
+ * zero. Throws for a non-positive or non-integer dimension. The values are not
+ * antithetic and are not yet scaled by a time step.
  */
 export function standardNormalVector(
   _stream: RandomStream,

@@ -1,3 +1,5 @@
+/* Theme-token colors for shared surfaces, text and controls. */
+
 body {
   background: var(--page);
   color: var(--text);

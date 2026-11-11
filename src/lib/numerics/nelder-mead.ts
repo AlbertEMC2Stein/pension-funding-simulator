@@ -4,7 +4,9 @@ export function nelderMead(
   start: number[],
   maxIterations = 1500,
 ) {
+  /** Simplex point and its cached objective value. */
   type Vertex = { x: number[]; loss: number };
+  /** Evaluate the objective at a candidate point and retain both together. */
   const evaluate = (x: number[]): Vertex => ({ x, loss: objective(x) });
   const n = start.length;
   const simplex = [
@@ -37,6 +39,7 @@ export function nelderMead(
       (_, i) => simplex.slice(0, n).reduce((sum, v) => sum + v.x[i], 0) / n,
     );
     const worst = simplex[n];
+    /** Construct a reflection, expansion or contraction point relative to the current simplex centroid. */
     const point = (factor: number) =>
       centroid.map((value, i) => value + factor * (centroid[i] - worst.x[i]));
     const reflected = evaluate(point(1));

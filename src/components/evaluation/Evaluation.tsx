@@ -607,12 +607,14 @@ export function Evaluation() {
   const { draft, setDraft, prepared, setPrepared } = useSimulationDraft();
   const simulation = draft.simulation;
   const [errors, setErrors] = useState<string[]>([]);
+  /** Merge a partial control edit into the shared simulation draft while retaining the other settings. */
   function updateSimulation(change: Partial<typeof simulation>) {
     setDraft((current) => ({
       ...current,
       simulation: { ...current.simulation, ...change },
     }));
   }
+  /** Validate the current draft and capture its options for inspection. Report errors or a debug event; this does not run a simulation. */
   function prepareSimulation() {
     const result = buildSimulationOptions(draft);
     if (!result.ok) {

@@ -1,3 +1,5 @@
+/* Workspace shell, navigation, top bar and page headings. */
+
 .app-shell {
     min-height: 100vh;
     display: flex

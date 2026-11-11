@@ -1,5 +1,6 @@
 /** Annual cohort death probabilities and survival from a selected attained age. */
 export type LongevityScenario = "low" | "medium" | "high";
+/** Sex-specific cohort table used before any custom survival-curve mixture. */
 export type CohortSex = "female" | "male";
 
 export const FIRST_COHORT_YEAR = 1926;

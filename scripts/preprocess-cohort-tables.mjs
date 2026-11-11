@@ -108,6 +108,7 @@ function parseArguments(args) {
   return { sourceDir, check };
 }
 
+/** Convert the configured cohort source files or check the existing outputs, according to command-line options. */
 function main() {
   const { sourceDir, check } = parseArguments(process.argv.slice(2));
   // Validate all six inputs and construct all outputs in memory before writing.

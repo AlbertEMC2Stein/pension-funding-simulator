@@ -1,3 +1,5 @@
+/* Base breakpoints for the workspace, panels and mobile layouts. */
+
 @media(max-width:1150px) {
     .main {
         padding: 0 25px

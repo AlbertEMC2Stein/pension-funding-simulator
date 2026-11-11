@@ -10,6 +10,7 @@ import {
 import { calibrateMarket } from "../../lib/market/calibrate-market";
 import styles from "./developer.module.css";
 
+/** One local developer event displayed in the bounded in-memory activity log. */
 interface Activity {
   id: number;
   time: string;
@@ -29,6 +30,7 @@ export default function DeveloperView() {
 
   useEffect(() => {
     let nextId = 0;
+    /** Accept a well-formed debug event and append it to the most recent 100 entries; ignore malformed events. */
     function record(event: Event) {
       const detail = (
         event as CustomEvent<{ level: "info" | "error"; message: string }>

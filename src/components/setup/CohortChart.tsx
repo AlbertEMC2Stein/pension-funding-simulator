@@ -15,7 +15,10 @@ import {
   type LongevityScenario,
 } from "../../lib/mortality/cohort-survival";
 
+/** One cohort survival curve used by the chart and mortality fitting. */
 type Curve = { age: number; survival: number }[];
+
+/** Result of loading the requested cohort data, including any loading error. */
 type Loaded =
   | { key: string; female?: number[]; male?: number[] }
   | { key: string; error: string };
@@ -290,6 +293,7 @@ export function CohortChart({
   const oldRun =
     running && (running.gmKey !== gmKey || running.ceKey !== ceKey);
 
+  /** Start a mortality worker for the current captured inputs. Ask before replacing an active fit and ignore messages from superseded workers. */
   function startFit() {
     if (
       workerRef.current &&
