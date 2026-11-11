@@ -1,5 +1,7 @@
 import { createRunSnapshot } from "../lib/model/simulation/run-configuration";
 import { runScheduler } from "../lib/model/simulation/tensorflow/run-scheduler";
+import { estimateMortalityRisk } from "../lib/model/simulation/risk-estimate";
+import { compatibleRisk } from "../lib/model/analytical/compatible-policy";
 import type {
   SimulationWorkerRequest,
   SimulationWorkerResponse,
@@ -66,10 +68,27 @@ worker.onmessage = ({ data }) => {
             batchElapsedMs: performance.now() - batchStarted,
           }),
       });
+      const ceBenchmark = compatibleRisk(
+        {
+          market: snapshot.market,
+          mortality: snapshot.mortality.ce.parameters,
+          impoverishmentLevel: snapshot.options.investor.impoverishmentLevel,
+        },
+        snapshot.options.investor.initialCapital,
+        snapshot.resolvedAnnualWithdrawal,
+      );
+      const risk = estimateMortalityRisk({
+        firstHitTimes: result.firstHitTimes,
+        gm: snapshot.mortality.gm.parameters,
+        ce: snapshot.mortality.ce.parameters,
+        horizonYears: snapshot.numerical.horizonYears,
+        ceBenchmark,
+      });
       worker.postMessage({
         type: "complete",
         runId,
         result,
+        risk,
         elapsedMs: performance.now() - started,
       });
     } catch (error) {

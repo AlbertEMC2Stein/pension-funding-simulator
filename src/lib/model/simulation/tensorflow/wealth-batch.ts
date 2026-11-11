@@ -163,7 +163,7 @@ export async function simulateTensorWealthBatch(
           currentSafeBoundary: prepared.currentBoundary,
           nextSafeBoundary: prepared.nextBoundary,
           timeStepYears: dt,
-          logGapVarianceRate: model.market.rho / (delta - 1) ** 2,
+          logGapVarianceRate: (2 * model.market.rho) / (delta - 1) ** 2,
           draws: bridgeDraws(step),
         });
         const nextWealth = tf.where(

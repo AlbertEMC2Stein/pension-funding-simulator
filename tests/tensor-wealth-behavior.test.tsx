@@ -115,6 +115,32 @@ test("batch detects an unobserved crossing, records its time and stops at the th
   assertEuros(result.finalWealth[0], threshold);
 });
 
+test("batch uses twice rho for the bridge log-gap variance", async () => {
+  await initializeTensorBackend(["cpu"]);
+  const safeNext = 300000 - 200000 * Math.exp(-rate * 9);
+  const gapNext = 50000 * Math.exp(rate - 0.03);
+  const d0 = Math.log(2);
+  const d1 = Math.log((safeNext - threshold) / gapNext);
+  // This threshold lies between the crossing tests for 2ρ and ρ.
+  const hitThreshold = (3 * d0 * d1) / (2 * market.rho);
+  const result = await simulateTensorWealthBatch({
+    market,
+    mortality,
+    annualWithdrawal: withdrawal,
+    investor: { initialCapital: 150000, impoverishmentLevel: threshold },
+    pathCount: 1,
+    times: [0, 1],
+    increments: [[0, 0]],
+    bridgeDraws: () => ({
+      hitThreshold: tf.fill([1], hitThreshold),
+      timeNormal: tf.ones([1]),
+      timeUniform: tf.zeros([1]),
+    }),
+  });
+
+  assert.equal(result.firstHitStep[0], 1);
+});
+
 test("TensorFlow agrees with reference at each grid time with supplied increments", async () => {
   await initializeTensorBackend(["cpu"]);
 

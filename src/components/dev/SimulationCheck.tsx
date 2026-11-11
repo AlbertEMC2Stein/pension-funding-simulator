@@ -16,6 +16,10 @@ import type {
 } from "../../lib/model/simulation/tensorflow/run-scheduler";
 import type { TensorBackend } from "../../lib/model/simulation/tensorflow/backend";
 import type {
+  MortalityRiskResults,
+  RiskEstimate,
+} from "../../lib/model/simulation/risk-estimate";
+import type {
   SimulationWorkerRequest,
   SimulationWorkerResponse,
 } from "../../lib/model/simulation/worker-protocol";
@@ -36,8 +40,21 @@ interface CheckRun {
   /** Elapsed batch-processing time, excluding backend initialization. */
   batchElapsedMs?: number;
   result?: RunSchedulerResult;
+  risk?: MortalityRiskResults;
   elapsedMs?: number;
   message?: string;
+}
+
+/** Present a probability as a percentage for the developer's run summary. */
+function percentage(value: number): string {
+  return `${(value * 100).toFixed(3)}%`;
+}
+
+/** Describe the approximate 95% Monte Carlo interval or why it is unavailable. */
+function riskInterval(estimate: RiskEstimate): string {
+  if (!estimate.interval95) return "Not available";
+
+  return `${percentage(estimate.interval95.lower)} – ${percentage(estimate.interval95.upper)}`;
 }
 
 /** Format a rough batch-based estimate without implying subsecond precision. */
@@ -159,7 +176,7 @@ export function SimulationCheck() {
         schema: "prototype-1",
         model: "compatible-ce-1",
         randomGenerator: "cyrb128-sfc32-box-muller-1",
-        simulationAlgorithm: "tensorflow-bridge-1",
+        simulationAlgorithm: "tensorflow-bridge-2",
       },
       provenance: {
         mortalityData: `Current cohort fit: ${keys.gm}`,
@@ -229,6 +246,7 @@ export function SimulationCheck() {
               ...current,
               phase: "complete",
               result: message.result,
+              risk: message.risk,
               elapsedMs: message.elapsedMs,
             },
         );
@@ -300,8 +318,8 @@ export function SimulationCheck() {
       </div>
       <p>
         Runs the current market and investor settings with their current GM and
-        CE fits. Approximate bridge hits include between-step crossings but
-        ignore mortality; they are not lifetime-risk estimates.
+        CE fits. Approximate bridge hit times are weighted by CE and GM survival
+        to estimate impoverishment before death within the run horizon.
       </p>
       <div className={styles.simulationForm}>
         <label>
@@ -481,6 +499,62 @@ export function SimulationCheck() {
               {((run.elapsedMs ?? 0) / 1000).toFixed(2)} seconds. This count is
               not a lifetime-risk estimate.
             </p>
+          )}
+          {run.risk && (
+            <div className={styles.riskSummary}>
+              <strong>Mortality-weighted risk by the run horizon</strong>
+              <div className={styles.riskTableWrap}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Mortality</th>
+                      <th>Estimate</th>
+                      <th>Monte Carlo SE</th>
+                      <th>Approx. 95% MC interval</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(
+                      [
+                        ["CE", run.risk.ce],
+                        ["GM", run.risk.gm],
+                      ] as const
+                    ).map(([name, estimate]) => (
+                      <tr key={name}>
+                        <th scope="row">{name}</th>
+                        <td>{percentage(estimate.estimate)}</td>
+                        <td>
+                          {estimate.standardError === null
+                            ? "Not available"
+                            : percentage(estimate.standardError)}
+                        </td>
+                        <td>{riskInterval(estimate)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                Analytical CE risk over the full CE horizon:{" "}
+                {percentage(run.risk.ceBenchmark)}.
+                {run.risk.horizonYears < run.risk.ceEndpoint &&
+                  " The run ends earlier, so its CE estimate is truncated and is not directly comparable to this benchmark."}
+                {run.risk.horizonYears >= run.risk.ceEndpoint &&
+                  ` CE estimate minus benchmark: ${((run.risk.ce.estimate - run.risk.ceBenchmark) * 100).toFixed(3)} percentage points.`}
+              </p>
+              <p>
+                Intervals use a normal approximation and describe Monte Carlo
+                sampling only. They are not reported when sample variation is
+                zero or there are fewer than two paths; rare events may require
+                more paths.
+              </p>
+              <p>
+                Estimates exclude hits after the run horizon and depend on the
+                approximate bridge and time step. GM mortality can extend beyond
+                the CE endpoint; outcomes after the run horizon are not
+                included.
+              </p>
+            </div>
           )}
         </div>
       )}

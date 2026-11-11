@@ -3,8 +3,8 @@
 This directory contains an initial scalar reference and a TensorFlow.js batch
 prototype for the unconstrained CE wealth process. The TensorFlow prototype is
 available through a worker in the developer panel. It estimates first-passage
-times with a local bridge approximation and does not yet compute
-mortality-weighted risk.
+times with a local bridge approximation and reports CE- and GM-survival-weighted
+risk within the simulated horizon.
 
 Suggested order:
 
@@ -45,6 +45,13 @@ Suggested order:
    `tensorflow/ce-impoverishment-bridge.ts` converts each wealth step into
    bridge coordinates, using a linearized log boundary or a frozen wealth
    diffusion at the CE endpoint. These are local approximations.
+7. **`risk-estimate.ts`** uses each hit time's CE or GM survival probability
+   as a pathwise payoff, with zero for a path not hit by the horizon. It reports
+   sample standard errors and approximate 95% normal Monte Carlo intervals for
+   independent paths. No interval is returned when the sample has no variation
+   or fewer than two paths. This sampling uncertainty does not include bridge,
+   time-step or horizon effects. GM risk beyond the finite CE policy endpoint
+   is not included.
 
 The TensorFlow batch draws seeded standard normals on the CPU into a flat
 Float32 buffer at each step. TensorFlow then applies the retained covariance
@@ -63,8 +70,8 @@ same investor input rather than maintained as a separate editable value.
 All paths in a batch share one investor's initial capital. The tensor backend
 creates the path-state vector internally from that amount and the batch size.
 The snapshot and batch result format are not stable. Bridge-detected times
-remain approximate for a curved boundary. Mortality-weighted estimates,
-projection and Monte Carlo intervals are later work. CPU TensorFlow has
+remain approximate for a curved boundary. Projected-policy estimates and
+evaluation-panel integration are later work. CPU TensorFlow has
 deterministic bridge checks and an analytical CE risk sanity check; the new
 bridge integration has not been verified on WebGPU.
 

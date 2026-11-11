@@ -160,6 +160,10 @@ test("worker validates its cloned input and reports real batch progress", async 
   assert.ok(complete?.type === "complete");
   assert.equal(complete.result.completedPaths, 5);
   assert.equal(complete.result.backend, "cpu");
+  assert.ok(complete.risk.ce.estimate >= 0 && complete.risk.ce.estimate <= 1);
+  assert.ok(complete.risk.gm.estimate >= 0 && complete.risk.gm.estimate <= 1);
+  assert.equal(complete.risk.horizonYears, 1);
+  assert.equal(complete.risk.ceEndpoint, 1);
 });
 
 test("worker acknowledges cancellation between batches", async () => {

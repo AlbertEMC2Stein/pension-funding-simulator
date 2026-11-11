@@ -68,6 +68,20 @@ export function gompertzMakehamSurvival(
 }
 
 /**
+ * Prepare a GM survival evaluator after validating its parameters once.
+ * The returned function trusts the caller to supply finite, non-negative
+ * times, making it suitable for validated simulation first-hit times.
+ */
+export function prepareGompertzMakehamSurvival(
+  params: GompertzMakehamParameters,
+): (t: number) => number {
+  validateGompertzMakeham(params);
+  const captured = { ...params };
+
+  return (t) => Math.exp(-cumulativeHazard(t, captured));
+}
+
+/**
  * Generic CE survival. Returns zero at and beyond its finite endpoint tau.
  * Uses the same parameterization as the research survival function; no
  * compatibility with a market or optimal-policy theorem is implied here.
@@ -85,6 +99,32 @@ export function compactifiedExponentialSurvival(
   if (t === 0) return 1;
   if (t >= params.tau) return 0;
 
+  return makeCeSurvivalEvaluator(params)(t);
+}
+
+/**
+ * Prepare CE survival constants once for a run. The returned function trusts
+ * the caller to supply finite, non-negative times; it returns zero at and
+ * beyond the endpoint. It preserves the stable logarithmic evaluation used by
+ * the checked single-value function.
+ */
+export function prepareCompactifiedExponentialSurvival(
+  input: CompactifiedExponentialParameters,
+): (t: number) => number {
+  nonnegativeFinite(input.lambda, "lambda");
+  positiveFinite(input.p, "p");
+  positiveFinite(input.kappa, "kappa");
+  positiveFinite(input.tau, "tau");
+
+  return makeCeSurvivalEvaluator(input);
+}
+
+/** Precompute CE constants after the caller has validated the parameters. */
+function makeCeSurvivalEvaluator(
+  input: CompactifiedExponentialParameters,
+): (t: number) => number {
+  const params = { ...input };
+
   const endpointProduct = params.kappa * params.tau;
   const denominator = -Math.expm1(-endpointProduct);
 
@@ -93,27 +133,11 @@ export function compactifiedExponentialSurvival(
       "CE parameters are outside the supported numerical range.",
     );
 
-  const numerator = -Math.expm1(-params.kappa * (params.tau - t));
-
-  if (numerator === 0)
-    throw new RangeError(
-      "CE parameters are outside the supported numerical range.",
-    );
-
-  // The ratio is near one close to t=0; log1p avoids subtracting two logs.
-  const difference =
-    (Math.exp(-params.kappa * (params.tau - t)) *
-      -Math.expm1(-params.kappa * t)) /
-    denominator;
-  const logRatio =
-    difference < 0.5
-      ? Math.log1p(-difference)
-      : Math.log(numerator) - Math.log(denominator);
   const eta = Math.exp(
     Math.log(params.p) +
-    Math.log(params.kappa) -
-    endpointProduct -
-    Math.log(denominator),
+      Math.log(params.kappa) -
+      endpointProduct -
+      Math.log(denominator),
   );
 
   if (!Number.isFinite(eta))
@@ -121,12 +145,32 @@ export function compactifiedExponentialSurvival(
       "CE parameters are outside the supported numerical range.",
     );
 
-  const logSurvival = (eta - params.lambda) * t + params.p * logRatio;
+  return (t) => {
+    if (t === 0) return 1;
+    if (t >= params.tau) return 0;
 
-  if (Number.isNaN(logSurvival) || logSurvival > 1e-10)
-    throw new RangeError("CE parameters produced an invalid survival value.");
+    const numerator = -Math.expm1(-params.kappa * (params.tau - t));
+    if (numerator === 0)
+      throw new RangeError(
+        "CE parameters are outside the supported numerical range.",
+      );
 
-  return Math.exp(Math.min(logSurvival, 0));
+    // The ratio is near one close to t=0; log1p avoids subtracting two logs.
+    const difference =
+      (Math.exp(-params.kappa * (params.tau - t)) *
+        -Math.expm1(-params.kappa * t)) /
+      denominator;
+    const logRatio =
+      difference < 0.5
+        ? Math.log1p(-difference)
+        : Math.log(numerator) - Math.log(denominator);
+    const logSurvival = (eta - params.lambda) * t + params.p * logRatio;
+
+    if (Number.isNaN(logSurvival) || logSurvival > 1e-10)
+      throw new RangeError("CE parameters produced an invalid survival value.");
+
+    return Math.exp(Math.min(logSurvival, 0));
+  };
 }
 
 /** log(1 + exp(x)) without overflowing for large x. */

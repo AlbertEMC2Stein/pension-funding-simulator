@@ -52,6 +52,29 @@
   accent-color: var(--accent);
 }
 
+.riskSummary {
+  margin-top: 18px;
+}
+
+.riskTableWrap {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.riskTableWrap table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.riskTableWrap th,
+.riskTableWrap td {
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
 .code,
 .log {
   max-height: 380px;

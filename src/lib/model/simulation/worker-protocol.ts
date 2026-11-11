@@ -4,6 +4,7 @@ import type {
   RunSchedulerResult,
 } from "./tensorflow/run-scheduler";
 import type { TensorBackend } from "./tensorflow/backend";
+import type { MortalityRiskResults } from "./risk-estimate";
 
 /** Messages sent to the financial-simulation worker. Each start has a unique ID. */
 export type SimulationWorkerRequest =
@@ -30,6 +31,7 @@ export type SimulationWorkerResponse =
       type: "complete";
       runId: number;
       result: RunSchedulerResult;
+      risk: MortalityRiskResults;
       elapsedMs: number;
     }
   | { type: "cancelled"; runId: number }

@@ -33,9 +33,10 @@ test("bridge-detected CE first-hit times reproduce the analytical lifetime risk"
     increments: (_step, dt) => {
       const increments = new Float32Array(2 * count);
 
-      // Both coordinates carry the same noise, so mᵀΔZ has variance ρ·dt.
+      // Both coordinates carry the same noise, so mᵀΔZ has variance 2ρ·dt.
       for (let path = 0; path < count; path += 1) {
-        const value = 0.1 * Math.sqrt(dt) * stream.nextStandardNormal();
+        const value =
+          Math.sqrt(2 * market.rho * dt) * stream.nextStandardNormal();
         increments[2 * path] = value;
         increments[2 * path + 1] = value;
       }
