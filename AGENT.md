@@ -33,6 +33,7 @@ Stop iterating once requirements are met, appropriate verification passes, and n
 - Add a detailed docstring to every function, including functions in React files. Document types and interfaces as well; document individual fields when their purpose, units or interpretation are not immediately clear.
 - Use explanatory comments where they help readers understand non-obvious behavior, assumptions or decisions. Keep comments accurate when code changes.
 - Separate semantic blocks with blank lines. For example, distinguish preparation, validation, calculation and return statements so the structure is easy to scan.
+- Group related inputs so their presence and purpose are clear; avoid hiding important values deep in unrelated nested objects. Passing a value in more than one place is acceptable when it improves readability, but derive all copies from one authoritative source and keep them consistent. Validate independently supplied duplicates at the relevant boundary; do not maintain separately editable copies that can drift apart.
 - Keep theme colors easy to change by hand, and design interfaces and text organization with future English/German language support in mind.
 - In mathematical notation, write the exponential base upright as `\mathrm{e}` and use `\ln` for the natural logarithm.
 - Develop the mathematical backend in small, reviewable steps so each feature and its results can be checked before building on it.

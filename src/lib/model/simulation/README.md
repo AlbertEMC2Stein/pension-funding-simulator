@@ -31,6 +31,10 @@ Suggested order:
 The provisional increment convention is asset-ordered return noise with
 covariance `Σ × dt`: its volatility and time-step scaling have already been
 applied. The wealth-step implementation must not apply those factors again.
+Scalar-step and tensor-batch inputs group the investor's wealth and
+impoverishment level together. Batch entry points construct these inputs from
+the validated snapshot; the analytical model's threshold is derived from that
+same investor input rather than maintained as a separate editable value.
 The snapshot and batch result format are not stable. A finite grid alone does
 not detect all within-step crossings; first-passage and mortality estimates,
 projection, worker execution and Monte Carlo intervals are later work. CPU

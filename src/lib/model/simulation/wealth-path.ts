@@ -8,12 +8,13 @@ import { correlatePreparedIncrement, factorPreparedCovariance } from "./matrix";
 import { createRandomStream } from "./random";
 import { prepareWealthGrid, type PreparedWealthStep } from "./prepared-grid";
 import { safeBoundary } from "../analytical/safe-boundary";
+import type { CompatiblePolicyInputs } from "../analytical/compatible-policy";
 
 /** Inputs for one path; termination and first-passage choices remain open. */
 export interface WealthPathInput {
-  /** Initial state and shared model/withdrawal; increment and endTime vary by step. */
+  /** Market, mortality and investor state; increment and endTime vary by step. */
   initialStep: Omit<WealthStepInput, "endTime" | "marketIncrement">;
-  /** Explicit increasing grid of times in years, beginning at current.time. */
+  /** Increasing times in years, beginning at the investor's current time. */
   times: readonly number[];
   /** Optional to avoid storing every value for large runs. */
   recordTrajectory: boolean;
@@ -32,7 +33,7 @@ export interface WealthPathResult {
  * Run one path over an explicitly validated time grid. Request one
  * asset-ordered increment per step from `nextIncrement`, call the verified
  * wealth-step function, and optionally retain states.
- * @param _input The initial state, model, withdrawal and time grid.
+ * @param _input The market, mortality, investor state, withdrawal and time grid.
  * @param _nextIncrement A function that returns a verified asset-ordered increment for each step.
  * @returns The final state and, if requested, the trajectory of states.
  * @throws RangeError if any step fails due to impoverishment or invalid time step.
@@ -41,7 +42,7 @@ export function simulateWealthPath(
   _input: WealthPathInput,
   _nextIncrement: (timeStepYears: number) => readonly number[],
 ): WealthPathResult {
-  const currentState = _input.initialStep.current;
+  const currentState = _input.initialStep.investor.current;
 
   if (
     _input.times.length < 1 ||
@@ -54,7 +55,7 @@ export function simulateWealthPath(
       "The time grid must start at the initial time and increase strictly.",
     );
   }
-  if (currentState.wealth <= _input.initialStep.model.impoverishmentLevel) {
+  if (currentState.wealth <= _input.initialStep.investor.impoverishmentLevel) {
     throw new RangeError(
       "Initial wealth must exceed the impoverishment level.",
     );
@@ -62,7 +63,12 @@ export function simulateWealthPath(
 
   // This standalone reference entry accepts arbitrary inputs, unlike a batch
   // prepared from a validated snapshot. Check its domain once before looping.
-  const { model, annualWithdrawal } = _input.initialStep;
+  const { market, mortality, investor, annualWithdrawal } = _input.initialStep;
+  const model = {
+    market,
+    mortality,
+    impoverishmentLevel: investor.impoverishmentLevel,
+  };
   const boundaryInput = {
     realRiskFreeRate: model.market.realRiskFreeRate,
     annualWithdrawal,
@@ -72,12 +78,12 @@ export function simulateWealthPath(
   safeBoundary({ ...boundaryInput, time: _input.times[0] });
   safeBoundary({ ...boundaryInput, time: _input.times.at(-1)! });
   const steps = prepareWealthGrid(
-    _input.initialStep.model,
+    model,
     _input.initialStep.annualWithdrawal,
     _input.times,
   );
 
-  return simulatePreparedPath(_input, _nextIncrement, steps);
+  return simulatePreparedPath(_input, _nextIncrement, steps, model);
 }
 
 /** Simulate one path using the grid and coefficients already prepared for its batch. */
@@ -85,17 +91,18 @@ function simulatePreparedPath(
   input: WealthPathInput,
   nextIncrement: (timeStepYears: number) => readonly number[],
   steps: readonly PreparedWealthStep[],
+  model: CompatiblePolicyInputs,
 ): WealthPathResult {
   const trajectory: WealthState[] = input.recordTrajectory
-    ? [{ ...input.initialStep.current }]
+    ? [{ ...input.initialStep.investor.current }]
     : [];
-  let currentState = input.initialStep.current;
+  let currentState = input.initialStep.investor.current;
   let status: WealthPathResult["status"] = "completed";
 
   for (let i = 1; i < input.times.length; i++) {
     const step = steps[i - 1];
     currentState = advancePreparedWealth(
-      input.initialStep.model,
+      model,
       input.initialStep.annualWithdrawal,
       currentState,
       input.times[i],
@@ -106,7 +113,7 @@ function simulatePreparedPath(
     if (input.recordTrajectory) {
       trajectory.push({ ...currentState });
     }
-    if (currentState.wealth <= input.initialStep.model.impoverishmentLevel) {
+    if (currentState.wealth <= input.initialStep.investor.impoverishmentLevel) {
       status = "impoverished-on-grid";
       break;
     }
@@ -167,12 +174,16 @@ export function simulateWealthBatch(_snapshot: RunSnapshot): WealthBatchResult {
   for (let i = 0; i < numPaths; i++) {
     const pathInput: WealthPathInput = {
       initialStep: {
-        model,
-        annualWithdrawal: annualWithdrawal,
-        current: {
-          time: 0,
-          wealth: _snapshot.options.investor.initialCapital,
+        market: model.market,
+        mortality: model.mortality,
+        investor: {
+          impoverishmentLevel: model.impoverishmentLevel,
+          current: {
+            time: 0,
+            wealth: _snapshot.options.investor.initialCapital,
+          },
         },
+        annualWithdrawal: annualWithdrawal,
       },
       times,
       recordTrajectory: _snapshot.numerical.recordTrajectories,
@@ -182,6 +193,7 @@ export function simulateWealthBatch(_snapshot: RunSnapshot): WealthBatchResult {
       pathInput,
       incrementGenerator,
       steps,
+      model,
     );
     paths.push(pathResult);
   }

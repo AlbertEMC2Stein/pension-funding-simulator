@@ -11,9 +11,15 @@ import { createRandomStream } from "../random";
 
 /** Deterministic grid experiment; each step supplies asset noise for all paths. */
 export interface TensorWealthBatchInput {
-  model: CompatiblePolicyInputs;
+  /** Calibrated market and compatible mortality parameters shared by the batch. */
+  market: CompatiblePolicyInputs["market"];
+  mortality: CompatiblePolicyInputs["mortality"];
   annualWithdrawal: number;
-  initialWealth: readonly number[];
+  /** Investor threshold and the initial real wealth of each path, in euros. */
+  investor: {
+    impoverishmentLevel: number;
+    initialWealth: readonly number[];
+  };
   /** Years after retirement, including the initial time. */
   times: readonly number[];
   /**
@@ -44,13 +50,20 @@ export interface TensorWealthBatchResult {
 export async function simulateTensorWealthBatch(
   input: TensorWealthBatchInput,
 ): Promise<TensorWealthBatchResult> {
-  const { model, annualWithdrawal, initialWealth, times, increments } = input;
-  const { realRiskFreeRate: r, mertonDirection } = model.market;
-  const { p: delta } = model.mortality;
-  const threshold = model.impoverishmentLevel;
+  const { market, mortality, investor, annualWithdrawal, times, increments } =
+    input;
+  const { initialWealth, impoverishmentLevel: threshold } = investor;
+  const { realRiskFreeRate: r, mertonDirection } = market;
+  const { p: delta } = mortality;
   const count = initialWealth.length;
   const assets = mertonDirection.length;
 
+  // The analytical model uses the same investor threshold, not another copy.
+  const model: CompatiblePolicyInputs = {
+    market,
+    mortality,
+    impoverishmentLevel: threshold,
+  };
   const steps = prepareWealthGrid(model, annualWithdrawal, times);
 
   // Tensor state survives between steps; tidy releases each step's temporaries.
@@ -137,11 +150,6 @@ export async function simulateTensorSnapshotBatch(
 ): Promise<TensorWealthBatchResult> {
   assertRunSnapshot(snapshot);
   const { market, options, mortality, numerical } = snapshot;
-  const model = {
-    market,
-    mortality: mortality.ce.parameters,
-    impoverishmentLevel: options.investor.impoverishmentLevel,
-  };
   const withdrawal = snapshot.resolvedAnnualWithdrawal;
   const times = generateTimeGrid(
     numerical.horizonYears,
@@ -151,11 +159,15 @@ export async function simulateTensorSnapshotBatch(
   const stream = createRandomStream(numerical.seed);
 
   return simulateTensorWealthBatch({
-    model,
+    market,
+    mortality: mortality.ce.parameters,
     annualWithdrawal: withdrawal,
-    initialWealth: Array(numerical.batchSize).fill(
-      options.investor.initialCapital,
-    ),
+    investor: {
+      impoverishmentLevel: options.investor.impoverishmentLevel,
+      initialWealth: Array(numerical.batchSize).fill(
+        options.investor.initialCapital,
+      ),
+    },
     times,
     increments: (_step, dt) => {
       const batch: number[] = [];

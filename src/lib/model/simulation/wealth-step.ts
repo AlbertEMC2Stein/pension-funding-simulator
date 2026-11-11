@@ -8,11 +8,15 @@ export interface WealthState {
   wealth: number;
 }
 
-/** Model, withdrawal, current state and asset-ordered market increment for one reference wealth step. */
+/** Market, mortality, investor state and asset-ordered noise for one reference step. */
 export interface WealthStepInput {
-  model: CompatiblePolicyInputs;
+  market: CompatiblePolicyInputs["market"];
+  mortality: CompatiblePolicyInputs["mortality"];
+  /** Current wealth state and fixed impoverishment threshold, in real euros. */
+  investor: { impoverishmentLevel: number; current: WealthState };
+  /** Constant real withdrawal in euros per year. */
   annualWithdrawal: number;
-  current: WealthState;
+  /** End time in years after retirement. */
   endTime: number;
   /** Asset-ordered increments with covariance Σ Δt, already scaled by √Δt. */
   marketIncrement: readonly number[];
@@ -63,14 +67,19 @@ export function advancePreparedWealth(
 export function advanceUnconstrainedWealth(
   input: WealthStepInput,
 ): WealthState {
-  const { model, annualWithdrawal, current, endTime, marketIncrement } = input;
-  const { realRiskFreeRate: r, rho, mertonDirection } = model.market;
-  const { tau, p: delta } = model.mortality;
+  const {
+    market,
+    mortality,
+    investor,
+    annualWithdrawal,
+    endTime,
+    marketIncrement,
+  } = input;
+  const { current, impoverishmentLevel } = investor;
+  const { realRiskFreeRate: r, rho, mertonDirection } = market;
+  const { tau, p: delta } = mortality;
 
-  if (
-    !Number.isFinite(current.wealth) ||
-    current.wealth <= model.impoverishmentLevel
-  )
+  if (!Number.isFinite(current.wealth) || current.wealth <= impoverishmentLevel)
     throw new RangeError(
       "Current wealth must be finite and above the impoverishment level.",
     );
@@ -89,7 +98,7 @@ export function advanceUnconstrainedWealth(
   const boundaryInput = {
     realRiskFreeRate: r,
     annualWithdrawal,
-    impoverishmentLevel: model.impoverishmentLevel,
+    impoverishmentLevel,
     mortalityEndpoint: tau,
   };
   const xSafe = safeBoundary({ ...boundaryInput, time: current.time });
@@ -97,7 +106,7 @@ export function advanceUnconstrainedWealth(
   const nextBoundary = safeBoundary({ ...boundaryInput, time: endTime });
 
   return advancePreparedWealth(
-    model,
+    { market, mortality, impoverishmentLevel },
     annualWithdrawal,
     current,
     endTime,
