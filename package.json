@@ -14,6 +14,8 @@
     "data:check": "node scripts/preprocess-cohort-tables.mjs --check"
   },
   "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "katex": "^0.16.22",
     "next": "^16.0.0",
     "plotly.js-basic-dist-min": "^4.2.0",
