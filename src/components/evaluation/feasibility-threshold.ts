@@ -11,9 +11,8 @@ export type FeasibilityThreshold =
 /**
  * Find the impoverishment level at ζ = 1 while preserving whichever policy
  * input is selected. For target risk, the CE withdrawal is recomputed as the
- * threshold changes; for custom withdrawal it stays fixed. The result is nudged
- * slightly to the feasible side to account for input and floating-point
- * precision, then checked using the same diagnostic as the interface.
+ * threshold changes; for custom withdrawal it stays fixed. The result is rounded
+ * upward to cents and checked using the same diagnostic as the interface.
  */
 export function findFeasibilityThreshold(
   ce: RiskWithdrawalResult,
@@ -41,9 +40,9 @@ export function findFeasibilityThreshold(
   // yields these expressions for the two different fixed-input modes.
   const candidate = data.custom
     ? (multiplier * (epsilon / rate) * data.selectedWithdrawal) /
-    (1 + multiplier * epsilon)
+      (1 + multiplier * epsilon)
     : (multiplier * data.initialCapital) /
-    (multiplier - Math.expm1(Math.log(data.selectedRisk) / delta));
+      (multiplier - Math.expm1(Math.log(data.selectedRisk) / delta));
 
   if (!Number.isFinite(candidate))
     return {
@@ -55,8 +54,8 @@ export function findFeasibilityThreshold(
       message: `The required impoverishment level must be at least €1 and less than your starting capital. (Required level: approx. €${candidate.toLocaleString("en-US", { maximumFractionDigits: 2 })}.)`,
     };
 
-  // The tiny upward adjustment prevents rounding from placing ζ above 1.
-  const value = (candidate * (1 + 1e-12)).toFixed(8);
+  // Round toward the feasible side so the stored amount does not exceed ζ = 1.
+  const value = (Math.ceil(candidate * 100) / 100).toFixed(2);
   const amount = Number(value);
   if (
     !/^\d+(?:\.\d+)?$/.test(value) ||
@@ -73,16 +72,13 @@ export function findFeasibilityThreshold(
     const withdrawal = data.custom
       ? data.selectedWithdrawal
       : compatibleWithdrawal(
-        updatedModel,
-        data.initialCapital,
-        data.selectedRisk,
-      );
+          updatedModel,
+          data.initialCapital,
+          data.selectedRisk,
+        );
     const result = compatibleGlobalFeasibility(updatedModel, withdrawal);
 
-    if (
-      result.reason !== "feasible" ||
-      Math.abs(result.relativeBandwidthExcess - 1) > 1e-8
-    )
+    if (result.reason !== "feasible")
       return {
         message:
           "The boundary could not be verified at the supported numerical precision.",

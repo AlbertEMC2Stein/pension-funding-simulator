@@ -19,13 +19,14 @@ test("boundary preserves target risk and recomputes the withdrawal", () => {
   const data = makeChartData(model, 150000, { mode: "targetRisk", risk: 0.25 });
   const result = findFeasibilityThreshold({ data, model });
   assert.ok("amount" in result);
-  assert.ok(Math.abs(result.amount - 100000) < 1e-5);
+  assert.match(result.value, /^\d+\.\d{2}$/);
+  assert.ok(Math.abs(result.amount - 100000) <= 0.011);
 
   const updated = { ...model, impoverishmentLevel: result.amount };
   const withdrawal = compatibleWithdrawal(updated, 150000, 0.25);
   const diagnostic = compatibleGlobalFeasibility(updated, withdrawal);
   assert.equal(diagnostic.reason, "feasible");
-  assert.ok(Math.abs(diagnostic.relativeBandwidthExcess! - 1) < 1e-8);
+  assert.ok(Math.abs(diagnostic.relativeBandwidthExcess! - 1) < 1e-6);
   assert.notEqual(withdrawal, data.selectedWithdrawal);
 });
 
@@ -37,14 +38,32 @@ test("boundary preserves a custom withdrawal", () => {
   });
   const result = findFeasibilityThreshold({ data, model });
   assert.ok("amount" in result);
-  assert.ok(Math.abs(result.amount - 100000) < 1e-5);
+  assert.match(result.value, /^\d+\.\d{2}$/);
+  assert.ok(Math.abs(result.amount - 100000) <= 0.011);
 
   const diagnostic = compatibleGlobalFeasibility(
     { ...model, impoverishmentLevel: result.amount },
     withdrawal,
   );
   assert.equal(diagnostic.reason, "feasible");
-  assert.ok(Math.abs(diagnostic.relativeBandwidthExcess! - 1) < 1e-8);
+  assert.ok(Math.abs(diagnostic.relativeBandwidthExcess! - 1) < 1e-6);
+});
+
+test("non-cent boundary is rounded upward while keeping the strategy feasible", () => {
+  const risk = 0.24;
+  const data = makeChartData(model, 150000, { mode: "targetRisk", risk });
+  const result = findFeasibilityThreshold({ data, model });
+  assert.ok("amount" in result);
+
+  const exact = 150000 / (2 - Math.sqrt(risk));
+  assert.ok(result.amount >= exact && result.amount - exact < 0.010001);
+  assert.match(result.value, /^\d+\.\d{2}$/);
+  const updated = { ...model, impoverishmentLevel: result.amount };
+  const withdrawal = compatibleWithdrawal(updated, 150000, risk);
+  assert.equal(
+    compatibleGlobalFeasibility(updated, withdrawal).reason,
+    "feasible",
+  );
 });
 
 test("boundary is unavailable for negative Merton components and insufficient capital", () => {

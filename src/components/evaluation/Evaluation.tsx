@@ -980,7 +980,7 @@ export function Evaluation() {
                 <small>
                   {"message" in feasibilityThreshold
                     ? feasibilityThreshold.message
-                    : `Changes your impoverishment level to approx. €${feasibilityThreshold.amount.toLocaleString("en-US", { maximumFractionDigits: 2 })}; ${custom ? "the target withdrawal stays fixed and the model-derived risk may change" : "the target risk stays fixed and the model-derived withdrawal may change"}.`}
+                    : `Changes your impoverishment level to €${feasibilityThreshold.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, rounded up to preserve feasibility; ${custom ? "the target withdrawal stays fixed and the model-derived risk may change" : "the target risk stays fixed and the model-derived withdrawal may change"}.`}
                 </small>
               </div>
             </div>
