@@ -21,7 +21,7 @@ import styles from "./developer.module.css";
 interface CheckRun {
   signature: string;
   phase:
-    "starting" | "running" | "cancelling" | "complete" | "cancelled" | "error";
+  "starting" | "running" | "cancelling" | "complete" | "cancelled" | "error";
   backend?: TensorBackend;
   annualWithdrawal?: number;
   progress?: RunProgress;
@@ -75,7 +75,7 @@ export function SimulationCheck() {
   const remainingMs =
     run?.progress && run.batchElapsedMs !== undefined
       ? (run.batchElapsedMs / run.progress.completedPaths) *
-        (run.progress.totalPaths - run.progress.completedPaths)
+      (run.progress.totalPaths - run.progress.completedPaths)
       : null;
 
   useEffect(
@@ -118,7 +118,6 @@ export function SimulationCheck() {
 
     const pathCount = Number(paths);
     const horizonYears = Number(horizon);
-    const requestedBatch = batch === "auto" ? 1024 : Number(batch);
     if (!Number.isSafeInteger(pathCount) || pathCount <= 0)
       return fail("Enter a positive whole number of paths.");
     if (
@@ -131,7 +130,11 @@ export function SimulationCheck() {
       );
     if (!seed.trim()) return fail("Enter a seed for the development check.");
 
-    // This provisional auto choice is a simple cap, not a hardware benchmark.
+    // Aim for four batches, capped at 2^15 paths to preserve progress updates.
+    const requestedBatch =
+      batch === "auto"
+        ? Math.min(2 ** 15, Math.ceil(pathCount / 4))
+        : Number(batch);
     const batchSize = Math.min(pathCount, requestedBatch);
     const input: RunConfigurationInput = {
       options: {
@@ -319,8 +322,8 @@ export function SimulationCheck() {
             value={batch}
             onChange={(event) => setBatch(event.target.value)}
           >
-            <option value="auto">Automatic (up to 1,024)</option>
-            {[1024, 2048, 4096, 8192, 16384, 32768, 65536].map((size) => (
+            <option value="auto">Automatic (up to 32,768)</option>
+            {[4096, 8192, 16384, 32768].map((size) => (
               <option key={size} value={size}>
                 {size.toLocaleString("en-US")}
               </option>
@@ -343,8 +346,9 @@ export function SimulationCheck() {
         </label>
       </div>
       <p className={styles.hint}>
-        Uses the simulation time step from the evaluation settings. Batch size
-        is capped at the requested path count.
+        Uses the simulation time step from the evaluation settings. Automatic
+        batch size aims for four batches and is capped at 32,768 paths. Manual
+        batch sizes are capped at the requested path count.
       </p>
       <div className={styles.actions}>
         <button
