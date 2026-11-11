@@ -64,6 +64,9 @@ export async function simulateTensorWealthBatch(
     mortality,
     impoverishmentLevel: threshold,
   };
+
+  // The safe boundary x_safe(t) and log-gap drift are shared by every path.
+  // Prepare them once per grid time, rather than recalculating them per path.
   const steps = prepareWealthGrid(model, annualWithdrawal, times);
 
   // Tensor state survives between steps; tidy releases each step's temporaries.
@@ -79,11 +82,24 @@ export async function simulateTensorWealthBatch(
           ? increments(step, dt)
           : increments[step];
       const prepared = steps[step];
+
       const next = tf.tidy(() => {
+        // `active` excludes paths that have already reached the impoverishment
+        // level on the grid; `risky` selects x < x_safe(t) for each path.
         const active = firstHit.equal(-1);
         const risky = wealth.less(prepared.currentBoundary);
+
+        // z has shape [paths, assets] and covariance Sigma * dt. Multiplying
+        // by the Merton direction m gives m^T Delta Z for every path. The
+        // increments already include volatility and sqrt(dt) scaling.
         const z = tf.tensor2d(stepIncrements as number[], [count, assets]);
         const noise = z.matMul(direction).reshape([count]);
+
+        // In the risky region, Y = x_safe - X follows a geometric diffusion.
+        // Its exact log-gap increment is
+        //   ln(Y_next / Y) = [r - 2*rho/(delta-1) - rho/(delta-1)^2] * dt
+        //                    - m^T Delta Z/(delta-1).
+        // `logGapDriftTimesStep` contains the bracketed drift times dt.
         const gap = tf
           .scalar(prepared.currentBoundary)
           .sub(wealth)
@@ -94,18 +110,28 @@ export async function simulateTensorWealthBatch(
                 .sub(noise.div(delta - 1)),
             ),
           );
+
+        // Convert the updated gap back to wealth at the next safe boundary.
         const riskyWealth = tf.scalar(prepared.nextBoundary).sub(gap);
+
+        // At or above the safe boundary, the risky allocation is zero. Solve
+        // dX/dt = r*X - C exactly using (exp(r*dt) - 1)/r from the prepared step.
         const safeWealth = wealth.add(
           wealth
             .mul(r)
             .sub(annualWithdrawal)
             .mul(prepared.riskFreeAnnuityFactor),
         );
+
+        // Choose the appropriate update and freeze paths with a prior grid hit.
         const nextWealth = tf.where(
           active,
           tf.where(risky, riskyWealth, safeWealth),
           wealth,
         ) as tf.Tensor1D;
+
+        // Record only the first observed grid point with X <= x_imp. This is
+        // not a continuous-time first-passage or Brownian-bridge calculation.
         const nextHit = tf.where(
           active.logicalAnd(nextWealth.lessEqual(threshold)),
           tf.fill([count], step + 1, "int32"),
@@ -114,6 +140,8 @@ export async function simulateTensorWealthBatch(
 
         return { wealth: nextWealth, firstHit: nextHit };
       });
+
+      // Retain only the new states; all intermediate tensors were released by tidy.
       wealth.dispose();
       firstHit.dispose();
       wealth = next.wealth;
@@ -155,6 +183,9 @@ export async function simulateTensorSnapshotBatch(
     numerical.horizonYears,
     options.numerical.timeStep,
   );
+
+  // Factor Sigma = L L^T once. Every step draws independent standard normals
+  // and transforms them to Delta Z = L * xi * sqrt(dt) for each path.
   const factor = factorPreparedCovariance(market.covariance);
   const stream = createRandomStream(numerical.seed);
 
