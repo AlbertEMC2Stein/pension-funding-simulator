@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { AllocationCard } from "./AllocationCard";
+import { useEvaluationRun, type EvaluationRun } from "./useEvaluationRun";
 import { FeasibilityControls } from "./FeasibilityControls";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import {
@@ -21,7 +22,6 @@ import {
   MANUAL_BATCH_SIZES,
   type BatchSizeChoice,
 } from "../../lib/options/batch-size";
-import { buildSimulationOptions } from "../../lib/options/simulation-options";
 import {
   Metric,
   PageHeading,
@@ -71,12 +71,47 @@ const visualGroups: {
 ];
 
 /**
- * Placeholder GM-risk comparison. `projected` only reveals the additional
- * projected-policy row; no risk or uncertainty is computed here.
+ * Show the captured GM estimate and its CE reference without attributing an
+ * unconstrained estimate to the projected policy.
  */
-function GmRiskCard({ projected }: { projected: boolean }) {
+export function GmRiskCard({
+  projected,
+  run,
+  stale,
+  custom,
+}: {
+  projected: boolean;
+  run: EvaluationRun | null;
+  stale: boolean;
+  custom: boolean;
+}) {
   const dialog = useRef<HTMLDialogElement>(null);
   const { navigate } = useDraft();
+  const running =
+    run?.phase === "starting" ||
+    run?.phase === "running" ||
+    run?.phase === "cancelling";
+  const risk = run?.risk;
+  const targetMode = run
+    ? run.options.policy.withdrawal.mode === "targetRisk"
+    : !custom;
+  const status = running
+    ? "RUNNING"
+    : stale && risk
+      ? "NEEDS UPDATING"
+      : run?.phase === "error"
+        ? "ERROR"
+        : run?.phase === "cancelled"
+          ? "CANCELLED"
+          : risk
+            ? "CALCULATED"
+            : "NOT CALCULATED";
+  const difference = risk ? (risk.gm.estimate - risk.ceBenchmark) * 100 : null;
+  const remainingMs =
+    run?.progress && run.batchElapsedMs !== undefined
+      ? (run.batchElapsedMs / run.progress.completedPaths) *
+        (run.progress.totalPaths - run.progress.completedPaths)
+      : null;
 
   return (
     <article className="chart-card diagnostic-card">
@@ -97,26 +132,137 @@ function GmRiskCard({ projected }: { projected: boolean }) {
             </button>
           </h3>
           <p className="timing-intro">
-            Compare the policy&apos;s calibration target with its estimated risk
-            under the fitted GM model.
+            Compare the CE-model reference with the estimated risk under the
+            fitted GM model.
           </p>
         </div>
-        <span className="chip">NOT CALCULATED</span>
+        <span className="chip">{status}</span>
       </div>
+      {running && (
+        <div className="risk-run-progress" role="status">
+          <span className="risk-spinner" aria-hidden="true" />
+          {run?.phase === "cancelling"
+            ? "Stopping after the current batch…"
+            : run?.progress
+              ? `${run.progress.completedPaths.toLocaleString("en-US")} / ${run.progress.totalPaths.toLocaleString("en-US")} paths${remainingMs !== null && remainingMs > 0 ? ` · approximately ${Math.max(1, Math.ceil(remainingMs / 1000))} seconds remaining` : ""}`
+              : "Preparing simulation…"}
+        </div>
+      )}
+      {stale && (
+        <p role="status">
+          Settings changed since this run started. Its results belong to the
+          earlier settings.
+        </p>
+      )}
+      {run?.message && <p role="alert">{run.message}</p>}
+      {run?.phase === "cancelled" && (
+        <p role="status">The simulation was cancelled.</p>
+      )}
       <div className="diagnostic-metrics">
-        <Metric
-          label="Target risk α"
-          note="Unconstrained policy, own mortality model"
-        />
-        <Metric
-          label="Estimated GM risk"
-          note="Unconstrained policy · Monte Carlo estimate"
-        />
-        <Metric
-          label="Difference from target"
-          note="Percentage points · uncertainty shown after a run"
-        />
+        <div>
+          <span>{targetMode ? "Target risk α" : "CE-model risk"}</span>
+          <strong>
+            {risk ? `${(risk.ceBenchmark * 100).toFixed(3)}%` : "—"}
+          </strong>
+          <small>Unconstrained CE policy · full CE horizon</small>
+        </div>
+        <div>
+          <span>Estimated GM risk</span>
+          <strong>
+            {risk ? `${(risk.gm.estimate * 100).toFixed(3)}%` : "—"}
+          </strong>
+          <small>Unconstrained policy · Monte Carlo estimate</small>
+        </div>
+        <div>
+          <span>
+            {targetMode ? "Difference from target" : "Difference from CE risk"}
+          </span>
+          <strong>
+            {difference === null
+              ? "—"
+              : `${difference > 0 ? "+" : ""}${difference.toFixed(3)} pp`}
+          </strong>
+          <small>GM estimate minus CE reference</small>
+        </div>
       </div>
+      {risk && (
+        <>
+          <p className="chart-disclaimer">
+            Approximate 95% Monte Carlo interval:{" "}
+            {risk.gm.interval95
+              ? `${(risk.gm.interval95.lower * 100).toFixed(3)}% – ${(risk.gm.interval95.upper * 100).toFixed(3)}%`
+              : "not available for this sample"}
+            . The estimate includes hits within {risk.horizonYears.toFixed(2)}{" "}
+            years; GM mortality may extend beyond the CE endpoint. Bridge,
+            time-step and horizon errors are not included in the interval.
+          </p>
+          {run && (
+            <details className="borrowing-details diagnostic-details">
+              <summary>Settings used for this run</summary>
+              <dl>
+                <div>
+                  <dt>Policy</dt>
+                  <dd>Unconstrained CE</dd>
+                </div>
+                <div>
+                  <dt>Annual withdrawal</dt>
+                  <dd>
+                    {run.annualWithdrawal === undefined
+                      ? "—"
+                      : `€${Math.round(run.annualWithdrawal).toLocaleString("en-US")} / year`}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Starting capital / impoverishment level</dt>
+                  <dd>
+                    €
+                    {run.options.investor.initialCapital.toLocaleString(
+                      "en-US",
+                    )}{" "}
+                    / €
+                    {run.options.investor.impoverishmentLevel.toLocaleString(
+                      "en-US",
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Mortality cohort</dt>
+                  <dd>
+                    {run.options.investor.birthYear} · retirement{" "}
+                    {run.options.investor.retirementYear} ·{" "}
+                    {run.options.investor.mortality.table} ·{" "}
+                    {run.options.investor.mortality.longevity}
+                    {run.options.investor.mortality.table === "custom" &&
+                      ` · male weight ${run.options.investor.mortality.maleWeight}`}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Market assets</dt>
+                  <dd>
+                    {run.options.market.assets
+                      .map((asset) => asset.name)
+                      .join(", ")}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Paths / time step</dt>
+                  <dd>
+                    {run.options.numerical.paths.toLocaleString("en-US")} /{" "}
+                    {run.options.numerical.timeStep}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Batch size / seed</dt>
+                  <dd>
+                    {run.numerical.batchSize.toLocaleString("en-US")} /{" "}
+                    {run.numerical.seed}
+                  </dd>
+                </div>
+              </dl>
+            </details>
+          )}
+        </>
+      )}
       {projected && (
         <div className="projection-risk-result">
           <div className="result-subheading">
@@ -168,9 +314,9 @@ function GmRiskCard({ projected }: { projected: boolean }) {
           </button>
         </div>
         <p>
-          This card compares the chosen risk target with an estimate using the
-          fitted Gompertz–Makeham mortality model. The estimate may differ from
-          the target.
+          This card compares the CE-model risk with an estimate using the fitted
+          Gompertz–Makeham mortality model. If a withdrawal amount was entered
+          directly, the CE value is its model-implied risk.
         </p>
         <p>
           If projection is selected, the comparison also shows how projected and
@@ -524,7 +670,8 @@ function BorrowingCard({ feasibility }: { feasibility: FeasibilityResult }) {
  */
 export function Evaluation() {
   const { navigate } = useDraft();
-  const { draft, setDraft, prepared, setPrepared } = useSimulationDraft();
+  const { draft, setDraft } = useSimulationDraft();
+  const { run, errors, stale, running, start, cancel } = useEvaluationRun();
   const ceResult = useRiskWithdrawalResult();
   const feasibility = evaluateGlobalFeasibility(ceResult);
   const assetNames = useMemo(
@@ -533,50 +680,12 @@ export function Evaluation() {
   );
   const feasibilityThreshold = findFeasibilityThreshold(ceResult);
   const simulation = draft.simulation;
-  const [errors, setErrors] = useState<string[]>([]);
   /** Merge a partial control edit into the shared simulation draft while retaining the other settings. */
   function updateSimulation(change: Partial<typeof simulation>) {
     setDraft((current) => ({
       ...current,
       simulation: { ...current.simulation, ...change },
     }));
-  }
-  /** Validate the current draft and capture its options for inspection. Report errors or a debug event; this does not run a simulation. */
-  function prepareSimulation() {
-    const result = buildSimulationOptions(draft);
-
-    if (!result.ok) {
-      setPrepared(null);
-      setErrors(result.errors);
-
-      if (process.env.NODE_ENV === "development") {
-        window.dispatchEvent(
-          new CustomEvent("simulation-debug-event", {
-            detail: {
-              level: "error",
-              message: `Options validation failed (${result.errors.length} issues).`,
-            },
-          }),
-        );
-      }
-
-      return;
-    }
-
-    setErrors([]);
-    setPrepared({ draft, options: result.options });
-
-    if (process.env.NODE_ENV === "development") {
-      window.dispatchEvent(
-        new CustomEvent("simulation-debug-event", {
-          detail: {
-            level: "info",
-            message:
-              "Simulation options prepared; simulation is not connected.",
-          },
-        }),
-      );
-    }
   }
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -615,17 +724,27 @@ export function Evaluation() {
           <button
             type="button"
             className="button button-primary"
-            onClick={prepareSimulation}
+            onClick={start}
           >
-            ▶ &nbsp; Run simulation
+            ▶ &nbsp; {running ? "Run again" : "Run simulation"}
           </button>
+          {running && (
+            <button
+              type="button"
+              className="button button-light"
+              disabled={run?.phase === "cancelling"}
+              onClick={cancel}
+            >
+              Cancel run
+            </button>
+          )}
         </div>
       </PageHeading>
       <PreviewBanner>
         <strong>You&apos;re exploring a design draft.</strong> The CE withdrawal
         chart, allocation, capital comparison and feasibility diagnostic use
-        your current inputs and fitted model. Other results remain illustrative
-        placeholders.
+        your current inputs. The GM risk card shows the latest simulation when
+        available; other results remain illustrative placeholders.
       </PreviewBanner>
       {errors.length > 0 && (
         <div className="form-card" role="alert">
@@ -637,12 +756,14 @@ export function Evaluation() {
           </ul>
         </div>
       )}
-      {prepared && (
-        <div className="form-card" role="status">
-          {prepared.draft === draft
-            ? "Simulation options prepared."
-            : "Prepared options need updating."}{" "}
-          No simulation has run yet.
+      {running && !visuals.gm && (
+        <div className="form-card risk-run-progress" role="status">
+          <span className="risk-spinner" aria-hidden="true" />
+          {run?.phase === "cancelling"
+            ? "Stopping after the current batch…"
+            : run?.progress
+              ? `Simulating ${run.progress.completedPaths.toLocaleString("en-US")} / ${run.progress.totalPaths.toLocaleString("en-US")} paths.`
+              : "Preparing simulation…"}
         </div>
       )}
       <div
@@ -741,7 +862,14 @@ export function Evaluation() {
             </div>
           )}
           {visuals.withdrawal && <RiskWithdrawalChart result={ceResult} />}
-          {visuals.gm && <GmRiskCard projected={projected} />}
+          {visuals.gm && (
+            <GmRiskCard
+              projected={projected}
+              run={run}
+              stale={stale}
+              custom={custom}
+            />
+          )}
           {visuals.capital && (
             <CapitalCard
               comparison={calculateCapitalComparison(ceResult, projected)}
@@ -978,9 +1106,9 @@ export function Evaluation() {
               </select>
             </div>
             <div className="settings-footer">
-              ◷ &nbsp; Results appear here after a run.
+              ◷ &nbsp; The CE chart responds to relevant settings.
               <br />
-              <small>The CE chart responds to relevant settings.</small>
+              <small>Run the simulation to estimate GM risk.</small>
             </div>
           </aside>
         )}

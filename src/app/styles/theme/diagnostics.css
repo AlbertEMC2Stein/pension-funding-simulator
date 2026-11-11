@@ -8,7 +8,9 @@
 .capital-card h3,
 .borrowing-card h3 {
   color: var(--text-strong);
-  font: 700 16px Manrope, sans-serif;
+  font:
+    700 16px Manrope,
+    sans-serif;
   margin: 7px 0;
 }
 
@@ -27,8 +29,8 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.capital-summary>div,
-.borrowing-metrics>div {
+.capital-summary > div,
+.borrowing-metrics > div {
   padding: 12px;
   border-radius: 6px;
   background: var(--surface-soft);
@@ -46,7 +48,9 @@
 .borrowing-metrics strong {
   display: block;
   color: var(--text-strong);
-  font: 700 18px Manrope, sans-serif;
+  font:
+    700 18px Manrope,
+    sans-serif;
   margin: 5px 0;
 }
 
@@ -340,7 +344,9 @@ table.capital-table {
 
 .diagnostic-card h3 {
   color: var(--text-strong);
-  font: 700 16px Manrope, sans-serif;
+  font:
+    700 16px Manrope,
+    sans-serif;
   margin: 7px 0;
 }
 
@@ -351,7 +357,38 @@ table.capital-table {
   margin-top: 18px;
 }
 
-.diagnostic-metrics>div,
+.risk-run-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.risk-spinner {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: risk-spin 0.8s linear infinite;
+}
+
+@keyframes risk-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .risk-spinner {
+    animation: none;
+  }
+}
+
+.diagnostic-metrics > div,
 .fit-status {
   background: var(--surface-soft);
   border-radius: 6px;
@@ -369,7 +406,9 @@ table.capital-table {
 .diagnostic-metrics strong {
   display: block;
   color: var(--text-strong);
-  font: 700 18px Manrope, sans-serif;
+  font:
+    700 18px Manrope,
+    sans-serif;
   margin: 6px 0;
 }
 
@@ -393,7 +432,9 @@ table.capital-table {
 
 .status-guide h2 {
   color: var(--text-strong);
-  font: 700 15px Manrope, sans-serif;
+  font:
+    700 15px Manrope,
+    sans-serif;
   margin: 7px 0;
 }
 
@@ -495,11 +536,11 @@ table.capital-table {
   cursor: pointer;
 }
 
-.input-with-help>label {
+.input-with-help > label {
   display: inline;
 }
 
-.input-with-help>.term-link {
+.input-with-help > .term-link {
   font-size: 11px;
   margin-left: 5px;
 }
@@ -572,7 +613,9 @@ table.capital-table {
 .dictionary-entry h2,
 .help-dialog h2 {
   color: var(--text-strong);
-  font: 700 17px Manrope, sans-serif;
+  font:
+    700 17px Manrope,
+    sans-serif;
   margin: 8px 0;
 }
 
@@ -610,7 +653,7 @@ table.capital-table {
 }
 
 .help-dialog::backdrop {
-  background: rgba(22, 29, 43, .56);
+  background: rgba(22, 29, 43, 0.56);
 }
 
 .help-dialog-heading {
@@ -619,4 +662,3 @@ table.capital-table {
   justify-content: space-between;
   gap: 16px;
 }
-
