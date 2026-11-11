@@ -29,6 +29,9 @@ interface CheckRun {
     "starting" | "running" | "cancelling" | "complete" | "cancelled" | "error";
   backend?: TensorBackend;
   annualWithdrawal?: number;
+  /** Actual run horizon, capped at the fitted CE endpoint. */
+  horizonYears?: number;
+  horizonCapped?: boolean;
   progress?: RunProgress;
   /** Elapsed batch-processing time, excluding backend initialization. */
   batchElapsedMs?: number;
@@ -125,15 +128,14 @@ export function SimulationCheck() {
     const horizonYears = Number(horizon);
     if (!Number.isSafeInteger(pathCount) || pathCount <= 0)
       return fail("Enter a positive whole number of paths.");
-    if (
-      !Number.isFinite(horizonYears) ||
-      horizonYears <= 0 ||
-      horizonYears > mortalityFits.ce.fit.parameters.tau
-    )
-      return fail(
-        `Horizon must be positive and at most the fitted CE endpoint (${mortalityFits.ce.fit.parameters.tau.toFixed(2)} years).`,
-      );
+    if (!Number.isFinite(horizonYears) || horizonYears <= 0)
+      return fail("Enter a positive maximum horizon.");
     if (!seed.trim()) return fail("Enter a seed for the development check.");
+
+    const effectiveHorizon = Math.min(
+      horizonYears,
+      mortalityFits.ce.fit.parameters.tau,
+    );
 
     // The check uses the shared selection with its own development path count.
     const batchSize = resolveBatchSize(
@@ -147,7 +149,12 @@ export function SimulationCheck() {
       },
       market: market.market,
       mortality: { gm: mortalityFits.gm.fit, ce: mortalityFits.ce.fit },
-      numerical: { seed, horizonYears, batchSize, recordTrajectories: false },
+      numerical: {
+        seed,
+        horizonYears: effectiveHorizon,
+        batchSize,
+        recordTrajectories: false,
+      },
       versions: {
         schema: "prototype-1",
         model: "compatible-ce-1",
@@ -171,7 +178,12 @@ export function SimulationCheck() {
 
     const runId = ++runIdRef.current;
     workerRef.current = worker;
-    setRun({ signature, phase: "starting" });
+    setRun({
+      signature,
+      phase: "starting",
+      horizonYears: effectiveHorizon,
+      horizonCapped: effectiveHorizon < horizonYears,
+    });
 
     /** Finish the active worker without affecting a newer run. */
     function finish() {
@@ -303,7 +315,7 @@ export function SimulationCheck() {
           />
         </label>
         <label>
-          Horizon · years
+          Maximum horizon · years
           <input
             type="number"
             min="0.01"
@@ -311,6 +323,24 @@ export function SimulationCheck() {
             value={horizon}
             onChange={(event) => setHorizon(event.target.value)}
           />
+        </label>
+        <label>
+          Time step
+          <select
+            value={draft.simulation.timeStep}
+            onChange={(event) => {
+              const timeStep = event.target
+                .value as typeof draft.simulation.timeStep;
+              setDraft((current) => ({
+                ...current,
+                simulation: { ...current.simulation, timeStep },
+              }));
+            }}
+          >
+            <option value="monthly">Monthly</option>
+            <option value="fortnightly">Fortnightly</option>
+            <option value="weekly">Weekly</option>
+          </select>
         </label>
         <label>
           Seed
@@ -359,9 +389,10 @@ export function SimulationCheck() {
         </label>
       </div>
       <p className={styles.hint}>
-        Uses the shared time step and batch-size selection. Automatic batch size
-        aims for four batches and is capped at 32,768 paths. Manual batch sizes
-        are capped at the requested path count.
+        Time step and batch size are shared with Evaluation. Automatic batch
+        size aims for four batches and is capped at 32,768 paths. Manual batch
+        sizes are capped at the requested path count. The run horizon is capped
+        at the fitted CE mortality endpoint.
       </p>
       <div className={styles.actions}>
         <button
@@ -396,6 +427,16 @@ export function SimulationCheck() {
           )}
           {run.phase === "cancelling" && (
             <p>Stopping after the current batch…</p>
+          )}
+          {run.horizonYears !== undefined && (
+            <p>
+              Run horizon:{" "}
+              {run.horizonYears.toLocaleString("en-US", {
+                maximumFractionDigits: 6,
+              })}{" "}
+              years
+              {run.horizonCapped && " (capped at the CE mortality endpoint)"}.
+            </p>
           )}
           {run.backend && (
             <p>
