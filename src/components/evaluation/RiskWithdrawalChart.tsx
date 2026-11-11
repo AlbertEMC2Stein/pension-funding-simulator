@@ -26,7 +26,8 @@ export interface ChartData {
 }
 
 /** Either the current CE result or an explanation of why it is unavailable. */
-export type RiskWithdrawalResult = { data: ChartData } | { message: string };
+export type RiskWithdrawalResult =
+  { data: ChartData; model: CompatiblePolicyInputs } | { message: string };
 
 /**
  * Build a finite portion of the unconstrained CE curve, including its
@@ -332,7 +333,7 @@ export function useRiskWithdrawalResult(): RiskWithdrawalResult {
         : { mode: "customAmount" as const, amount: simulation.withdrawalEuros };
 
     try {
-      return { data: makeChartData(model, capital, withdrawal) };
+      return { data: makeChartData(model, capital, withdrawal), model };
     } catch (error) {
       return {
         message:

@@ -24,6 +24,12 @@
   --notice-bg: #f8ece7;
   --notice-border: #efd9d2;
   --notice-text: #83544c;
+  --feasibility-good-bg: #e5f2e9;
+  --feasibility-good-border: #a6cbb1;
+  --feasibility-good-text: #276441;
+  --feasibility-bad-bg: #f8e7e5;
+  --feasibility-bad-border: #dfaaa3;
+  --feasibility-bad-text: #963c34;
   --chart-grid: #e6e1e1;
   --chart-equity: #526c8b;
   --chart-bond: #de968a;
@@ -49,6 +55,12 @@
   --notice-bg: #49383b;
   --notice-border: #67494a;
   --notice-text: #f2c7b9;
+  --feasibility-good-bg: #233e34;
+  --feasibility-good-border: #4c8063;
+  --feasibility-good-text: #a5dfb8;
+  --feasibility-bad-bg: #493039;
+  --feasibility-bad-border: #a05d60;
+  --feasibility-bad-text: #ffb9b1;
   --chart-grid: #424a59;
   --chart-equity: #96b1d0;
   --chart-bond: #e5988a;

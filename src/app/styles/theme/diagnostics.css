@@ -194,6 +194,17 @@ table.capital-table {
   padding: 11px;
 }
 
+.feasibility-status[data-status="feasible"] {
+  background: var(--feasibility-good-bg);
+  border-color: var(--feasibility-good-border);
+}
+
+.feasibility-status[data-status="negative-merton"],
+.feasibility-status[data-status="borrowing"] {
+  background: var(--feasibility-bad-bg);
+  border-color: var(--feasibility-bad-border);
+}
+
 .feasibility-status strong {
   display: flex;
   flex-wrap: wrap;
@@ -206,6 +217,17 @@ table.capital-table {
 .feasibility-status strong span {
   color: var(--text-secondary);
   font-weight: 400;
+}
+
+.feasibility-status[data-status="feasible"] strong span {
+  color: var(--feasibility-good-text);
+  font-weight: 600;
+}
+
+.feasibility-status[data-status="negative-merton"] strong span,
+.feasibility-status[data-status="borrowing"] strong span {
+  color: var(--feasibility-bad-text);
+  font-weight: 600;
 }
 
 .feasibility-status p,
@@ -221,6 +243,8 @@ table.capital-table {
 
 .feasibility-status small {
   display: block;
+  color: var(--text-muted);
+  font-size: 9px;
 }
 
 .mortality-mixture {

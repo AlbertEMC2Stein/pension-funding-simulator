@@ -7,6 +7,10 @@ import {
   useRiskWithdrawalResult,
 } from "./RiskWithdrawalChart";
 import {
+  evaluateGlobalFeasibility,
+  type FeasibilityResult,
+} from "./global-feasibility";
+import {
   MANUAL_BATCH_SIZES,
   type BatchSizeChoice,
 } from "../../lib/options/batch-size";
@@ -443,8 +447,8 @@ function TimingCard() {
   );
 }
 
-/** Placeholder for unprojected-policy borrowing and feasibility diagnostics. */
-function BorrowingCard() {
+/** Display analytical global feasibility alongside borrowing simulation placeholders. */
+function BorrowingCard({ feasibility }: { feasibility: FeasibilityResult }) {
   return (
     <article className="chart-card borrowing-card">
       <div className="card-top">
@@ -472,8 +476,20 @@ function BorrowingCard() {
         <summary>View borrowing diagnostics</summary>
         <dl>
           {[
-            ["Global no-borrowing feasibility", "Not evaluated"],
-            ["Relative bandwidth multiplier ζ", "—"],
+            [
+              "Global simplex feasibility",
+              feasibility.status === "feasible"
+                ? "Feasible"
+                : feasibility.status === "unavailable"
+                  ? "Not available"
+                  : "Not feasible",
+            ],
+            [
+              "Relative bandwidth multiplier ζ",
+              "zeta" in feasibility
+                ? `${feasibility.zeta.toPrecision(6)} (${feasibility.zeta <= 1 ? "≤" : ">"} 1)`
+                : "—",
+            ],
             ["Borrowing at retirement", "Not evaluated"],
             ["Last possible borrowing time", "—"],
           ].map(([a, b]) => (
@@ -483,6 +499,7 @@ function BorrowingCard() {
             </div>
           ))}
         </dl>
+        <p>{feasibility.message}</p>
         <p>
           Where the model assumptions apply, ζ &gt; 1 indicates that the
           relative bandwidth exceeds the global no-borrowing threshold.
@@ -495,7 +512,8 @@ function BorrowingCard() {
         </p>
       </details>
       <p className="chart-disclaimer">
-        Placeholders only · no exposure has been calculated.
+        Borrowing exposure is not calculated yet. The global feasibility
+        diagnostic is analytical when available.
       </p>
     </article>
   );
@@ -509,6 +527,7 @@ export function Evaluation() {
   const { navigate } = useDraft();
   const { draft, setDraft, prepared, setPrepared } = useSimulationDraft();
   const ceResult = useRiskWithdrawalResult();
+  const feasibility = evaluateGlobalFeasibility(ceResult);
   const simulation = draft.simulation;
   const [errors, setErrors] = useState<string[]>([]);
   /** Merge a partial control edit into the shared simulation draft while retaining the other settings. */
@@ -601,8 +620,8 @@ export function Evaluation() {
       </PageHeading>
       <PreviewBanner>
         <strong>You&apos;re exploring a design draft.</strong> The CE withdrawal
-        chart uses your current inputs and fitted model. Other results remain
-        illustrative placeholders.
+        chart and global feasibility diagnostic use your current inputs and
+        fitted model. Other results remain illustrative placeholders.
       </PreviewBanner>
       {errors.length > 0 && (
         <div className="form-card" role="alert">
@@ -711,7 +730,8 @@ export function Evaluation() {
               </div>
               <p className="visual-picker-note">
                 Mortality fit is shown in Investor & mortality. The CE chart is
-                calculated; other visuals remain illustrative placeholders.
+                calculated, as is global feasibility. Other results remain
+                illustrative placeholders.
               </p>
             </div>
           )}
@@ -773,7 +793,9 @@ export function Evaluation() {
               />
               <div className="risk-section-grid">
                 {visuals.timing && <TimingCard />}
-                {visuals.borrowing && <BorrowingCard />}
+                {visuals.borrowing && (
+                  <BorrowingCard feasibility={feasibility} />
+                )}
               </div>
             </section>
           )}
@@ -895,19 +917,26 @@ export function Evaluation() {
                 ⓘ &nbsp; <TermLink term="projection">Projection</TermLink> is a
                 feasible comparison policy.
               </div>
-              <div className="feasibility-status" role="status">
+              <div
+                className="feasibility-status"
+                data-status={feasibility.status}
+                role="status"
+              >
                 <strong>
-                  Global feasibility <span>Not evaluated</span>
+                  Global feasibility{" "}
+                  <span>
+                    {feasibility.status === "feasible"
+                      ? "Feasible"
+                      : feasibility.status === "unavailable"
+                        ? "Not available"
+                        : "Not feasible"}
+                  </span>
                 </strong>
-                <p>
-                  When the model&apos;s sufficient condition holds, this will
-                  confirm that the unconstrained strategy satisfies the
-                  no-short-selling and no-borrowing constraints throughout its
-                  relevant state space.
-                </p>
+                <p>{feasibility.message}</p>
                 <small>
-                  If the condition cannot be verified or does not hold, the
-                  message will explain what is known.
+                  For the unconstrained CE policy. The Merton vector must be
+                  componentwise non-negative, with at least one positive entry.
+                  Selecting projection does not change this diagnostic.
                 </small>
               </div>
             </div>
