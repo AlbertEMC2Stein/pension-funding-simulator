@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
-import { survivalKlDivergence } from "../src/lib/mortality/survival-fit-loss";
+import {
+  createSurvivalKlObjective,
+  survivalKlDivergence,
+} from "../src/lib/mortality/survival-fit-loss";
 import {
   fitCompatibleCe,
   fitGompertzMakeham,
@@ -10,7 +13,10 @@ import {
   compactifiedExponentialSurvival,
   gompertzMakehamSurvival,
 } from "../src/lib/mortality/mortality-models";
-import { mixCohortSurvival, parseCohortCsv } from "../src/lib/mortality/cohort-survival";
+import {
+  mixCohortSurvival,
+  parseCohortCsv,
+} from "../src/lib/mortality/cohort-survival";
 
 test("KL uses the last survival value as the final tail bin", () => {
   const loss = survivalKlDivergence([0, 1, 2], [1, 0.7, 0.2], [1, 0.6, 0.1]);
@@ -22,6 +28,18 @@ test("KL uses the last survival value as the final tail bin", () => {
   );
   assert.equal(survivalKlDivergence([0, 1], [1, 0], [1, 0]), 0);
   assert.throws(() => survivalKlDivergence([0, 1], [1, 1.1], [1, 0.5]));
+});
+
+test("prepared KL objective captures the target and still checks each candidate", () => {
+  const times = [0, 1, 2];
+  const target = [1, 0.7, 0.2];
+  const loss = createSurvivalKlObjective(times, target);
+  const expected = survivalKlDivergence(times, target, [1, 0.6, 0.1]);
+  target[1] = 0.4;
+  times[1] = 3;
+  assert.equal(loss([1, 0.6, 0.1]), expected);
+  assert.equal(loss([1, 0.8, 0.9]), Infinity);
+  assert.throws(() => loss([1, 0.6]));
 });
 
 test("GM multistart recovers a synthetic survival curve", () => {

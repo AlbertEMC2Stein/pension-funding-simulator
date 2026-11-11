@@ -4,6 +4,7 @@ import * as tf from "@tensorflow/tfjs";
 import { advanceUnconstrainedWealth } from "../src/lib/model/simulation/wealth-step";
 import {
   generateTimeGrid,
+  simulateWealthBatch,
   simulateWealthPath,
 } from "../src/lib/model/simulation/wealth-path";
 import {
@@ -15,7 +16,10 @@ import {
   standardNormalVector,
 } from "../src/lib/model/simulation/random";
 import { initializeTensorBackend } from "../src/lib/model/simulation/tensorflow/backend";
-import { simulateTensorWealthBatch } from "../src/lib/model/simulation/tensorflow/wealth-batch";
+import {
+  simulateTensorSnapshotBatch,
+  simulateTensorWealthBatch,
+} from "../src/lib/model/simulation/tensorflow/wealth-batch";
 import {
   createRunSnapshot,
   type RunConfigurationInput,
@@ -176,7 +180,7 @@ test("TensorFlow CPU batch matches scalar paths with the same supplied increment
   assert.equal(tf.memory().numTensors, before);
 });
 
-test("snapshot copies inputs and rejects changed markets and unsupported projection", () => {
+test("snapshot copies and freezes inputs and rejects changed markets and unsupported projection", async () => {
   const built = buildSimulationOptions(initialSimulationDraft());
   assert.ok(built.ok);
   const calibrated = calibrateMarket(built.options.market);
@@ -229,6 +233,22 @@ test("snapshot copies inputs and rejects changed markets and unsupported project
   assert.notEqual(
     snapshot.options.investor.initialCapital,
     input.options.investor.initialCapital,
+  );
+  assert.ok(Object.isFrozen(snapshot));
+  assert.ok(Object.isFrozen(snapshot.market.covariance[0]));
+  assert.throws(() =>
+    Object.defineProperty(snapshot.market.covariance[0], "0", { value: 0 }),
+  );
+  const tiny = createRunSnapshot({
+    ...input,
+    numerical: { ...input.numerical, horizonYears: 0.25, batchSize: 3 },
+  });
+  assert.equal(simulateWealthBatch(tiny).paths.length, 3);
+  assert.equal((await simulateTensorSnapshotBatch(tiny)).finalWealth.length, 3);
+  assert.throws(() => simulateWealthBatch(structuredClone(tiny)), /validated/);
+  await assert.rejects(
+    simulateTensorSnapshotBatch(structuredClone(tiny)),
+    /validated/,
   );
   assert.throws(
     () =>
