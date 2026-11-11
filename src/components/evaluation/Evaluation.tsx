@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { AllocationCard } from "./AllocationCard";
+import { FeasibilityControls } from "./FeasibilityControls";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import {
   RiskWithdrawalChart,
@@ -54,9 +55,7 @@ const visualGroups: {
   },
   {
     title: "Portfolio & policies",
-    entries: [
-      { id: "allocation", label: "Portfolio allocation" },
-    ],
+    entries: [{ id: "allocation", label: "Portfolio allocation" }],
   },
   {
     title: "Impoverishment & borrowing",
@@ -904,53 +903,21 @@ export function Evaluation() {
                 ⓘ &nbsp; <TermLink term="projection">Projection</TermLink> is a
                 feasible comparison policy.
               </div>
-              <div
-                className="feasibility-status"
-                data-status={feasibility.status}
-                role="status"
-              >
-                <strong>
-                  Global feasibility{" "}
-                  <span>
-                    {feasibility.status === "feasible"
-                      ? "Feasible"
-                      : feasibility.status === "unavailable"
-                        ? "Not available"
-                        : "Not feasible"}
-                  </span>
-                </strong>
-                <p>{feasibility.message}</p>
-                <small>
-                  For the unconstrained CE policy. The Merton vector must be
-                  componentwise non-negative, with at least one positive entry.
-                  Selecting projection does not change this diagnostic.
-                </small>
-              </div>
-              <div className="feasibility-action">
-                <button
-                  type="button"
-                  className="button button-light"
-                  disabled={"message" in feasibilityThreshold}
-                  onClick={() => {
-                    if ("message" in feasibilityThreshold) return;
-
-                    setDraft((current) => ({
-                      ...current,
-                      investor: {
-                        ...current.investor,
-                        impoverishmentLevel: feasibilityThreshold.value,
-                      },
-                    }));
-                  }}
-                >
-                  Make globally feasible (ζ = 1)
-                </button>
-                <small>
-                  {"message" in feasibilityThreshold
-                    ? feasibilityThreshold.message
-                    : `Changes your impoverishment level to €${feasibilityThreshold.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, rounded up to preserve feasibility; ${custom ? "the target withdrawal stays fixed and the model-derived risk may change" : "the target risk stays fixed and the model-derived withdrawal may change"}.`}
-                </small>
-              </div>
+              <FeasibilityControls
+                projected={projected}
+                custom={custom}
+                feasibility={feasibility}
+                threshold={feasibilityThreshold}
+                onApply={(value) =>
+                  setDraft((current) => ({
+                    ...current,
+                    investor: {
+                      ...current.investor,
+                      impoverishmentLevel: value,
+                    },
+                  }))
+                }
+              />
             </div>
             <div className="settings-group">
               <div className="group-title">

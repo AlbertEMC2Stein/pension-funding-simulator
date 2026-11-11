@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { renderToStaticMarkup } from "react-dom/server";
+import { FeasibilityControls } from "../src/components/evaluation/FeasibilityControls";
 import { makeChartData } from "../src/components/evaluation/RiskWithdrawalChart";
 import { evaluateGlobalFeasibility } from "../src/components/evaluation/global-feasibility";
 import type { CompatiblePolicyInputs } from "../src/lib/model/analytical/compatible-policy";
@@ -55,4 +57,46 @@ test("global diagnostic rejects an all-zero Merton vector", () => {
     evaluateGlobalFeasibility({ model: zero, data }).status,
     "unavailable",
   );
+});
+
+test("projected policy is shown feasible and its threshold action is disabled", () => {
+  const html = renderToStaticMarkup(
+    <FeasibilityControls
+      projected
+      custom={false}
+      feasibility={{
+        status: "borrowing",
+        message: "Borrowing possible",
+        zeta: 2,
+      }}
+      threshold={{ value: "100000.00", amount: 100000 }}
+      onApply={() => {}}
+    />,
+  );
+
+  assert.match(html, /data-status="feasible"/);
+  assert.match(html, /globally feasible by construction/);
+  assert.match(html, /projection is not implemented yet/);
+  assert.match(html, /disabled=""/);
+  assert.match(html, /only applies to the unconstrained policy/);
+});
+
+test("unconstrained policy retains its diagnostic and enabled threshold action", () => {
+  const html = renderToStaticMarkup(
+    <FeasibilityControls
+      projected={false}
+      custom={false}
+      feasibility={{
+        status: "borrowing",
+        message: "Borrowing possible",
+        zeta: 2,
+      }}
+      threshold={{ value: "100000.00", amount: 100000 }}
+      onApply={() => {}}
+    />,
+  );
+
+  assert.match(html, /data-status="borrowing"/);
+  assert.match(html, /Borrowing possible/);
+  assert.doesNotMatch(html, /disabled=""/);
 });
