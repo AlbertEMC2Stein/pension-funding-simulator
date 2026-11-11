@@ -31,6 +31,12 @@ Suggested order:
    Initialize the backend first. Tensors are disposed internally; no financial
    worker is connected yet.
 
+The TensorFlow batch draws seeded standard normals on the CPU into a flat
+Float32 buffer at each step. TensorFlow then applies the retained covariance
+factor to all paths with a batched matrix multiplication on the selected
+backend. This preserves the existing random stream but still requires a CPU
+loop and one upload per step; GPU random generation is not implemented.
+
 The provisional increment convention is asset-ordered return noise with
 covariance `Σ × dt`: its volatility and time-step scaling have already been
 applied. The wealth-step implementation must not apply those factors again.

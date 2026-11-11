@@ -3,7 +3,6 @@ import type { CompatiblePolicyInputs } from "../../analytical/compatible-policy"
 import { assertRunSnapshot, type RunSnapshot } from "../run-configuration";
 import { generateTimeGrid } from "../wealth-path";
 import { prepareWealthGrid } from "../prepared-grid";
-import { correlatePreparedIncrement } from "../matrix";
 import type { RandomStream } from "../random";
 
 /** Deterministic grid experiment; each step supplies asset noise for all paths. */
@@ -22,12 +21,16 @@ export interface TensorWealthBatchInput {
   /** Years after retirement, including the initial time. */
   times: readonly number[];
   /**
-   * Asset-ordered increments for each step, stored path-major with shape
-   * [number of paths, number of assets]. A callback avoids retaining all steps.
+   * Asset-ordered increments with shape [paths, assets]. Arrays are flattened
+   * in path-major order. A callback may instead create a Tensor2D for each
+   * step; tensors created inside that callback are disposed with the step.
    */
   increments:
     | readonly (readonly number[])[]
-    | ((step: number, timeStepYears: number) => readonly number[]);
+    | ((
+        step: number,
+        timeStepYears: number,
+      ) => readonly number[] | tf.Tensor2D);
 }
 
 /** Final Float32 grid states and the first observed grid-hit indices for one supplied-increment batch. */
@@ -83,13 +86,16 @@ export async function simulateTensorWealthBatch(
   try {
     for (let step = 0; step < times.length - 1; step += 1) {
       const dt = times[step + 1] - times[step];
-      const stepIncrements =
-        typeof increments === "function"
-          ? increments(step, dt)
-          : increments[step];
       const prepared = steps[step];
 
       const next = tf.tidy(() => {
+        // Invoke the source inside tidy so step-local tensors it creates are
+        // released together with the other intermediate tensors.
+        const stepIncrements =
+          typeof increments === "function"
+            ? increments(step, dt)
+            : increments[step];
+
         // `active` excludes paths that have already reached the impoverishment
         // level on the grid; `risky` selects x < x_safe(t) for each path.
         const active = firstHit.equal(-1);
@@ -98,7 +104,10 @@ export async function simulateTensorWealthBatch(
         // z has shape [paths, assets] and covariance Sigma * dt. Multiplying
         // by the Merton direction m gives m^T Delta Z for every path. The
         // increments already include volatility and sqrt(dt) scaling.
-        const z = tf.tensor2d(stepIncrements as number[], [count, assets]);
+        const z =
+          stepIncrements instanceof tf.Tensor
+            ? stepIncrements
+            : tf.tensor2d(stepIncrements as number[], [count, assets]);
         const noise = z.matMul(direction).reshape([count]);
 
         // In the risky region, Y = x_safe - X follows a geometric diffusion.
@@ -199,31 +208,40 @@ export async function simulateTensorBatch(
     options.numerical.timeStep,
   );
 
-  // Reuse the factor L from calibration. Every step transforms independent
-  // standard normals to Delta Z = L * xi * sqrt(dt) for each path.
-  const factor = market.covarianceFactor;
+  // Keep the factor on the selected backend for the entire batch. Each row of
+  // independent normals xi is transformed as xi * L^T * sqrt(dt).
+  const assets = market.covarianceFactor.length;
+  const factor = tf.tensor2d(
+    market.covarianceFactor.map((row) => [...row]),
+    [assets, assets],
+  );
 
-  return simulateTensorWealthBatch({
-    market,
-    mortality: mortality.ce.parameters,
-    annualWithdrawal: withdrawal,
-    investor: {
-      impoverishmentLevel: options.investor.impoverishmentLevel,
-      initialCapital: options.investor.initialCapital,
-    },
-    pathCount,
-    times,
-    increments: (_step, dt) => {
-      const batch: number[] = [];
+  try {
+    return await simulateTensorWealthBatch({
+      market,
+      mortality: mortality.ce.parameters,
+      annualWithdrawal: withdrawal,
+      investor: {
+        impoverishmentLevel: options.investor.impoverishmentLevel,
+        initialCapital: options.investor.initialCapital,
+      },
+      pathCount,
+      times,
+      increments: (_step, dt) => {
+        // The existing seeded stream runs on the CPU. Upload one flat buffer
+        // per step, then correlate all paths on the TensorFlow backend.
+        const normals = new Float32Array(pathCount * assets);
 
-      for (let path = 0; path < pathCount; path += 1) {
-        const normals = Array.from({ length: factor.length }, () =>
-          stream.nextStandardNormal(),
-        );
-        batch.push(...correlatePreparedIncrement(factor, normals, dt));
-      }
+        for (let i = 0; i < normals.length; i += 1)
+          normals[i] = stream.nextStandardNormal();
 
-      return batch;
-    },
-  });
+        return tf
+          .tensor2d(normals, [pathCount, assets])
+          .matMul(factor, false, true)
+          .mul(Math.sqrt(dt)) as tf.Tensor2D;
+      },
+    });
+  } finally {
+    factor.dispose();
+  }
 }

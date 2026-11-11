@@ -10,6 +10,7 @@ import {
 import {
   covarianceFactor,
   correlatedMarketIncrement,
+  correlatePreparedIncrement,
 } from "../src/lib/model/simulation/matrix";
 import {
   createRandomStream,
@@ -280,11 +281,48 @@ test("snapshot copies and freezes inputs and rejects changed markets and unsuppo
   });
   assert.equal(simulateWealthBatch(tiny).paths.length, 3);
   const stream = createRandomStream(tiny.numerical.seed);
+  const tensorCountBefore = tf.memory().numTensors;
   const firstBatch = await simulateTensorBatch(tiny, 3, stream);
   const secondBatch = await simulateTensorBatch(tiny, 2, stream);
   assert.equal(firstBatch.finalWealth.length, 3);
   assert.equal(secondBatch.finalWealth.length, 2);
   assert.notEqual(firstBatch.finalWealth[0], secondBatch.finalWealth[0]);
+
+  // Independently correlate the same draws with the scalar matrix helper.
+  const referenceStream = createRandomStream(tiny.numerical.seed);
+  const scalarCorrelation = await simulateTensorWealthBatch({
+    market: tiny.market,
+    mortality: tiny.mortality.ce.parameters,
+    annualWithdrawal: tiny.resolvedAnnualWithdrawal,
+    investor: tiny.options.investor,
+    pathCount: 3,
+    times: generateTimeGrid(
+      tiny.numerical.horizonYears,
+      tiny.options.numerical.timeStep,
+    ),
+    increments: (_step, dt) => {
+      const draws: number[] = [];
+
+      for (let path = 0; path < 3; path += 1) {
+        const normals = tiny.market.assetNames.map(() =>
+          referenceStream.nextStandardNormal(),
+        );
+        draws.push(
+          ...correlatePreparedIncrement(
+            tiny.market.covarianceFactor,
+            normals,
+            dt,
+          ),
+        );
+      }
+
+      return draws;
+    },
+  });
+  firstBatch.finalWealth.forEach((wealth, i) => {
+    assert.ok(Math.abs(wealth - scalarCorrelation.finalWealth[i]) < 0.1);
+    assert.equal(firstBatch.firstGridHit[i], scalarCorrelation.firstGridHit[i]);
+  });
 
   const replay = createRandomStream(tiny.numerical.seed);
   assert.deepEqual(
@@ -295,6 +333,7 @@ test("snapshot copies and freezes inputs and rejects changed markets and unsuppo
     (await simulateTensorBatch(tiny, 2, replay)).finalWealth,
     secondBatch.finalWealth,
   );
+  assert.equal(tf.memory().numTensors, tensorCountBefore);
   assert.throws(() => simulateWealthBatch(structuredClone(tiny)), /validated/);
   await assert.rejects(
     simulateTensorBatch(structuredClone(tiny), 1, createRandomStream("test")),
