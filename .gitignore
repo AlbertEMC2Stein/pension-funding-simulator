@@ -4,3 +4,4 @@ out/
 public/workers/
 *.tsbuildinfo
 .env*
+.DS_Store
