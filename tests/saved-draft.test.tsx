@@ -77,7 +77,7 @@ test("initial mortality fit waits while browser recovery is being checked", () =
   const draft = initialSimulationDraft();
   assert.equal(
     initialMortalityFitAction({
-      draft,
+      cohortValid: true,
       phase: "checking-storage",
       cohortReady: true,
       marketReady: true,
@@ -87,7 +87,7 @@ test("initial mortality fit waits while browser recovery is being checked", () =
   );
   assert.equal(
     initialMortalityFitAction({
-      draft,
+      cohortValid: true,
       phase: "skipped",
       cohortReady: true,
       marketReady: true,
@@ -97,7 +97,7 @@ test("initial mortality fit waits while browser recovery is being checked", () =
   );
   assert.equal(
     initialMortalityFitAction({
-      draft,
+      cohortValid: true,
       phase: "loading",
       cohortReady: true,
       marketReady: true,

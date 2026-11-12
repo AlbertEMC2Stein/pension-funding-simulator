@@ -214,9 +214,10 @@ not been selected or implemented.
 ### 11. Local recovery and exports — implemented; integration checks ongoing
 
 Editable setup inputs, name and both tables are saved in versioned browser local
-storage, including incomplete edits. A restored draft does not restore fits or
-results, or trigger the first-visit fit. Setup JSON import validates inputs
-before replacing the workspace and clears prior fits and results. Separate
+storage, including incomplete edits. On startup, the mortality models are fitted
+automatically using valid restored inputs; stored fits and simulation results are
+not restored. Setup JSON import validates inputs before replacing the workspace
+and clears prior fits and results; the imported mortality fit is started manually. Separate
 exports provide results JSON, comparison-table CSV and PNG/SVG/CSV chart output.
 See [setup files](setup-file.md) and [results and chart exports](results-export.md)
 for formats and current limitations.

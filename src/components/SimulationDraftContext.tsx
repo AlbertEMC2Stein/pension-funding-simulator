@@ -32,7 +32,7 @@ export interface SharedMortalityFits {
   ce: { key: string; fit: CeFit } | null;
 }
 
-/** One-time first-visit fit status, shared so Evaluation can show progress. */
+/** One-time startup fit status, shared so Evaluation can show progress. */
 export type InitialMortalityFit =
   | { phase: "checking-storage" }
   | { phase: "loading" }
@@ -76,7 +76,7 @@ const Context = createContext<{
   storageWarning: string | null;
 } | null>(null);
 
-/** Provide shared inputs and restore editable drafts locally before starting the example fit. */
+/** Provide shared inputs and restore editable drafts locally before starting the mortality fit. */
 export function SimulationDraftProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft] = useState(initialSimulationDraft);
   const [setupName, setSetupName] = useState(DEFAULT_SETUP_NAME);
@@ -113,7 +113,7 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
         setDraft(saved.draft);
         setSetupName(saved.name);
         setTables(saved.tables);
-        setInitialMortalityFit({ phase: "skipped" });
+        setInitialMortalityFit({ phase: "loading" });
         // Remount panel-local state, including the next comparison-row ID.
         setWorkspaceRevision((revision) => revision + 1);
       } else {

@@ -76,8 +76,8 @@ export function QuickStart() {
       </ol>
       <div className="quick-start-notes">
         <p>
-          On a fresh visit, the example mortality models normally fit
-          automatically. After changing relevant inputs or importing a setup,
+          On startup, the mortality models normally fit automatically using your
+          restored inputs. After changing relevant inputs or importing a setup,
           check and fit the models in Investor &amp; mortality before running.
         </p>
         <p>

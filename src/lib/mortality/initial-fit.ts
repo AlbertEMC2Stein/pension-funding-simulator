@@ -1,27 +1,5 @@
-import {
-  initialSimulationDraft,
-  type SimulationDraft,
-} from "../options/simulation-options";
-
-/** Check whether the mortality-relevant inputs still match the fresh example. */
-export function isInitialMortalitySetup(draft: SimulationDraft): boolean {
-  const initial = initialSimulationDraft();
-  const investor = draft.investor;
-  const example = initial.investor;
-
-  return (
-    JSON.stringify(draft.market) === JSON.stringify(initial.market) &&
-    investor.birthYear === example.birthYear &&
-    investor.retirementYear === example.retirementYear &&
-    investor.mortality === example.mortality &&
-    investor.maleWeight === example.maleWeight &&
-    investor.longevity === example.longevity
-  );
-}
-
-/** Decide whether the one-time fit should start, wait for data, or be skipped. */
-export function initialMortalityFitAction(input: {
-  draft: SimulationDraft;
+/** Inputs needed to decide whether an automatic startup fit can begin. */
+export interface InitialMortalityFitInputs {
   phase:
     | "checking-storage"
     | "loading"
@@ -29,14 +7,26 @@ export function initialMortalityFitAction(input: {
     | "complete"
     | "skipped"
     | "error";
+  /** Whether the chosen birth and retirement years are supported. */
+  cohortValid: boolean;
+  /** Whether the currently selected cohort survival curve has loaded. */
   cohortReady: boolean;
+  /** Whether market calibration supplies the parameters required by the CE fit. */
   marketReady: boolean;
   workerActive: boolean;
-}): "start" | "skip" | "wait" {
-  if (input.phase !== "loading") return "wait";
-  if (!isInitialMortalitySetup(input.draft)) return "skip";
+}
 
-  return input.cohortReady && input.marketReady && !input.workerActive
-    ? "start"
-    : "wait";
+/**
+ * Decide how to proceed with the one-time startup fit, after saved inputs have
+ * been restored. Invalid inputs are reported instead of waiting indefinitely;
+ * loading cohort data and an already active worker are temporary conditions.
+ */
+export function initialMortalityFitAction(
+  input: InitialMortalityFitInputs,
+): "start" | "invalid-cohort" | "invalid-market" | "wait" {
+  if (input.phase !== "loading") return "wait";
+  if (!input.cohortValid) return "invalid-cohort";
+  if (!input.marketReady) return "invalid-market";
+
+  return input.cohortReady && !input.workerActive ? "start" : "wait";
 }

@@ -312,7 +312,7 @@ export function CohortChart({
           if (initialMortalityFit.phase === "loading")
             setInitialMortalityFit({
               phase: "error",
-              message: "Could not load the example cohort data.",
+              message: "Could not load the cohort data.",
             });
         }
       });
@@ -381,7 +381,7 @@ export function CohortChart({
       if (automatic)
         setInitialMortalityFit({
           phase: "error",
-          message: "Could not start the example mortality fit.",
+          message: "Could not start the automatic mortality fit.",
         });
 
       return;
@@ -451,7 +451,8 @@ export function CohortChart({
             fitFailed
               ? {
                   phase: "error",
-                  message: "The example mortality fit could not be completed.",
+                  message:
+                    "The automatic mortality fit could not be completed.",
                 }
               : { phase: "complete" },
           );
@@ -470,7 +471,7 @@ export function CohortChart({
       if (automatic)
         setInitialMortalityFit({
           phase: "error",
-          message: "The example mortality fitting worker failed.",
+          message: "The automatic mortality fitting worker failed.",
         });
     };
     try {
@@ -489,27 +490,34 @@ export function CohortChart({
       if (automatic)
         setInitialMortalityFit({
           phase: "error",
-          message: "Could not start the example mortality fit.",
+          message: "Could not start the automatic mortality fit.",
         });
     }
   }
 
-  // Only the unchanged fresh example is fitted automatically, once per session.
+  // Fit once after startup recovery, using the currently restored inputs.
   useEffect(() => {
     const action = initialMortalityFitAction({
-      draft,
       phase: initialMortalityFit.phase,
+      cohortValid: valid,
       cohortReady: curve !== null,
       marketReady: !!market && !!ceKey,
       workerActive: workerRef.current !== null,
     });
 
-    if (action === "skip") {
-      setInitialMortalityFit({ phase: "skipped" });
+    if (action === "invalid-cohort" || action === "invalid-market") {
+      setInitialMortalityFit({
+        phase: "error",
+        message:
+          action === "invalid-cohort"
+            ? "The selected birth or retirement year is outside the supported cohort data."
+            : "The market inputs are not valid for the compatible mortality fit.",
+      });
       return;
     }
+
     if (action === "start") startFit(true);
-  }, [initialMortalityFit.phase, draft, curve, market, ceKey]);
+  }, [initialMortalityFit.phase, valid, curve, market, ceKey]);
 
   if (!valid)
     return (

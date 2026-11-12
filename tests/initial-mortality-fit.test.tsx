@@ -1,35 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { initialSimulationDraft } from "../src/lib/options/simulation-options";
-import {
-  initialMortalityFitAction,
-  isInitialMortalitySetup,
-} from "../src/lib/mortality/initial-fit";
+import { initialMortalityFitAction } from "../src/lib/mortality/initial-fit";
 
-test("only unchanged mortality and market inputs qualify for the first-visit fit", () => {
-  const draft = initialSimulationDraft();
-  assert.equal(isInitialMortalitySetup(draft), true);
-
-  draft.simulation.targetRiskPercent = 10;
-  draft.investor.initialCapital = "600,000";
-  assert.equal(isInitialMortalitySetup(draft), true);
-
-  draft.investor.maleWeight = 0.7;
-  assert.equal(isInitialMortalitySetup(draft), false);
-  draft.investor.maleWeight = 0.5;
-  draft.market.assets[0].nominalReturnPercent = "7.00";
-  assert.equal(isInitialMortalitySetup(draft), false);
-});
-
-test("the first-visit fit starts once after data load and never on imported setups", () => {
-  const draft = initialSimulationDraft();
+/** The same readiness checks apply to default and recovered setups. */
+test("startup fitting waits for recovery and cohort data, and runs once", () => {
   const input = {
-    draft,
     phase: "loading" as const,
+    cohortValid: true,
     cohortReady: false,
     marketReady: true,
     workerActive: false,
   };
+
   assert.equal(initialMortalityFitAction(input), "wait");
   assert.equal(
     initialMortalityFitAction({ ...input, cohortReady: true }),
@@ -43,25 +25,35 @@ test("the first-visit fit starts once after data load and never on imported setu
     }),
     "wait",
   );
+  for (const phase of [
+    "checking-storage",
+    "running",
+    "complete",
+    "skipped",
+    "error",
+  ] as const) {
+    assert.equal(
+      initialMortalityFitAction({ ...input, cohortReady: true, phase }),
+      "wait",
+    );
+  }
+});
+
+test("invalid restored inputs stop startup fitting with an actionable reason", () => {
+  const input = {
+    phase: "loading" as const,
+    cohortValid: true,
+    cohortReady: false,
+    marketReady: true,
+    workerActive: false,
+  };
+
   assert.equal(
-    initialMortalityFitAction({
-      ...input,
-      cohortReady: true,
-      phase: "skipped",
-    }),
-    "wait",
+    initialMortalityFitAction({ ...input, cohortValid: false }),
+    "invalid-cohort",
   );
   assert.equal(
-    initialMortalityFitAction({
-      ...input,
-      cohortReady: true,
-      phase: "complete",
-    }),
-    "wait",
-  );
-  draft.investor.birthYear = "1960";
-  assert.equal(
-    initialMortalityFitAction({ ...input, cohortReady: true }),
-    "skip",
+    initialMortalityFitAction({ ...input, marketReady: false }),
+    "invalid-market",
   );
 });

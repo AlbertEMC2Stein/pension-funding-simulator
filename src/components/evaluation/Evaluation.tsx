@@ -672,8 +672,8 @@ export function Evaluation() {
         initialMortalityFit.phase === "running") && (
         <p className="initial-fit-status" role="status">
           {initialMortalityFit.phase === "loading"
-            ? "Preparing the example mortality data…"
-            : `Fitting the example mortality models · ${initialMortalityFit.model}: ${initialMortalityFit.completed} / ${initialMortalityFit.total} starts`}
+            ? "Preparing mortality data…"
+            : `Fitting mortality models · ${initialMortalityFit.model}: ${initialMortalityFit.completed} / ${initialMortalityFit.total} starts`}
         </p>
       )}
       {initialMortalityFit.phase === "error" && (
