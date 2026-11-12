@@ -17,12 +17,6 @@
   padding-top: 0;
 }
 
-.mortality-market-note {
-  padding: 12px 14px;
-  border-radius: 8px;
-  background: var(--surface-soft, rgba(127, 149, 144, 0.1));
-  line-height: 1.5;
-}
 .input-with-help {
   font-size: 10px;
   font-weight: 700;

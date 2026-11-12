@@ -24,6 +24,7 @@ import { MarketEditor } from "./MarketEditor";
 import { MarketAssumptionChecks } from "./MarketAssumptionChecks";
 import { MarketValidation } from "./MarketValidation";
 import { MortalityDataInfo } from "./MortalityDataInfo";
+import { MarketDataInfo } from "./MarketDataInfo";
 import { parseAmount } from "../../lib/options/simulation-options";
 import { CohortChart } from "./CohortChart";
 import type { CeFitStatus } from "../../lib/mortality/fit-status";
@@ -85,9 +86,7 @@ function MarketSetup() {
           currency, and assumptions before using them.
         </p>
         <div className="insight-divider" />
-        <DemoAction message="Market data sources are not connected in this draft.">
-          Market data sources
-        </DemoAction>
+        <MarketDataInfo />
       </aside>
       <div>
         <SectionHeading
@@ -121,18 +120,18 @@ function MarketSetup() {
               )}
             </div>
           </div>
-          <p>Enter your own assumptions or restore the two-asset example.</p>
+          <p>
+            Enter your own assumptions or restore the two-asset example. Market
+            assumptions can affect the fitted mortality model. After changing
+            them, check the fit under Investor &amp; mortality. The underlying
+            cohort data do not change.
+          </p>
           {undo && (
             <p role="status">
               Previous market saved. You can undo the change until you edit
               another input.
             </p>
           )}
-          <p className="mortality-market-note">
-            Market assumptions can affect the fitted mortality model. After
-            changing them, check the fit under Investor &amp; mortality. The
-            underlying cohort data do not change.
-          </p>
           <div className="input-grid market-input-grid">
             <label>
               Base currency
