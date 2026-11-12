@@ -1052,11 +1052,6 @@ export function Evaluation() {
                 ))}
               </select>
             </div>
-            <div className="settings-footer">
-              ◷ &nbsp; The CE chart responds to relevant settings.
-              <br />
-              <small>Run the simulation to estimate GM risk.</small>
-            </div>
           </aside>
         )}
       </div>
