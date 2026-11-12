@@ -1,8 +1,10 @@
+import type { Language } from "../i18n/messages";
+
 /** Appearance and language selector values saved independently of setup data. */
 export interface DisplayPreferences {
   theme: "light" | "dark";
-  /** The language selector is currently a preview; it does not translate the UI. */
-  language: "en" | "de";
+  /** Selected language; individual panels are translated incrementally. */
+  language: Language;
 }
 
 /** Storage methods used for local display preferences. */

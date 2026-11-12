@@ -9,6 +9,8 @@ import {
   useState,
 } from "react";
 import { DraftContext, type View } from "./common";
+import { LanguageProvider } from "./LanguageContext";
+import { shellMessages } from "../lib/i18n/messages";
 import {
   DEFAULT_DISPLAY_PREFERENCES,
   readDisplayPreferences,
@@ -25,11 +27,11 @@ import {
 } from "./SimulationDraftContext";
 
 /** Navigation entries and their presentation order in the workspace rail. */
-const navigation: { id: View; label: string; icon: string }[] = [
-  { id: "evaluation", label: "Evaluation", icon: "◫" },
-  { id: "setup", label: "Market & investor", icon: "◉" },
-  { id: "data", label: "Data & tables", icon: "▤" },
-  { id: "help", label: "Dictionary & help", icon: "ⓘ" },
+const navigation: { id: View; icon: string }[] = [
+  { id: "evaluation", icon: "◫" },
+  { id: "setup", icon: "◉" },
+  { id: "data", icon: "▤" },
+  { id: "help", icon: "ⓘ" },
 ];
 // The constant guard lets production builds discard the development module.
 const DeveloperView =
@@ -37,10 +39,7 @@ const DeveloperView =
     ? lazy(() => import("./dev/DeveloperView"))
     : null;
 const visibleNavigation = DeveloperView
-  ? [
-      ...navigation,
-      { id: "developer" as const, label: "Developer tools", icon: "⌘" },
-    ]
+  ? [...navigation, { id: "developer" as const, icon: "⌘" }]
   : navigation;
 
 /** Keep panels mounted during navigation, but recreate them after a setup import. */
@@ -93,6 +92,7 @@ export function SimulatorDraft() {
     DEFAULT_DISPLAY_PREFERENCES,
   );
   const dark = display.theme === "dark";
+  const text = shellMessages[display.language];
   const [toast, setToast] = useState("");
   // When navigation originates from a term link, HelpView focuses this entry.
   const [term, setTerm] = useState<string | null>(null);
@@ -123,7 +123,7 @@ export function SimulatorDraft() {
       writeDisplayPreferences(window.localStorage, next);
       return true;
     } catch {
-      notice("Display preferences could not be saved in this browser.");
+      notice(shellMessages[next.language].preferenceWriteError);
       return false;
     }
   }
@@ -146,128 +146,134 @@ export function SimulatorDraft() {
   }, []);
 
   return (
-    <DraftContext.Provider value={{ navigate, notice }}>
-      <SimulationDraftProvider>
-        <div className="app-shell">
-          <aside className="rail" aria-label="Main navigation">
-            <a
-              href="#overview"
-              className="brand"
-              aria-label="Stillwell home"
-              onClick={(event) => {
-                event.preventDefault();
-                navigate("evaluation");
-              }}
+    <LanguageProvider language={display.language}>
+      <DraftContext.Provider value={{ navigate, notice }}>
+        <SimulationDraftProvider>
+          <div className="app-shell">
+            <aside
+              className="rail"
+              lang={display.language}
+              aria-label={text.workspace}
             >
-              <span className="brand-mark">
-                <i />
-                <i />
-                <i />
-              </span>
-              <span>
-                stillwell<span className="brand-dot">.</span>
-                <small>PENSION LAB</small>
-              </span>
-            </a>
-            <div className="rail-label">WORKSPACE</div>
-            <nav className="nav" aria-label="Workspace">
-              {visibleNavigation.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`nav-item ${view === item.id ? "active" : ""}`}
-                  aria-current={view === item.id ? "page" : undefined}
-                  onClick={() => navigate(item.id)}
-                >
-                  <span className="nav-icon" aria-hidden="true">
-                    {item.icon}
-                  </span>
-                  <span className="nav-label">{item.label}</span>
-                </button>
-              ))}
-            </nav>
-            <div className="rail-bottom">
-              <div className="rail-note">
-                <span className="sparkle">✳</span>
-                <strong>Plan with perspective.</strong>
-                <p>A clearer view of the choices shaping retirement.</p>
-              </div>
-              <div className="rail-footer">
-                <span className="status-dot" /> Design draft <span>v0.1</span>
-              </div>
-            </div>
-          </aside>
-          <main className="main" id="overview">
-            <header className="topbar">
-              <div className="breadcrumb">
-                WORKSPACE <span>/</span>{" "}
-                <b>
-                  {visibleNavigation
-                    .find((item) => item.id === view)
-                    ?.label.toUpperCase()}
-                </b>
-              </div>
-              <div className="top-actions">
-                <span className="draft-pill">
-                  <span /> INTERFACE PREVIEW
+              <a
+                href="#overview"
+                className="brand"
+                aria-label={text.home}
+                onClick={(event) => {
+                  event.preventDefault();
+                  navigate("evaluation");
+                }}
+              >
+                <span className="brand-mark">
+                  <i />
+                  <i />
+                  <i />
                 </span>
-                <button
-                  className="theme-toggle"
-                  type="button"
-                  aria-pressed={dark}
-                  aria-label={`Switch to ${dark ? "light" : "dark"} theme`}
-                  onClick={() =>
-                    updateDisplay({
-                      ...display,
-                      theme: dark ? "light" : "dark",
-                    })
-                  }
-                >
-                  {dark ? "☀" : "☾"}{" "}
-                  <span>{dark ? "Light mode" : "Dark mode"}</span>
-                </button>
-                <label className="language-control">
-                  <span className="visually-hidden">
-                    Language (preview only)
-                  </span>
-                  <select
-                    value={display.language}
-                    aria-label="Language (preview only)"
-                    onChange={(event) => {
-                      const language =
-                        event.target.value === "de" ? "de" : "en";
-                      if (updateDisplay({ ...display, language }))
-                        notice(
-                          language === "de"
-                            ? "German selected for preview. The interface is still in English; translations are not implemented yet."
-                            : "English selected. Language switching is a preview.",
-                        );
-                    }}
-                  >
-                    <option value="en">EN</option>
-                    <option value="de">DE</option>
-                  </select>
-                </label>
+                <span>
+                  stillwell<span className="brand-dot">.</span>
+                  <small>PENSION LAB</small>
+                </span>
+              </a>
+              <div className="rail-label">
+                {text.workspace.toLocaleUpperCase(display.language)}
               </div>
-            </header>
-            <DraftStorageNotice />
-            <WorkspacePanels view={view} term={term} />
-            <footer className="page-footer">
-              <span>
-                STILLWELL <b>✳</b> PENSION LAB
-              </span>
-              <span>DESIGN DRAFT · ALL VALUES ILLUSTRATIVE</span>
-            </footer>
-          </main>
-        </div>
-        <div
-          className={`toast ${toast ? "visible" : ""}`}
-          role="status"
-          aria-live="polite"
-        >
-          {toast}
-        </div>
-      </SimulationDraftProvider>
-    </DraftContext.Provider>
+              <nav className="nav" aria-label={text.workspace}>
+                {visibleNavigation.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`nav-item ${view === item.id ? "active" : ""}`}
+                    aria-current={view === item.id ? "page" : undefined}
+                    onClick={() => navigate(item.id)}
+                  >
+                    <span className="nav-icon" aria-hidden="true">
+                      {item.icon}
+                    </span>
+                    <span className="nav-label">
+                      {text.navigation[item.id]}
+                    </span>
+                  </button>
+                ))}
+              </nav>
+              <div className="rail-bottom">
+                <div className="rail-note">
+                  <span className="sparkle">✳</span>
+                  <strong>{text.railHeadline}</strong>
+                  <p>{text.railDescription}</p>
+                </div>
+                <div className="rail-footer">
+                  <span className="status-dot" /> {text.designDraft}{" "}
+                  <span>v0.1</span>
+                </div>
+              </div>
+            </aside>
+            <main className="main" id="overview">
+              <header className="topbar" lang={display.language}>
+                <div className="breadcrumb">
+                  {text.workspace.toLocaleUpperCase(display.language)}{" "}
+                  <span>/</span>{" "}
+                  <b>
+                    {text.navigation[view].toLocaleUpperCase(display.language)}
+                  </b>
+                </div>
+                <div className="top-actions">
+                  <span className="draft-pill">
+                    <span /> {text.preview.toLocaleUpperCase(display.language)}
+                  </span>
+                  <button
+                    className="theme-toggle"
+                    type="button"
+                    aria-pressed={dark}
+                    aria-label={dark ? text.switchToLight : text.switchToDark}
+                    onClick={() =>
+                      updateDisplay({
+                        ...display,
+                        theme: dark ? "light" : "dark",
+                      })
+                    }
+                  >
+                    {dark ? "☀" : "☾"}{" "}
+                    <span>{dark ? text.themeLight : text.themeDark}</span>
+                  </button>
+                  <label className="language-control">
+                    <span className="visually-hidden">
+                      {text.languageLabel}
+                    </span>
+                    <select
+                      value={display.language}
+                      aria-label={text.languageLabel}
+                      onChange={(event) => {
+                        const language =
+                          event.target.value === "de" ? "de" : "en";
+                        if (updateDisplay({ ...display, language }))
+                          notice(shellMessages[language].languagePartial);
+                      }}
+                    >
+                      <option value="en">EN</option>
+                      <option value="de">DE</option>
+                    </select>
+                  </label>
+                </div>
+              </header>
+              <DraftStorageNotice />
+              <WorkspacePanels view={view} term={term} />
+              <footer className="page-footer" lang={display.language}>
+                <span>
+                  STILLWELL <b>✳</b> PENSION LAB
+                </span>
+                <span>{text.footer.toLocaleUpperCase(display.language)}</span>
+              </footer>
+            </main>
+          </div>
+          <div
+            className={`toast ${toast ? "visible" : ""}`}
+            role="status"
+            aria-live="polite"
+          >
+            {toast}
+          </div>
+        </SimulationDraftProvider>
+      </DraftContext.Provider>
+    </LanguageProvider>
   );
 }
