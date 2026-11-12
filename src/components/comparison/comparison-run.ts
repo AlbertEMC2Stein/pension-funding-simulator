@@ -63,6 +63,27 @@ export function comparisonRowSignature(row: ComparisonRowInput): string {
 }
 
 /**
+ * Check whether every visible row has a completed GM result for its current
+ * row inputs. The caller must also verify that the shared setup still matches.
+ */
+export function areComparisonRowsCalculated(
+  rows: readonly ComparisonRowInput[],
+  results: readonly ComparisonRunRow[],
+): boolean {
+  if (rows.length === 0) return false;
+
+  const byId = new Map(results.map((result) => [result.id, result]));
+  return rows.every((row) => {
+    const result = byId.get(row.id);
+    return (
+      result?.status === "calculated" &&
+      result.gm !== undefined &&
+      result.rowSignature === comparisonRowSignature(row)
+    );
+  });
+}
+
+/**
  * Capture all shared settings once, resolve each CE input, and construct one
  * isolated risk-only worker input per nontrivial row. Below the safe boundary
  * no financial hit is possible before the CE horizon, so the GM result is an

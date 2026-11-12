@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   prepareComparisonRows,
   comparisonSetupSignature,
+  areComparisonRowsCalculated,
 } from "../src/components/comparison/comparison-run";
 import { test } from "node:test";
 import {
@@ -241,6 +242,23 @@ test("completed rows are reused until their inputs or shared settings change", (
     added.rows.map((row) => row.status),
     ["calculated", "queued"],
   );
+  assert.equal(areComparisonRowsCalculated([firstRow], previous.rows), true);
+  assert.equal(
+    areComparisonRowsCalculated([firstRow, secondRow], previous.rows),
+    false,
+  );
+  assert.equal(
+    areComparisonRowsCalculated([{ ...firstRow, value: "6" }], previous.rows),
+    false,
+  );
+  assert.equal(
+    areComparisonRowsCalculated(
+      [firstRow],
+      [{ ...previous.rows[0], status: "cancelled" }],
+    ),
+    false,
+  );
+  assert.equal(areComparisonRowsCalculated([], previous.rows), false);
   assert.equal(added.rows[0].gm, estimate);
   assert.equal(added.rows[0].batchProgress, undefined);
   assert.deepEqual(added.rows[1].batchProgress, { completed: 0, total: 4 });

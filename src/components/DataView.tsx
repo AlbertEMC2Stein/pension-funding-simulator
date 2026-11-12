@@ -7,6 +7,7 @@ import { useComparisonSimulation } from "./comparison/useComparisonSimulation";
 import {
   comparisonSetupSignature,
   comparisonRowSignature,
+  areComparisonRowsCalculated,
 } from "./comparison/comparison-run";
 import {
   comparisonBatchProgress,
@@ -82,6 +83,10 @@ export function DataView() {
     feasibility: initialRows(),
   });
   const rows = tables[tableType];
+  const allComputed =
+    run !== null &&
+    !sharedStale &&
+    areComparisonRowsCalculated(tables.withdrawal, run.rows);
   const resultHeading =
     rows.length === 0
       ? "CE RESULT"
@@ -520,7 +525,9 @@ export function DataView() {
                     ? simulation.cancel()
                     : simulation.start(tables.withdrawal)
                 }
-                disabled={running ? run?.cancelling : rows.length === 0}
+                disabled={
+                  running ? run?.cancelling : rows.length === 0 || allComputed
+                }
               >
                 {running ? "Cancel rows" : "▶  Compute rows"}
               </button>
