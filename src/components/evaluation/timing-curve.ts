@@ -95,3 +95,74 @@ export function includeSelectedRiskPoint(
 
   return [...simplified.slice(0, lower), selected, ...simplified.slice(next)];
 }
+
+/** A time interval and its average mortality-weighted risk density per year. */
+export interface TimingDensityBin {
+  startTime: number;
+  endTime: number;
+  density: number;
+}
+
+/** Density bins specified either by their width or by their total count. */
+export type TimingDensityBinning =
+  { widthYears: number } | { binCount: number };
+
+/**
+ * Estimate a density histogram from the full, right-continuous cumulative curve.
+ * Each bin's area equals its cumulative-risk increment; events exactly at a bin
+ * end belong to that bin. A possible time-zero hit is included in the first
+ * bin. Width-based bins may end with a shorter interval; count-based bins span
+ * the full horizon evenly. The caller supplies a nonempty curve with increasing
+ * times and a positive width or a positive integer bin count.
+ */
+export function makeTimingDensityBins(
+  points: readonly ImpoverishmentForecastPoint[],
+  binning: TimingDensityBinning = { widthYears: 1 },
+): TimingDensityBin[] {
+  const start = points[0].timeYears;
+  const horizon = points[points.length - 1].timeYears;
+  const bins: TimingDensityBin[] = [];
+  let index = 0;
+  let previousRisk = 0;
+  let currentRisk = 0;
+  let binStart = start;
+  const count =
+    "binCount" in binning
+      ? binning.binCount
+      : Math.ceil((horizon - start) / binning.widthYears);
+
+  for (let bin = 0; bin < count; bin += 1) {
+    const binEnd =
+      bin === count - 1
+        ? horizon
+        : "binCount" in binning
+          ? start + ((horizon - start) * (bin + 1)) / count
+          : Math.min(start + (bin + 1) * binning.widthYears, horizon);
+
+    while (index < points.length && points[index].timeYears <= binEnd) {
+      currentRisk = points[index].cumulativeRisk;
+      index += 1;
+    }
+
+    bins.push({
+      startTime: binStart,
+      endTime: binEnd,
+      density: Math.max(0, currentRisk - previousRisk) / (binEnd - binStart),
+    });
+    previousRisk = currentRisk;
+    binStart = binEnd;
+  }
+
+  return bins;
+}
+
+/** Return the histogram density in the bin containing the selected time. */
+export function timingDensityAt(
+  bins: readonly TimingDensityBin[],
+  time: number,
+): number {
+  return (
+    bins.find((bin) => time >= bin.startTime && time <= bin.endTime)?.density ??
+    0
+  );
+}

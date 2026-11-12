@@ -7,7 +7,9 @@
 
 .timing-card h3 {
   color: var(--text-strong);
-  font: 700 16px Manrope, sans-serif;
+  font:
+    700 16px Manrope,
+    sans-serif;
   margin: 7px 0;
 }
 
@@ -62,7 +64,7 @@
 
 .timing-tail {
   fill: var(--accent-soft);
-  opacity: .32;
+  opacity: 0.32;
 }
 
 .timing-age-line {
@@ -89,3 +91,20 @@
   margin-bottom: 0;
 }
 
+.timing-approximation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.timing-approximation small {
+  margin-left: 5px;
+  color: var(--text-muted);
+}
+
+.timing-diagnostics {
+  margin-top: 20px;
+}

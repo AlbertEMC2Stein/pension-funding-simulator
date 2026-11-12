@@ -10,8 +10,10 @@ import { StatusBadge, type ResultStatus } from "../StatusBadge";
 import type { EvaluationRun } from "./useEvaluationRun";
 import {
   includeSelectedRiskPoint,
+  makeTimingDensityBins,
   remainingRiskAt,
   simplifyRemainingRiskCurve,
+  timingDensityAt,
 } from "./timing-curve";
 
 /** Display a static Plotly step curve and mark the selected attained age. */
@@ -21,23 +23,36 @@ function TimingPlot({
   selectedTime,
   horizon,
   conditional,
+  density,
 }: {
   points: readonly ImpoverishmentForecastPoint[];
   retirementAge: number;
   selectedTime: number;
   horizon: number;
   conditional: boolean;
+  density: boolean;
 }) {
   const element = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState("light");
   const [plotError, setPlotError] = useState(false);
   const simplified = useMemo(
-    () => simplifyRemainingRiskCurve(points),
-    [points],
+    () => (density ? [] : simplifyRemainingRiskCurve(points)),
+    [points, density],
+  );
+  const bins = useMemo(
+    () =>
+      density
+        ? makeTimingDensityBins(
+            points,
+            conditional ? { binCount: 30 } : { widthYears: 1 },
+          )
+        : [],
+    [points, density, conditional],
   );
   const displayPoints = useMemo(
-    () => includeSelectedRiskPoint(simplified, points, selectedTime),
-    [simplified, points, selectedTime],
+    () =>
+      density ? [] : includeSelectedRiskPoint(simplified, points, selectedTime),
+    [simplified, points, selectedTime, density],
   );
 
   useEffect(() => {
@@ -70,19 +85,39 @@ function TimingPlot({
       const grid = colors.getPropertyValue("--chart-grid").trim();
       const accent = colors.getPropertyValue("--accent").trim();
       const chosenAge = retirementAge + selectedTime;
-      const selectedRisk = remainingRiskAt(points, selectedTime);
+      const selectedRisk = density
+        ? timingDensityAt(bins, selectedTime)
+        : remainingRiskAt(points, selectedTime);
 
       await plotly.react(
         node,
         [
-          {
-            x: displayPoints.map((point) => retirementAge + point.timeYears),
-            y: displayPoints.map((point) => point.cumulativeRisk),
-            type: "scatter",
-            mode: "lines",
-            line: { color: accent, width: 2.5, shape: "hv" },
-            hoverinfo: "skip",
-          },
+          ...(density
+            ? [
+                {
+                  x: bins.map(
+                    (bin) => retirementAge + (bin.startTime + bin.endTime) / 2,
+                  ),
+                  y: bins.map((bin) => bin.density),
+                  width: bins.map((bin) => bin.endTime - bin.startTime),
+                  type: "bar",
+                  marker: { color: accent },
+                  opacity: 0.65,
+                  hoverinfo: "skip",
+                },
+              ]
+            : [
+                {
+                  x: displayPoints.map(
+                    (point) => retirementAge + point.timeYears,
+                  ),
+                  y: displayPoints.map((point) => point.cumulativeRisk),
+                  type: "scatter",
+                  mode: "lines",
+                  line: { color: accent, width: 2.5, shape: "hv" },
+                  hoverinfo: "skip",
+                },
+              ]),
           {
             x: [chosenAge],
             y: [selectedRisk],
@@ -112,7 +147,10 @@ function TimingPlot({
             automargin: true,
           },
           yaxis: {
-            title: { text: "Risk after age", standoff: 6 },
+            title: {
+              text: density ? "Risk density / year" : "Risk after age",
+              standoff: 6,
+            },
             tickformat: ".1%",
             ticklabelstandoff: 8,
             rangemode: "tozero",
@@ -197,6 +235,8 @@ function TimingPlot({
   }, [
     points,
     displayPoints,
+    bins,
+    density,
     retirementAge,
     selectedTime,
     horizon,
@@ -212,7 +252,7 @@ function TimingPlot({
       <div
         ref={element}
         role="img"
-        aria-label={`${conditional ? "Conditional" : "Forecast"} remaining impoverishment risk by attained age`}
+        aria-label={`${conditional ? "Conditional" : "Forecast"} ${density ? "impoverishment risk density" : "remaining impoverishment risk"} by attained age`}
       />
     </>
   );
@@ -229,6 +269,7 @@ export function TimingCard({
   projected: boolean;
 }) {
   const [conditional, setConditional] = useState(false);
+  const [density, setDensity] = useState(false);
   const [selectedTime, setSelectedTime] = useState(0);
   const running =
     run?.phase === "starting" ||
@@ -338,15 +379,33 @@ export function TimingCard({
         <fieldset>
           <legend>Chart</legend>
           <div className="segmented timing-switch">
-            <button type="button" disabled>
+            <button
+              type="button"
+              className={density ? "selected" : ""}
+              aria-pressed={density}
+              onClick={() => setDensity(true)}
+            >
               Density
             </button>
-            <button type="button" className="selected" aria-pressed="true">
+            <button
+              type="button"
+              className={!density ? "selected" : ""}
+              aria-pressed={!density}
+              onClick={() => setDensity(false)}
+            >
               Remaining risk
             </button>
           </div>
         </fieldset>
       </div>
+      {!projected && (
+        <label className="timing-approximation">
+          <input type="checkbox" disabled />
+          <span>
+            Show Durbin approximation <small>Coming soon</small>
+          </span>
+        </label>
+      )}
       {running && (
         <p role="status">
           Simulation running; timing results appear after the run completes.
@@ -369,6 +428,7 @@ export function TimingCard({
                 selectedTime={time}
                 horizon={horizon}
                 conditional={conditional}
+                density={density}
               />
             </div>
           )}
@@ -411,10 +471,49 @@ export function TimingCard({
             GM mortality · {projected ? "projected" : "unconstrained"} policy ·
             events through age {(retirementAge + horizon).toFixed(1)}. GM
             mortality may extend beyond this horizon. The curve is an estimate;
-            time-step, bridge and Monte Carlo errors apply. The curve reaches
-            zero at the end of the simulated horizon. Density view is not
-            available yet.
+            time-step, bridge and Monte Carlo errors apply.{" "}
+            {density
+              ? conditional
+                ? "Bars show average risk density across 30 intervals; their areas represent risk. Results can be noisy when few paths remain."
+                : "Bars show average risk density per year; their areas represent risk. The last interval may be shorter than one year."
+              : "The curve reaches zero at the end of the simulated horizon."}
           </p>
+          <details className="borrowing-details timing-diagnostics">
+            <summary>Approximation error &amp; diagnostics</summary>
+            <dl>
+              <div>
+                <dt>Simulated paths</dt>
+                <dd>{hits?.length.toLocaleString("en-US")}</dd>
+              </div>
+              {conditional && update?.available && (
+                <div>
+                  <dt>Paths without an earlier hit</dt>
+                  <dd>{update.eligiblePaths.toLocaleString("en-US")}</dd>
+                </div>
+              )}
+              <div>
+                <dt>Simulation horizon</dt>
+                <dd>{horizon.toFixed(2)} years after retirement</dd>
+              </div>
+              <div>
+                <dt>Monte Carlo interval for this chart</dt>
+                <dd>Not calculated yet</dd>
+              </div>
+              <div>
+                <dt>Durbin approximation error bound</dt>
+                <dd>
+                  {projected
+                    ? "Not applicable to the projected policy"
+                    : "Not calculated yet"}
+                </dd>
+              </div>
+            </dl>
+            <p>
+              The simulation also has time-step and bridge approximation errors.
+              The Monte Carlo interval and Durbin error bound describe different
+              sources of uncertainty.
+            </p>
+          </details>
         </>
       )}
     </article>

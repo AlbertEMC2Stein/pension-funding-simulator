@@ -41,7 +41,9 @@ test("timing card presents captured GM forecast and age control", () => {
   assert.match(html, /Forecast remaining impoverishment risk by attained age/);
   assert.match(html, /Selected age/);
   assert.match(html, /assessed at retirement/);
-  assert.match(html, /Density view is not available yet/);
+  assert.match(html, /Show Durbin approximation/);
+  assert.match(html, /Coming soon/);
+  assert.match(html, /Approximation error &amp; diagnostics/);
   assert.match(html, /GM mortality may extend beyond this horizon/);
 });
 

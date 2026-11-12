@@ -141,3 +141,10 @@ The result is explicitly unavailable outside the simulated interval, when no
 financial paths remain, or when mortality survival is numerically zero. It does
 not condition on observed current wealth. The evaluation timing chart uses the
 captured GM mortality fit and the selected policy's hit times from the same run.
+
+
+The timing panel's density view bins the full cumulative curve into one-year
+forecast intervals or 30 conditional intervals from the selected time to the
+horizon. Each probability increment is divided by its interval width. The area
+of each bar is its estimated risk; it is not normalized to integrate to one. The Durbin overlay and its bound
+are placeholders and are not used in either timing calculation.

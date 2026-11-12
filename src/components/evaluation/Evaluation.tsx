@@ -782,8 +782,8 @@ export function Evaluation() {
                 Mortality fit is shown in Investor & mortality. The CE chart,
                 allocation, capital comparison and global feasibility are
                 calculated when available. GM risk is estimated when a
-                simulation completes. The timing view uses the same run; density
-                and other unfinished visuals remain unavailable or illustrative.
+                simulation completes. The timing view uses the same run; other
+                unfinished visuals remain illustrative placeholders.
               </p>
             </div>
           )}
