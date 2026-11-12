@@ -511,43 +511,45 @@ export function SimulationCheck() {
           )}
           {run.risk && (
             <div className={styles.riskSummary}>
-              <strong>
-                Unconstrained mortality-weighted risk by the run horizon
-              </strong>
-              <div className={styles.riskTableWrap}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Mortality</th>
-                      <th>Estimate</th>
-                      <th>Monte Carlo SE</th>
-                      <th>Approx. 95% MC interval</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(
-                      [
-                        ["CE", run.risk.ce],
-                        ["GM", run.risk.gm],
-                      ] as const
-                    ).map(([name, estimate]) => (
-                      <tr key={name}>
-                        <th scope="row">{name}</th>
-                        <td>{percentage(estimate.estimate)}</td>
-                        <td>
-                          {estimate.standardError === null
-                            ? "Not available"
-                            : percentage(estimate.standardError)}
-                        </td>
-                        <td>{riskInterval(estimate)}</td>
+              <section className={styles.riskSection}>
+                <h4>
+                  Unconstrained mortality-weighted risk by the run horizon
+                </h4>
+                <div className={styles.riskTableWrap}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Mortality</th>
+                        <th>Estimate</th>
+                        <th>Monte Carlo SE</th>
+                        <th>Approx. 95% MC interval</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {(
+                        [
+                          ["CE", run.risk.ce],
+                          ["GM", run.risk.gm],
+                        ] as const
+                      ).map(([name, estimate]) => (
+                        <tr key={name}>
+                          <th scope="row">{name}</th>
+                          <td>{percentage(estimate.estimate)}</td>
+                          <td>
+                            {estimate.standardError === null
+                              ? "Not available"
+                              : percentage(estimate.standardError)}
+                          </td>
+                          <td>{riskInterval(estimate)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
               {run.risk.projected && (
-                <>
-                  <strong>Projected policy and paired differences</strong>
+                <section className={styles.riskSection}>
+                  <h4>Projected policy and paired differences</h4>
                   <div className={styles.riskTableWrap}>
                     <table>
                       <thead>
@@ -591,7 +593,7 @@ export function SimulationCheck() {
                             </td>
                             <td>
                               {difference && estimate.interval95
-                                ? `${(estimate.interval95.lower * 100).toFixed(3)} – ${(estimate.interval95.upper * 100).toFixed(3)} pp`
+                                ? `${(estimate.interval95.lower * 100).toFixed(3)} pp – ${(estimate.interval95.upper * 100).toFixed(3)} pp`
                                 : riskInterval(estimate)}
                             </td>
                           </tr>
@@ -604,28 +606,30 @@ export function SimulationCheck() {
                     paths. The projected policy uses Euler steps and a
                     frozen-variance bridge; check time-step sensitivity.
                   </p>
-                </>
+                </section>
               )}
-              <p>
-                Analytical CE risk over the full CE horizon:{" "}
-                {percentage(run.risk.ceBenchmark)}.
-                {run.risk.horizonYears < run.risk.ceEndpoint &&
-                  " The run ends earlier, so its CE estimate is truncated and is not directly comparable to this benchmark."}
-                {run.risk.horizonYears >= run.risk.ceEndpoint &&
-                  ` CE estimate minus benchmark: ${((run.risk.ce.estimate - run.risk.ceBenchmark) * 100).toFixed(3)} percentage points.`}
-              </p>
-              <p>
-                Intervals use a normal approximation and describe Monte Carlo
-                sampling only. They are not reported when sample variation is
-                zero or there are fewer than two paths; rare events may require
-                more paths.
-              </p>
-              <p>
-                Estimates exclude hits after the run horizon and depend on the
-                approximate bridge and time step. GM mortality can extend beyond
-                the CE endpoint; outcomes after the run horizon are not
-                included.
-              </p>
+              <div className={styles.riskNotes}>
+                <p>
+                  Analytical CE risk over the full CE horizon:{" "}
+                  {percentage(run.risk.ceBenchmark)}.
+                  {run.risk.horizonYears < run.risk.ceEndpoint &&
+                    " The run ends earlier, so its CE estimate is truncated and is not directly comparable to this benchmark."}
+                  {run.risk.horizonYears >= run.risk.ceEndpoint &&
+                    ` CE estimate minus benchmark: ${((run.risk.ce.estimate - run.risk.ceBenchmark) * 100).toFixed(3)} percentage points.`}
+                </p>
+                <p>
+                  Intervals use a normal approximation and describe Monte Carlo
+                  sampling only. They are not reported when sample variation is
+                  zero or there are fewer than two paths; rare events may
+                  require more paths.
+                </p>
+                <p>
+                  Estimates exclude hits after the run horizon and depend on the
+                  approximate bridge and time step. GM mortality can extend
+                  beyond the CE endpoint; outcomes after the run horizon are not
+                  included.
+                </p>
+              </div>
             </div>
           )}
         </div>

@@ -13,7 +13,11 @@
 
 .simulationForm {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 165px), 1fr));
+  /* Cap the form at three columns while allowing columns to wrap naturally. */
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, max(190px, calc((100% - 32px) / 3))), 1fr)
+  );
   gap: 16px;
   margin-top: 20px;
 }
@@ -53,12 +57,32 @@
 }
 
 .riskSummary {
-  margin-top: 18px;
+  display: grid;
+  gap: 28px;
+  margin-top: 28px;
+}
+
+.riskSection,
+.riskNotes {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.riskSection h4,
+.riskSection p,
+.riskNotes p {
+  margin: 0;
+}
+
+.riskSection h4 {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.4;
 }
 
 .riskTableWrap {
   overflow-x: auto;
-  margin-top: 10px;
 }
 
 .riskTableWrap table {
@@ -70,9 +94,17 @@
 
 .riskTableWrap th,
 .riskTableWrap td {
-  padding: 8px 12px 8px 0;
+  padding: 12px 16px 12px 0;
   border-bottom: 1px solid var(--border);
   text-align: left;
+}
+
+.riskTableWrap tbody th {
+  color: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .code,
