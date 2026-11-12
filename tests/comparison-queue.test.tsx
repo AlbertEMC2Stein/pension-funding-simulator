@@ -167,6 +167,53 @@ test("ETAs use batch throughput and schedule queued rows across two slots", () =
   assert.equal(comparisonQueueRemaining([first, second, row(3)]), 3000);
   assert.equal(
     comparisonQueueRemaining([{ ...first, completedPaths: 0 }, second]),
+    4000,
+  );
+  assert.equal(
+    comparisonQueueRemaining([
+      { ...first, completedPaths: 0 },
+      { ...second, completedPaths: 0 },
+    ]),
     null,
   );
+});
+
+test("overall ETA estimates a first batch using previous same-policy rows", () => {
+  const completed = {
+    ...row(1),
+    status: "calculated" as const,
+    elapsedMs: 8000,
+  };
+  const newlyStarted = {
+    ...row(2),
+    status: "running" as const,
+    startedAtMs: 1000,
+  };
+  const projected = {
+    ...row(3, "Projected"),
+    status: "calculated" as const,
+    elapsedMs: 20000,
+  };
+  const another = {
+    ...row(4, "Projected"),
+    status: "running" as const,
+    startedAtMs: 2000,
+  };
+
+  assert.equal(comparisonQueueRemaining([completed, newlyStarted], 3000), 6000);
+  assert.equal(
+    comparisonQueueRemaining(
+      [completed, projected, newlyStarted, another],
+      3000,
+    ),
+    19000,
+  );
+  assert.equal(comparisonRowRemaining(newlyStarted), null);
+  const measured = {
+    ...newlyStarted,
+    completedPaths: 50,
+    totalPaths: 100,
+    elapsedMs: 1000,
+  };
+  assert.equal(comparisonQueueRemaining([completed, measured], 3000), 1000);
 });

@@ -93,7 +93,10 @@ export class ComparisonQueue {
       try {
         const worker = this.createWorker();
         this.active.set(row.id, worker);
-        this.update(row.id, { status: "running" });
+        this.update(row.id, {
+          status: "running",
+          startedAtMs: performance.now(),
+        });
         worker.onmessage = (event) => this.receive(row.id, event.data);
         worker.onerror = () =>
           this.finish(row.id, {
@@ -187,20 +190,20 @@ export function comparisonRowRemaining(row: ComparisonRunRow): number | null {
 }
 
 /**
- * Estimate the queue's makespan across two workers. Queued row durations use
- * observed full-run equivalents for the same policy where possible, otherwise
- * the mean of known rows. Return null until timing data are available for all
- * currently running workers; analytical and finished rows require no time.
+ * Estimate the queue's makespan across two workers. Rows without a completed
+ * batch use observed full-run times, preferring the same policy; subtract their
+ * elapsed wall time when a start time is available. Queued rows use the same
+ * estimates. Return null only when a needed estimate has no timing evidence.
+ * Updates still occur at queue events and batch boundaries, not within batches.
  */
 export function comparisonQueueRemaining(
   rows: readonly ComparisonRunRow[],
+  nowMs = performance.now(),
 ): number | null {
   const running = rows.filter((row) => row.status === "running");
   const queued = rows.filter((row) => row.status === "queued");
   if (!running.length && !queued.length) return 0;
 
-  const workerTimes = running.map(comparisonRowRemaining);
-  if (workerTimes.some((value) => value === null)) return null;
   const durations = rows.flatMap((row) => {
     if (row.analytical || row.elapsedMs === undefined) return [];
     if (row.status === "calculated")
@@ -214,17 +217,38 @@ export function comparisonQueueRemaining(
       ];
     return [];
   });
-  if (queued.length && durations.length === 0) return null;
 
-  const slots = workerTimes.map((value) => value!);
-  while (slots.length < 2) slots.push(0);
-  for (const row of queued) {
+  /** Estimate a full row duration from same-policy samples, or all samples. */
+  function estimatedDuration(row: ComparisonRunRow): number | null {
     const matching = durations.filter((item) => item.policy === row.policy);
     const source = matching.length ? matching : durations;
-    const duration =
-      source.reduce((sum, item) => sum + item.duration, 0) / source.length;
+    return source.length
+      ? source.reduce((sum, item) => sum + item.duration, 0) / source.length
+      : null;
+  }
+
+  const slots: number[] = [];
+  for (const row of running) {
+    const ownEstimate = comparisonRowRemaining(row);
+    if (ownEstimate !== null) {
+      slots.push(ownEstimate);
+      continue;
+    }
+
+    const estimate = estimatedDuration(row);
+    if (estimate === null) return null;
+    const elapsed =
+      row.startedAtMs === undefined ? 0 : Math.max(0, nowMs - row.startedAtMs);
+    slots.push(Math.max(0, estimate - elapsed));
+  }
+
+  while (slots.length < 2) slots.push(0);
+  for (const row of queued) {
+    const duration = estimatedDuration(row);
+    if (duration === null) return null;
     const slot = slots[0] <= slots[1] ? 0 : 1;
     slots[slot] += duration;
   }
+
   return Math.max(...slots);
 }

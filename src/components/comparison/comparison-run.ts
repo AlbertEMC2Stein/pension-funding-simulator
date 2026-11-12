@@ -30,6 +30,8 @@ export interface ComparisonRunRow {
   completedPaths?: number;
   totalPaths?: number;
   elapsedMs?: number;
+  /** Monotonic time when the worker started, used before its first batch. */
+  startedAtMs?: number;
 }
 
 /** Identify shared market, investor, numerical and mortality inputs used by a table. */
