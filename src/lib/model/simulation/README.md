@@ -116,3 +116,19 @@ first-passage adapter. Both policies share the same hit-recording logic and
 market and bridge draws, but keep separate path states. The unconstrained
 bridge retains its log-gap coordinate and endpoint fallback; the projected
 bridge uses a frozen wealth variance.
+
+## Impoverishment forecast curve
+
+`impoverishment-forecast.ts` converts one policy's simulated first-hit times
+into a right-continuous, mortality-weighted empirical cumulative risk curve.
+A financial hit at time `t` contributes `survival(t) / pathCount`, assuming
+independent financial paths and mortality. The curve is cumulative risk of
+impoverishment before death, not a distribution normalized to one. Its last
+point matches the corresponding horizon-limited GM or CE risk estimate, up
+to floating-point summation. Its time coordinates are years after retirement;
+the future chart must convert these to attained ages and preserve the step
+function or clearly identify any visual approximation.
+
+The curve includes only hits by the simulation horizon and inherits the
+simulation's time-step and bridge approximations. It is currently a standalone
+calculation, with no confidence bands, conditional update, or UI connection.
