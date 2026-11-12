@@ -19,6 +19,7 @@ import {
   prepareWithdrawalTable,
 } from "../lib/model/comparison/withdrawal-table";
 import { StatusBadge } from "./StatusBadge";
+import { feasibilityForCurrentMarket } from "./evaluation/global-feasibility";
 import {
   DemoAction,
   PageHeading,
@@ -81,6 +82,19 @@ export function DataView() {
     () => prepareWithdrawalTable(draft, mortalityFits),
     [draft.market, draft.investor, mortalityFits.ce],
   );
+  const marketFeasibility = useMemo(
+    () =>
+      feasibilityForCurrentMarket(draft.market, {
+        status: "unavailable",
+        message: "",
+      }),
+    [draft.market],
+  );
+  const feasibilityUnavailable = draft.simulation.projected
+    ? "This comparison is available for the unconstrained policy only. Turn off projection to view it. The projected policy prevents borrowing and short selling by keeping allocations within the simplex."
+    : marketFeasibility.status === "negative-merton"
+      ? "This comparison is unavailable because a Merton-vector component is negative. The unconstrained policy requires short selling whenever wealth is below the safe boundary."
+      : null;
   const simulation = useComparisonSimulation(draft, mortalityFits);
   const run = simulation.run;
   const running = run?.running ?? false;
@@ -263,6 +277,11 @@ export function DataView() {
             the shared setup.
           </p>
         )}
+        {tableType === "feasibility" && feasibilityUnavailable && (
+          <p className="table-description table-description-note" role="status">
+            {feasibilityUnavailable}
+          </p>
+        )}
         <div className="table-scroll">
           <table>
             <thead>
@@ -322,7 +341,9 @@ export function DataView() {
                     ? ("needs-updating" as const)
                     : captured.status
                   : tableType !== "withdrawal"
-                    ? ("not-calculated" as const)
+                    ? feasibilityUnavailable
+                      ? ("not-available" as const)
+                      : ("not-calculated" as const)
                     : !withdrawalContext.available
                       ? ("not-available" as const)
                       : result?.ok
@@ -579,12 +600,18 @@ export function DataView() {
               <span>
                 ⓘ &nbsp; Analytical and simulation outputs will appear here.
               </span>
-              <DemoAction
-                className="button button-primary"
-                message="Feasibility calculations are not connected yet."
-              >
-                ▶ &nbsp; Compute rows
-              </DemoAction>
+              {feasibilityUnavailable ? (
+                <button type="button" className="button button-primary" disabled>
+                  ▶ &nbsp; Compute rows
+                </button>
+              ) : (
+                <DemoAction
+                  className="button button-primary"
+                  message="Feasibility calculations are not connected yet."
+                >
+                  ▶ &nbsp; Compute rows
+                </DemoAction>
+              )}
             </>
           )}
         </div>
