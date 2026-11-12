@@ -248,6 +248,11 @@
     margin: 6px 0
 }
 
+.small-card p.chart-disclaimer {
+    font-size: 9px;
+    margin-top: 13px
+}
+
 .card-icon {
     color: #8bb1a2;
     background: #f0f6f1;
