@@ -30,6 +30,14 @@ export interface SharedMortalityFits {
   ce: { key: string; fit: CeFit } | null;
 }
 
+/** One-time first-visit fit status, shared so Evaluation can show progress. */
+export type InitialMortalityFit =
+  | { phase: "loading" }
+  | { phase: "complete" }
+  | { phase: "skipped" }
+  | { phase: "running"; model: string; completed: number; total: number }
+  | { phase: "error"; message: string };
+
 /** Shared editable inputs; the eventual worker receives a separate validated snapshot. */
 const Context = createContext<{
   draft: SimulationDraft;
@@ -57,6 +65,10 @@ const Context = createContext<{
   >;
   mortalityFits: SharedMortalityFits;
   setMortalityFits: React.Dispatch<React.SetStateAction<SharedMortalityFits>>;
+  initialMortalityFit: InitialMortalityFit;
+  setInitialMortalityFit: React.Dispatch<
+    React.SetStateAction<InitialMortalityFit>
+  >;
 } | null>(null);
 
 /** Provide in-memory editable inputs and the most recently prepared options to descendant panels. Neither value is persisted across reloads. */
@@ -78,6 +90,8 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
     gm: null,
     ce: null,
   });
+  const [initialMortalityFit, setInitialMortalityFit] =
+    useState<InitialMortalityFit>({ phase: "loading" });
 
   /** Register a live worker check and remove it when its owning panel unmounts. */
   const registerRunGuard = useCallback((isRunning: () => boolean) => {
@@ -103,6 +117,7 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
     setPrepared(null);
     setEvaluationResult(null);
     setMortalityFits({ gm: null, ce: null });
+    setInitialMortalityFit({ phase: "skipped" });
     setWorkspaceRevision((revision) => revision + 1);
     return true;
   }
@@ -125,6 +140,8 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
         setPrepared,
         mortalityFits,
         setMortalityFits,
+        initialMortalityFit,
+        setInitialMortalityFit,
       }}
     >
       {children}

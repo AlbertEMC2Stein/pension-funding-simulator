@@ -54,30 +54,30 @@ const visualGroups: {
   title: string;
   entries: { id: Visual; label: string }[];
 }[] = [
-    {
-      title: "Withdrawal & risk",
-      entries: [
-        { id: "withdrawal", label: "Withdrawal & risk" },
-        { id: "gm", label: "Estimated GM risk" },
-        { id: "capital", label: "Value of risk-taking" },
-      ],
-    },
-    {
-      title: "Portfolio & policies",
-      entries: [{ id: "allocation", label: "Portfolio allocation" }],
-    },
-    {
-      title: "Impoverishment & borrowing",
-      entries: [
-        { id: "timing", label: "Impoverishment timing" },
-        { id: "borrowing", label: "Borrowing exposure" },
-      ],
-    },
-    {
-      title: "Wealth trajectories",
-      entries: [{ id: "trajectories", label: "Illustrative trajectories" }],
-    },
-  ];
+  {
+    title: "Withdrawal & risk",
+    entries: [
+      { id: "withdrawal", label: "Withdrawal & risk" },
+      { id: "gm", label: "Estimated GM risk" },
+      { id: "capital", label: "Value of risk-taking" },
+    ],
+  },
+  {
+    title: "Portfolio & policies",
+    entries: [{ id: "allocation", label: "Portfolio allocation" }],
+  },
+  {
+    title: "Impoverishment & borrowing",
+    entries: [
+      { id: "timing", label: "Impoverishment timing" },
+      { id: "borrowing", label: "Borrowing exposure" },
+    ],
+  },
+  {
+    title: "Wealth trajectories",
+    entries: [{ id: "trajectories", label: "Illustrative trajectories" }],
+  },
+];
 
 /**
  * Show the captured GM estimate and its CE reference without attributing an
@@ -622,7 +622,8 @@ export function BorrowingCard({
  */
 export function Evaluation() {
   const { navigate } = useDraft();
-  const { draft, setDraft, setupName } = useSimulationDraft();
+  const { draft, setDraft, setupName, initialMortalityFit } =
+    useSimulationDraft();
   const { run, errors, stale, start, cancel } = useEvaluationRun();
   const ceResult = useRiskWithdrawalResult();
   const feasibility = useMemo(
@@ -689,6 +690,20 @@ export function Evaluation() {
         chart, allocation, capital comparison and feasibility diagnostic use
         your current inputs. Simulation results use the latest completed run.
       </PreviewBanner>
+      {(initialMortalityFit.phase === "loading" ||
+        initialMortalityFit.phase === "running") && (
+        <p className="initial-fit-status" role="status">
+          {initialMortalityFit.phase === "loading"
+            ? "Preparing the example mortality data…"
+            : `Fitting the example mortality models · ${initialMortalityFit.model}: ${initialMortalityFit.completed} / ${initialMortalityFit.total} starts`}
+        </p>
+      )}
+      {initialMortalityFit.phase === "error" && (
+        <p className="initial-fit-status initial-fit-error" role="alert">
+          {initialMortalityFit.message} Open Investor &amp; mortality to review
+          and fit the models.
+        </p>
+      )}
       <div
         className={`workspace-grid evaluation-workspace ${settingsOpen ? "" : "settings-closed"}`}
       >
@@ -703,9 +718,9 @@ export function Evaluation() {
             <span>Retirement age</span>
             <strong>
               {/^\d{4}$/.test(draft.investor.birthYear) &&
-                /^\d{4}$/.test(draft.investor.retirementYear)
+              /^\d{4}$/.test(draft.investor.retirementYear)
                 ? Number(draft.investor.retirementYear) -
-                Number(draft.investor.birthYear)
+                  Number(draft.investor.birthYear)
                 : "—"}{" "}
               <small>years</small>
             </strong>
@@ -924,11 +939,11 @@ export function Evaluation() {
                 onChange={(event) =>
                   custom
                     ? updateSimulation({
-                      withdrawalEuros: Number(event.target.value),
-                    })
+                        withdrawalEuros: Number(event.target.value),
+                      })
                     : updateSimulation({
-                      targetRiskPercent: Number(event.target.value),
-                    })
+                        targetRiskPercent: Number(event.target.value),
+                      })
                 }
               />
               <div className="range-ends">

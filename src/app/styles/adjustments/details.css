@@ -298,6 +298,20 @@ input[aria-invalid="true"] {
   margin-top: 24px;
 }
 
+.initial-fit-status {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: var(--surface-soft);
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.initial-fit-error {
+  color: var(--feasibility-bad-text);
+}
+
 .table-details-toggle {
   margin-top: 7px;
 }
