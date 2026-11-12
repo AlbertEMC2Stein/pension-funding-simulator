@@ -365,8 +365,8 @@ export function DataView() {
                         <td>
                           {result?.ok
                             ? row.type === "Target risk"
-                              ? `${resultHeading === "WITHDRAWAL / CE RISK" ? "Withdrawal: " : ""}€${result.annualWithdrawal.toLocaleString("en-US", { maximumFractionDigits: 2 })} / year`
-                              : `${(result.ceRisk * 100).toFixed(2)}% CE risk`
+                              ? `€${result.annualWithdrawal.toLocaleString("en-US", { maximumFractionDigits: 2 })} / year`
+                              : `${(result.ceRisk * 100).toFixed(2)}%`
                             : "—"}
                         </td>
                         <td>
