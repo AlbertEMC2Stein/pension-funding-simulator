@@ -190,3 +190,13 @@ input[aria-invalid="true"] {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
   gap: 8px 16px;
 }
+
+.table-input-suffix {
+  width: 165px;
+}
+
+.table-input-suffix input {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+}

@@ -265,17 +265,18 @@ export function DataView() {
                       </select>
                     </td>
                     <td>
-                      <input
-                        aria-label={`Input value for variation ${row.id}`}
-                        value={row.value}
-                        onChange={(event) =>
-                          changeRow(row.id, { value: event.target.value })
-                        }
-                      />
-                      <small>
-                        {" "}
-                        {row.type === "Target risk" ? "%" : "€ / year"}
-                      </small>
+                      <div className="input-suffix table-input-suffix">
+                        <input
+                          aria-label={`Input value for variation ${row.id}, ${row.type === "Target risk" ? "percent" : "euros per year"}`}
+                          value={row.value}
+                          onChange={(event) =>
+                            changeRow(row.id, { value: event.target.value })
+                          }
+                        />
+                        <span aria-hidden="true">
+                          {row.type === "Target risk" ? "%" : "€ / year"}
+                        </span>
+                      </div>
                     </td>
                     {tableType === "withdrawal" && (
                       <td>
