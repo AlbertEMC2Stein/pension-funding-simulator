@@ -20,6 +20,8 @@ import {
 } from "../lib/model/comparison/withdrawal-table";
 import { StatusBadge } from "./StatusBadge";
 import { feasibilityForCurrentMarket } from "./evaluation/global-feasibility";
+import type { SetupTableRow } from "../lib/options/setup-file";
+import { SetupFileActions } from "./SetupFileActions";
 import {
   DemoAction,
   PageHeading,
@@ -30,39 +32,8 @@ import {
 /** Available comparison-table layouts; each keeps separate editable example rows. */
 type TableType = "withdrawal" | "feasibility";
 
-/** Editable row shared by the table layouts; values are text until validated. */
-interface ExampleRow {
-  id: number;
-  /** Display name only; changing it does not affect calculated results. */
-  name: string;
-  type: "Target risk" | "Withdrawal";
-  value: string;
-  /** Row-specific threshold used only by the feasibility layout. */
-  impoverishmentLevel: string;
-  policy: "Unconstrained" | "Projected";
-}
-
-/** Each table keeps its own editable examples when the user switches views. */
-function initialRows(impoverishmentLevel: string): ExampleRow[] {
-  return [
-    {
-      id: 1,
-      name: "Variation 01",
-      type: "Target risk",
-      value: "5.0",
-      policy: "Unconstrained",
-      impoverishmentLevel,
-    },
-    {
-      id: 2,
-      name: "Variation 02",
-      type: "Target risk",
-      value: "10.0",
-      policy: "Projected",
-      impoverishmentLevel,
-    },
-  ];
-}
+/** Editable comparison row; numerical values remain text until validated. */
+type ExampleRow = SetupTableRow;
 
 /** Format a batch-based ETA without implying sub-second precision. */
 function formatComparisonEta(milliseconds: number): string {
@@ -92,7 +63,8 @@ const tableDescriptions: Record<TableType, string> = {
 
 /** Compare editable rows against the shared setup; exports and other tables are previews. */
 export function DataView() {
-  const { draft, setDraft, mortalityFits } = useSimulationDraft();
+  const { draft, setDraft, mortalityFits, tables, setTables } =
+    useSimulationDraft();
   const withdrawalContext = useMemo(
     () => prepareWithdrawalTable(draft, mortalityFits),
     [draft.market, draft.investor, mortalityFits.ce],
@@ -132,10 +104,6 @@ export function DataView() {
   const [expandedFeasibilityRows, setExpandedFeasibilityRows] = useState<
     number[]
   >([]);
-  const [tables, setTables] = useState<Record<TableType, ExampleRow[]>>({
-    withdrawal: initialRows(draft.investor.impoverishmentLevel),
-    feasibility: initialRows(draft.investor.impoverishmentLevel),
-  });
   const rows = tables[tableType];
   const allComputed =
     run !== null &&
@@ -150,7 +118,14 @@ export function DataView() {
           ? "CE LIFETIME RISK"
           : "WITHDRAWAL / CE RISK";
   // Keep IDs stable after deletion so editing one row does not affect another.
-  const [nextId, setNextId] = useState(3);
+  const [nextId, setNextId] = useState(
+    () =>
+      Math.max(
+        0,
+        ...tables.withdrawal.map((row) => row.id),
+        ...tables.feasibility.map((row) => row.id),
+      ) + 1,
+  );
   /** Merge a partial edit into the selected row without changing other rows. */
   function changeRow(id: number, change: Partial<ExampleRow>) {
     setTables((current) => ({
@@ -170,7 +145,7 @@ export function DataView() {
       />
       <PreviewBanner>
         <strong>In progress.</strong> CE values update analytically; GM risk is
-        estimated by simulation. Exports are previews.
+        estimated by simulation. Results export is a preview.
       </PreviewBanner>
       <SectionHeading
         eyebrow="YOUR COMPARISON"
@@ -761,14 +736,12 @@ export function DataView() {
         <div className="small-card">
           <span className="tiny-label">RECREATE YOUR SETUP</span>
           <h3>Import or export setup</h3>
-          <p>Save or restore your inputs, calibration and run settings.</p>
+          <p>
+            Save or restore your inputs, table variations and run settings. Fits
+            and results are not included.
+          </p>
           <div className="heading-actions">
-            <DemoAction message="Setup import is not connected in this draft.">
-              ↥ &nbsp; Import setup
-            </DemoAction>
-            <DemoAction message="Setup export is not connected in this draft.">
-              ↓ &nbsp; Export setup
-            </DemoAction>
+            <SetupFileActions />
           </div>
         </div>
         <div className="small-card">

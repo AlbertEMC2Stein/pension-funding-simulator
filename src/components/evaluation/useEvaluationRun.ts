@@ -56,7 +56,8 @@ export interface EvaluationRun {
  * Late messages are ignored and the worker is disposed when this view unmounts.
  */
 export function useEvaluationRun() {
-  const { draft, mortalityFits, setPrepared } = useSimulationDraft();
+  const { draft, mortalityFits, setPrepared, registerRunGuard } =
+    useSimulationDraft();
   const [run, setRun] = useState<EvaluationRun | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const workerRef = useRef<Worker | null>(null);
@@ -67,6 +68,11 @@ export function useEvaluationRun() {
     run?.phase === "starting" ||
     run?.phase === "running" ||
     run?.phase === "cancelling";
+
+  useEffect(
+    () => registerRunGuard(() => workerRef.current !== null),
+    [registerRunGuard],
+  );
 
   useEffect(
     () => () => {

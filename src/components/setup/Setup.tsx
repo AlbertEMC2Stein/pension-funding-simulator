@@ -28,6 +28,7 @@ import { MarketAssumptionChecks } from "./MarketAssumptionChecks";
 import { MarketValidation } from "./MarketValidation";
 import { MortalityDataInfo } from "./MortalityDataInfo";
 import { MarketDataInfo } from "./MarketDataInfo";
+import { SetupFileActions } from "../SetupFileActions";
 import {
   initialSimulationDraft,
   parseAmount,
@@ -367,7 +368,8 @@ function InvestorSetup({
     SimulationDraft["investor"] | null
   >(null);
   const exampleInvestor = initialSimulationDraft().investor;
-  const isExample = JSON.stringify(investor) === JSON.stringify(exampleInvestor);
+  const isExample =
+    JSON.stringify(investor) === JSON.stringify(exampleInvestor);
   const mortality = investor.mortality;
   const mix = investor.maleWeight;
   const cohortYears = validateCohortYears(
@@ -642,17 +644,12 @@ export function Setup() {
         description="Set the market and investor assumptions behind your analysis."
       >
         <div className="heading-actions">
-          <DemoAction message="Setup import is not connected in this draft.">
-            ↥ &nbsp; Import setup
-          </DemoAction>
-          <DemoAction message="Setup export is not connected in this draft.">
-            ↓ &nbsp; Export setup
-          </DemoAction>
+          <SetupFileActions />
         </div>
       </PageHeading>
       <PreviewBanner>
-        <strong>Design preview.</strong> Cohort data and mortality fits can be
-        explored. Settings are not saved, and simulations are not connected yet.
+        <strong>Design preview.</strong> Explore the market and mortality inputs
+        used by the simulator. Export your setup to save it for later.
       </PreviewBanner>
       <div className="form-card setup-name-card">
         <div className="card-heading">

@@ -1,12 +1,24 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   initialSimulationDraft,
   type SimulationDraft,
   type SimulationOptions,
 } from "../lib/options/simulation-options";
 import type { CeFit, GmFit } from "../lib/mortality/mortality-fitting";
+import {
+  initialSetupTables,
+  type SetupFile,
+  type SetupTables,
+} from "../lib/options/setup-file";
 
 /** Name used for an unnamed setup throughout the interface. */
 export const DEFAULT_SETUP_NAME = "A thoughtful start";
@@ -24,6 +36,12 @@ const Context = createContext<{
   /** Display-only setup name; it does not change simulation results. */
   setupName: string;
   setSetupName: React.Dispatch<React.SetStateAction<string>>;
+  tables: SetupTables;
+  setTables: React.Dispatch<React.SetStateAction<SetupTables>>;
+  /** Incremented on import to discard panel-local results and terminate workers. */
+  workspaceRevision: number;
+  importSetup: (file: SetupFile) => boolean;
+  registerRunGuard: (isRunning: () => boolean) => () => void;
   prepared: { draft: SimulationDraft; options: SimulationOptions } | null;
   setPrepared: React.Dispatch<
     React.SetStateAction<{
@@ -39,6 +57,11 @@ const Context = createContext<{
 export function SimulationDraftProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft] = useState(initialSimulationDraft);
   const [setupName, setSetupName] = useState(DEFAULT_SETUP_NAME);
+  const [tables, setTables] = useState(() =>
+    initialSetupTables(draft.investor.impoverishmentLevel),
+  );
+  const [workspaceRevision, setWorkspaceRevision] = useState(0);
+  const runGuards = useRef(new Set<() => boolean>());
   const [prepared, setPrepared] = useState<{
     draft: SimulationDraft;
     options: SimulationOptions;
@@ -48,6 +71,33 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
     ce: null,
   });
 
+  /** Register a live worker check and remove it when its owning panel unmounts. */
+  const registerRunGuard = useCallback((isRunning: () => boolean) => {
+    runGuards.current.add(isRunning);
+    return () => {
+      runGuards.current.delete(isRunning);
+    };
+  }, []);
+
+  /** Apply an already validated file atomically after confirming active work. */
+  function importSetup(file: SetupFile): boolean {
+    if (
+      [...runGuards.current].some((isRunning) => isRunning()) &&
+      !window.confirm(
+        "A simulation or mortality fit is running. Interrupt it and import this setup?",
+      )
+    )
+      return false;
+
+    setDraft(file.draft);
+    setSetupName(file.name);
+    setTables(file.tables);
+    setPrepared(null);
+    setMortalityFits({ gm: null, ce: null });
+    setWorkspaceRevision((revision) => revision + 1);
+    return true;
+  }
+
   return (
     <Context.Provider
       value={{
@@ -55,6 +105,11 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
         setDraft,
         setupName,
         setSetupName,
+        tables,
+        setTables,
+        workspaceRevision,
+        importSetup,
+        registerRunGuard,
         prepared,
         setPrepared,
         mortalityFits,

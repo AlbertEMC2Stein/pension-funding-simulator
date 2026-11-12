@@ -78,7 +78,8 @@ function formatRemainingTime(milliseconds: number): string {
  * The worker owns the validated snapshot; later edits only mark its result old.
  */
 export function SimulationCheck() {
-  const { draft, setDraft, mortalityFits } = useSimulationDraft();
+  const { draft, setDraft, mortalityFits, registerRunGuard } =
+    useSimulationDraft();
   const [seed, setSeed] = useState("development-check");
   const [paths, setPaths] = useState("1000");
   const [horizon, setHorizon] = useState("10");
@@ -86,6 +87,10 @@ export function SimulationCheck() {
   const [backend, setBackend] = useState<"auto" | TensorBackend>("auto");
   const [run, setRun] = useState<CheckRun | null>(null);
   const workerRef = useRef<Worker | null>(null);
+  useEffect(
+    () => registerRunGuard(() => workerRef.current !== null),
+    [registerRunGuard],
+  );
   const runIdRef = useRef(0);
   const running =
     run?.phase === "starting" ||

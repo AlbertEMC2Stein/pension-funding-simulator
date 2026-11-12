@@ -13,7 +13,10 @@ import { Evaluation } from "./evaluation/Evaluation";
 import { Setup } from "./setup/Setup";
 import { DataView } from "./DataView";
 import { HelpView } from "./HelpView";
-import { SimulationDraftProvider } from "./SimulationDraftContext";
+import {
+  SimulationDraftProvider,
+  useSimulationDraft,
+} from "./SimulationDraftContext";
 
 /** Navigation entries and their presentation order in the workspace rail. */
 const navigation: { id: View; label: string; icon: string }[] = [
@@ -33,6 +36,35 @@ const visibleNavigation = DeveloperView
       { id: "developer" as const, label: "Developer tools", icon: "⌘" },
     ]
   : navigation;
+
+/** Keep panels mounted during navigation, but recreate them after a setup import. */
+function WorkspacePanels({ view, term }: { view: View; term: string | null }) {
+  const { workspaceRevision } = useSimulationDraft();
+
+  return (
+    <div key={workspaceRevision}>
+      <div hidden={view !== "evaluation"}>
+        <Evaluation />
+      </div>
+      <div hidden={view !== "setup"}>
+        <Setup />
+      </div>
+      <div hidden={view !== "data"}>
+        <DataView />
+      </div>
+      <div hidden={view !== "help"}>
+        <HelpView selectedTerm={term} />
+      </div>
+      {DeveloperView && (
+        <div hidden={view !== "developer"}>
+          <Suspense fallback={null}>
+            <DeveloperView />
+          </Suspense>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * Application shell: switches workspace panels and supplies navigation and
@@ -171,26 +203,7 @@ export function SimulatorDraft() {
                 </label>
               </div>
             </header>
-            {/* Keep views mounted so navigating between them does not discard draft inputs. */}
-            <div hidden={view !== "evaluation"}>
-              <Evaluation />
-            </div>
-            <div hidden={view !== "setup"}>
-              <Setup />
-            </div>
-            <div hidden={view !== "data"}>
-              <DataView />
-            </div>
-            <div hidden={view !== "help"}>
-              <HelpView selectedTerm={term} />
-            </div>
-            {DeveloperView && (
-              <div hidden={view !== "developer"}>
-                <Suspense fallback={null}>
-                  <DeveloperView />
-                </Suspense>
-              </div>
-            )}
+            <WorkspacePanels view={view} term={term} />
             <footer className="page-footer">
               <span>
                 STILLWELL <b>✳</b> PENSION LAB

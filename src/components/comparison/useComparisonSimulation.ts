@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSimulationDraft } from "../SimulationDraftContext";
 import type { SimulationDraft } from "../../lib/options/simulation-options";
 import type { SharedMortalityFits } from "../SimulationDraftContext";
 import { ComparisonQueue, type ComparisonQueueState } from "./comparison-queue";
@@ -28,6 +29,12 @@ export function useComparisonSimulation(
   const [run, setRun] = useState<ComparisonRun | null>(null);
   const [error, setError] = useState<string | null>(null);
   const queueRef = useRef<ComparisonQueue | null>(null);
+  const { registerRunGuard } = useSimulationDraft();
+
+  useEffect(
+    () => registerRunGuard(() => queueRef.current !== null),
+    [registerRunGuard],
+  );
 
   useEffect(
     () => () => {

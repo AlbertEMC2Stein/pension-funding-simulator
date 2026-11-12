@@ -185,6 +185,13 @@ input[aria-invalid="true"] {
   margin-bottom: 16px;
 }
 
+.setup-file-error {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  color: var(--feasibility-bad-text);
+  font-size: 10px;
+}
+
 .table-settings-panel .simulation-detail-fields {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));

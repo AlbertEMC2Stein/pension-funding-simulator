@@ -193,8 +193,13 @@ export function CohortChart({
   onCeFitStatusChange: (status: CeFitStatus) => void;
 }) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
-  const { draft, mortalityFits, setMortalityFits } = useSimulationDraft();
+  const { draft, mortalityFits, setMortalityFits, registerRunGuard } =
+    useSimulationDraft();
   const workerRef = useRef<Worker | null>(null);
+  useEffect(
+    () => registerRunGuard(() => workerRef.current !== null),
+    [registerRunGuard],
+  );
   const { gm: gmResult, ce: ceResult } = mortalityFits;
   const [fitErrors, setFitErrors] = useState<{ gm?: string; ce?: string }>({});
   const [running, setRunning] = useState<{
