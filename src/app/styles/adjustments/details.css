@@ -221,8 +221,7 @@ input[aria-invalid="true"] {
   margin-bottom: 6px;
 }
 
-.comparison-name,
-.setup-name {
+.comparison-name {
   min-width: 0;
   max-width: 100%;
   border: 1px solid transparent;
@@ -248,29 +247,18 @@ input[aria-invalid="true"] {
   margin-top: 0;
 }
 
-.scenario-intro input.setup-name {
-  display: block;
-  width: 20ch;
-  max-width: 100%;
-  padding: 0;
-  margin: 0;
-  border: 0;
-  outline: 1px solid var(--border);
-  outline-offset: 4px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-}
-
 .comparison-name:hover {
   border-color: var(--border);
 }
 
-.comparison-name:focus-visible,
-.scenario-intro input.setup-name:focus-visible {
+.comparison-name:focus-visible {
   border-color: var(--accent);
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+.setup-name-card {
+  margin-top: 24px;
 }
 
 .table-details-toggle {

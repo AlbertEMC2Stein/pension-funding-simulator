@@ -19,7 +19,10 @@ import {
   type MarketEditAction,
   type MarketCalibrationDraft,
 } from "../../lib/market/market-calibration";
-import { useSimulationDraft } from "../SimulationDraftContext";
+import {
+  DEFAULT_SETUP_NAME,
+  useSimulationDraft,
+} from "../SimulationDraftContext";
 import { MarketEditor } from "./MarketEditor";
 import { MarketAssumptionChecks } from "./MarketAssumptionChecks";
 import { MarketValidation } from "./MarketValidation";
@@ -629,6 +632,7 @@ function InvestorSetup({
 export function Setup() {
   const [tab, setTab] = useState<"market" | "investor">("market");
   const [ceFitStatus, setCeFitStatus] = useState<CeFitStatus>("not-fitted");
+  const { setupName, setSetupName } = useSimulationDraft();
 
   return (
     <section className="view active">
@@ -650,6 +654,28 @@ export function Setup() {
         <strong>Design preview.</strong> Cohort data and mortality fits can be
         explored. Settings are not saved, and simulations are not connected yet.
       </PreviewBanner>
+      <div className="form-card setup-name-card">
+        <div className="card-heading">
+          <div>
+            <span className="tiny-label">YOUR SETUP</span>
+            <h3>Name your setup</h3>
+          </div>
+        </div>
+        <div className="input-grid">
+          <label>
+            Setup name
+            <input
+              type="text"
+              value={setupName}
+              maxLength={20}
+              onChange={(event) => setSetupName(event.target.value)}
+              onBlur={() => {
+                if (!setupName.trim()) setSetupName(DEFAULT_SETUP_NAME);
+              }}
+            />
+          </label>
+        </div>
+      </div>
       <div className="tabs" role="tablist" aria-label="Setup sections">
         <button
           type="button"

@@ -12,7 +12,10 @@ import {
   type BorrowingDiagnostics,
 } from "./borrowing-diagnostics";
 import { FeasibilityControls } from "./FeasibilityControls";
-import { useSimulationDraft } from "../SimulationDraftContext";
+import {
+  DEFAULT_SETUP_NAME,
+  useSimulationDraft,
+} from "../SimulationDraftContext";
 import {
   RiskWithdrawalChart,
   useRiskWithdrawalResult,
@@ -619,7 +622,7 @@ export function BorrowingCard({
  */
 export function Evaluation() {
   const { navigate } = useDraft();
-  const { draft, setDraft } = useSimulationDraft();
+  const { draft, setDraft, setupName } = useSimulationDraft();
   const { run, errors, stale, start, cancel } = useEvaluationRun();
   const ceResult = useRiskWithdrawalResult();
   const feasibility = useMemo(
@@ -644,7 +647,6 @@ export function Evaluation() {
     }));
   }
   const [settingsOpen, setSettingsOpen] = useState(true);
-  const [setupName, setSetupName] = useState("A thoughtful start");
   const [pickerOpen, setPickerOpen] = useState(false);
   const projected = simulation.projected;
   // Keep both draft inputs when switching modes; neither triggers a calculation.
@@ -694,17 +696,7 @@ export function Evaluation() {
           <div className="scenario-intro">
             <span className="tiny-label">YOUR SETUP</span>
             <strong>
-              <input
-                className="setup-name"
-                aria-label="Setup name"
-                title="Edit setup name"
-                value={setupName}
-                maxLength={20}
-                onChange={(event) => setSetupName(event.target.value)}
-                onBlur={() => {
-                  if (!setupName.trim()) setSetupName("A thoughtful start");
-                }}
-              />{" "}
+              {setupName.trim() || DEFAULT_SETUP_NAME} <span>✳</span>
             </strong>
           </div>
           <div className="scenario-item">

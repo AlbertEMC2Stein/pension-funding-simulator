@@ -8,6 +8,9 @@ import {
 } from "../lib/options/simulation-options";
 import type { CeFit, GmFit } from "../lib/mortality/mortality-fitting";
 
+/** Name used for an unnamed setup throughout the interface. */
+export const DEFAULT_SETUP_NAME = "A thoughtful start";
+
 /** Completed fits and their captured input keys; null means no fit is stored. */
 export interface SharedMortalityFits {
   gm: { key: string; fit: GmFit } | null;
@@ -18,6 +21,9 @@ export interface SharedMortalityFits {
 const Context = createContext<{
   draft: SimulationDraft;
   setDraft: React.Dispatch<React.SetStateAction<SimulationDraft>>;
+  /** Display-only setup name; it does not change simulation results. */
+  setupName: string;
+  setSetupName: React.Dispatch<React.SetStateAction<string>>;
   prepared: { draft: SimulationDraft; options: SimulationOptions } | null;
   setPrepared: React.Dispatch<
     React.SetStateAction<{
@@ -32,6 +38,7 @@ const Context = createContext<{
 /** Provide in-memory editable inputs and the most recently prepared options to descendant panels. Neither value is persisted across reloads. */
 export function SimulationDraftProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft] = useState(initialSimulationDraft);
+  const [setupName, setSetupName] = useState(DEFAULT_SETUP_NAME);
   const [prepared, setPrepared] = useState<{
     draft: SimulationDraft;
     options: SimulationOptions;
@@ -46,6 +53,8 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
       value={{
         draft,
         setDraft,
+        setupName,
+        setSetupName,
         prepared,
         setPrepared,
         mortalityFits,
