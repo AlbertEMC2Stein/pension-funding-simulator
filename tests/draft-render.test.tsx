@@ -45,7 +45,9 @@ test("setup and data views retain the requested design elements", () => {
   );
   const data = renderToStaticMarkup(
     <DraftContext.Provider value={actions}>
-      <DataView />
+      <SimulationDraftProvider>
+        <DataView />
+      </SimulationDraftProvider>
     </DraftContext.Provider>,
   );
   assert.doesNotMatch(setup, /Estimation uncertainty/);
@@ -60,6 +62,12 @@ test("setup and data views retain the requested design elements", () => {
   assert.match(setup, /Import setup/);
   assert.match(setup, /Export setup/);
   assert.match(data, /Comparison table/);
+  assert.match(data, /Withdrawal, risk &amp; policy/);
+  assert.match(data, /CALCULATED CE VALUE/);
+  assert.match(data, /ESTIMATED GM RISK/);
+  assert.match(data, /GM STATUS/);
+  assert.match(data, /Policy for variation 1/);
+  assert.doesNotMatch(data, /<option value="policy"/);
   assert.match(data, /Export table/);
   assert.match(data, /Import setup/);
   assert.match(data, /Export setup/);

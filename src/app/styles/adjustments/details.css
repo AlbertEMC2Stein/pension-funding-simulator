@@ -171,3 +171,12 @@ input[aria-invalid="true"] {
 .market-import-diagnostics table.capital-table {
   min-width: 850px;
 }
+
+.table-row-error {
+  display: block;
+  max-width: 230px;
+  margin-top: 6px;
+  color: var(--feasibility-bad-text);
+  font-size: 10px;
+  line-height: 1.4;
+}

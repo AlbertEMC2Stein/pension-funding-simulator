@@ -1,6 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useSimulationDraft } from "./SimulationDraftContext";
+import {
+  calculateWithdrawalRow,
+  prepareWithdrawalTable,
+} from "../lib/model/comparison/withdrawal-table";
 import { StatusBadge } from "./StatusBadge";
 import {
   DemoAction,
@@ -10,12 +15,12 @@ import {
 } from "./common";
 
 /** Available comparison-table layouts; each keeps separate editable example rows. */
-type TableType = "withdrawal" | "policy" | "feasibility";
+type TableType = "withdrawal" | "feasibility";
 
-/** One local example row; it is not a simulation or an exported result. */
+/** Editable row shared by the table layouts; values are text until validated. */
 interface ExampleRow {
   id: number;
-  type: string;
+  type: "Target risk" | "Withdrawal";
   value: string;
   policy: string;
 }
@@ -29,18 +34,22 @@ function initialRows(): ExampleRow[] {
 }
 
 const tableDescriptions: Record<TableType, string> = {
-  withdrawal: "Compare withdrawals and model risks for different inputs.",
-  policy: "Compare unconstrained and projected policies for selected inputs.",
+  withdrawal:
+    "Compare withdrawals and risk across unconstrained and projected policies.",
   feasibility:
     "Explore how the unprojected policy's feasibility diagnostics change with the inputs.",
 };
 
-/** Design-only comparison table and separate setup/result export controls. */
+/** Compare editable rows against the shared setup; exports and other tables are previews. */
 export function DataView() {
+  const { draft, mortalityFits } = useSimulationDraft();
+  const withdrawalContext = useMemo(
+    () => prepareWithdrawalTable(draft, mortalityFits),
+    [draft.market, draft.investor, mortalityFits.ce],
+  );
   const [tableType, setTableType] = useState<TableType>("withdrawal");
   const [tables, setTables] = useState<Record<TableType, ExampleRow[]>>({
     withdrawal: initialRows(),
-    policy: initialRows().map((row) => ({ ...row, value: "5.0" })),
     feasibility: initialRows(),
   });
   const rows = tables[tableType];
@@ -64,8 +73,8 @@ export function DataView() {
         description="Compare variations of your setup and save your work."
       />
       <PreviewBanner>
-        <strong>Design preview.</strong> Add and edit example rows below. No
-        calculations are performed.
+        <strong>In progress.</strong> CE values update analytically. GM risk,
+        feasibility sensitivity and export controls are previews.
       </PreviewBanner>
       <SectionHeading
         eyebrow="YOUR COMPARISON"
@@ -86,8 +95,7 @@ export function DataView() {
                 setTableType(event.target.value as TableType)
               }
             >
-              <option value="withdrawal">Withdrawal & risk</option>
-              <option value="policy">Policy comparison</option>
+              <option value="withdrawal">Withdrawal, risk & policy</option>
               <option value="feasibility">Feasibility sensitivity</option>
             </select>
           </label>
@@ -114,13 +122,19 @@ export function DataView() {
           </button>
         </div>
         <p className="table-description">
-          {tableDescriptions[tableType]} All other settings are shared. This is
-          a layout preview; values are not calculated.
+          {tableDescriptions[tableType]} All other settings are shared.
+          {tableType !== "withdrawal" &&
+            " This table is a layout preview; values are not calculated."}
         </p>
-        {tableType === "policy" && (
+        {tableType === "withdrawal" && !withdrawalContext.available && (
+          <p className="table-description table-description-note" role="status">
+            {withdrawalContext.message}
+          </p>
+        )}
+        {tableType === "withdrawal" && (
           <p className="table-description table-description-note">
-            Difference from target applies when a target risk is specified.
-            Borrowing refers to the policy shown in each row.
+            The CE value uses the unconstrained policy, including for projected
+            rows. GM risk is a placeholder and is not yet calculated.
           </p>
         )}
         {tableType === "feasibility" && (
@@ -136,18 +150,11 @@ export function DataView() {
                 <th>VARIATION</th>
                 <th>INPUT TYPE</th>
                 <th>INPUT VALUE</th>
-                {tableType === "policy" && <th>POLICY</th>}
                 {tableType === "withdrawal" && (
                   <>
-                    <th>WITHDRAWAL / YEAR</th>
-                    <th>MODEL RISK</th>
-                  </>
-                )}
-                {tableType === "policy" && (
-                  <>
+                    <th>POLICY</th>
+                    <th>CALCULATED CE VALUE</th>
                     <th>ESTIMATED GM RISK</th>
-                    <th>DIFFERENCE FROM TARGET</th>
-                    <th>EVER BORROWING</th>
                   </>
                 )}
                 {tableType === "feasibility" && (
@@ -157,96 +164,140 @@ export function DataView() {
                     <th>ASSUMPTIONS</th>
                   </>
                 )}
-                <th>STATUS</th>
+                <th>{tableType === "withdrawal" ? "GM STATUS" : "STATUS"}</th>
                 <th />
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.id}>
-                  <td>
-                    <b>Variation {String(row.id).padStart(2, "0")}</b>
-                  </td>
-                  <td>
-                    <select
-                      aria-label={`Input type for variation ${row.id}`}
-                      value={row.type}
-                      onChange={(event) =>
-                        changeRow(row.id, {
-                          type: event.target.value,
-                          value:
-                            event.target.value === "Target risk"
-                              ? "5.0"
-                              : "24800",
-                        })
-                      }
-                    >
-                      <option>Target risk</option>
-                      <option>Withdrawal</option>
-                    </select>
-                  </td>
-                  <td>
-                    <input
-                      aria-label={`Input value for variation ${row.id}`}
-                      value={row.value}
-                      onChange={(event) =>
-                        changeRow(row.id, { value: event.target.value })
-                      }
-                    />
-                    <small>
-                      {" "}
-                      {row.type === "Target risk" ? "%" : "€ / year"}
-                    </small>
-                  </td>
-                  {tableType === "policy" && (
+              {rows.map((row) => {
+                const result =
+                  tableType === "withdrawal" && withdrawalContext.available
+                    ? calculateWithdrawalRow(
+                        withdrawalContext,
+                        row.type,
+                        row.value,
+                      )
+                    : null;
+
+                return (
+                  <tr key={row.id}>
+                    <td>
+                      <b>Variation {String(row.id).padStart(2, "0")}</b>
+                    </td>
                     <td>
                       <select
-                        aria-label={`Policy for variation ${row.id}`}
-                        value={row.policy}
+                        aria-label={`Input type for variation ${row.id}`}
+                        value={row.type}
                         onChange={(event) =>
-                          changeRow(row.id, { policy: event.target.value })
+                          changeRow(row.id, {
+                            type: event.target.value as ExampleRow["type"],
+                            value:
+                              event.target.value === "Target risk"
+                                ? "5.0"
+                                : "24800",
+                          })
                         }
                       >
-                        <option>Unconstrained</option>
-                        <option>Projected</option>
+                        <option>Target risk</option>
+                        <option>Withdrawal</option>
                       </select>
                     </td>
-                  )}
-                  <td>—</td>
-                  <td>—</td>
-                  {tableType !== "withdrawal" && <td>—</td>}
-                  <td>
-                    <StatusBadge status="not-calculated" />
-                  </td>
-                  <td>
-                    <button
-                      className="row-remove"
-                      type="button"
-                      aria-label={`Remove variation ${row.id}`}
-                      onClick={() =>
-                        setTables((current) => ({
-                          ...current,
-                          [tableType]: current[tableType].filter(
-                            (item) => item.id !== row.id,
-                          ),
-                        }))
-                      }
-                    >
-                      ×
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    <td>
+                      <input
+                        aria-label={`Input value for variation ${row.id}`}
+                        value={row.value}
+                        onChange={(event) =>
+                          changeRow(row.id, { value: event.target.value })
+                        }
+                      />
+                      <small>
+                        {" "}
+                        {row.type === "Target risk" ? "%" : "€ / year"}
+                      </small>
+                    </td>
+                    {tableType === "withdrawal" && (
+                      <td>
+                        <select
+                          aria-label={`Policy for variation ${row.id}`}
+                          value={row.policy}
+                          onChange={(event) =>
+                            changeRow(row.id, { policy: event.target.value })
+                          }
+                        >
+                          <option>Unconstrained</option>
+                          <option>Projected</option>
+                        </select>
+                      </td>
+                    )}
+                    {tableType === "withdrawal" ? (
+                      <>
+                        <td>
+                          {result?.ok
+                            ? row.type === "Target risk"
+                              ? `€${result.annualWithdrawal.toLocaleString("en-US", { maximumFractionDigits: 2 })} / year`
+                              : `${(result.ceRisk * 100).toFixed(2)}% CE risk`
+                            : "—"}
+                        </td>
+                        <td>—</td>
+                      </>
+                    ) : (
+                      <>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                      </>
+                    )}
+                    <td>
+                      <StatusBadge
+                        status={
+                          tableType !== "withdrawal"
+                            ? "not-calculated"
+                            : !withdrawalContext.available
+                              ? "not-available"
+                              : result?.ok
+                                ? "not-calculated"
+                                : "error"
+                        }
+                      />
+                      {result && !result.ok && (
+                        <small className="table-row-error" role="status">
+                          {result.message}
+                        </small>
+                      )}
+                    </td>
+                    <td>
+                      <button
+                        className="row-remove"
+                        type="button"
+                        aria-label={`Remove variation ${row.id}`}
+                        onClick={() =>
+                          setTables((current) => ({
+                            ...current,
+                            [tableType]: current[tableType].filter(
+                              (item) => item.id !== row.id,
+                            ),
+                          }))
+                        }
+                      >
+                        ×
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
         <div className="table-footer">
           <span>
-            ⓘ &nbsp; Analytical and simulation outputs will appear here.
+            ⓘ &nbsp;{" "}
+            {tableType === "withdrawal"
+              ? "CE values update automatically; GM simulations are not connected yet."
+              : "Analytical and simulation outputs will appear here."}
           </span>
           <DemoAction
             className="button button-primary"
-            message="Table calculations are not connected in this design draft."
+            message="Table simulations are not connected in this design draft."
           >
             ▶ &nbsp; Compute rows
           </DemoAction>
