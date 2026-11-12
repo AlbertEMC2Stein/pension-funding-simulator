@@ -189,3 +189,98 @@ test("table jobs capture one shared setup and independently prepare selected pol
     comparisonSetupSignature(draft, completeFits),
   );
 });
+
+test("completed rows are reused until their inputs or shared settings change", () => {
+  const { draft, fits } = example();
+  const marketInput = buildMarketOptions(draft.market);
+  assert.ok(marketInput.ok);
+  const market = calibrateMarket(marketInput.market);
+  assert.ok(market.ok);
+  const gmKey = mortalityFitKeys({
+    ...draft.investor,
+    market: market.market,
+  }).gm;
+  const completeFits = {
+    ...fits,
+    gm: {
+      key: gmKey,
+      fit: {
+        ...fits.ce.fit,
+        parameters: { alpha: 0.01, beta: 0.1, lambda: 0.01 },
+      },
+    },
+  };
+  const firstRow = {
+    id: 1,
+    type: "Target risk" as const,
+    value: "5",
+    policy: "Unconstrained" as const,
+  };
+  const secondRow = {
+    id: 2,
+    type: "Target risk" as const,
+    value: "10",
+    policy: "Projected" as const,
+  };
+  const initial = prepareComparisonRows([firstRow], draft, completeFits);
+  assert.ok(initial.ok);
+  const estimate = { estimate: 0.051, standardError: 0.001, interval95: null };
+  const previous = {
+    signature: initial.signature,
+    rows: [{ ...initial.rows[0], status: "calculated" as const, gm: estimate }],
+  };
+
+  const added = prepareComparisonRows(
+    [firstRow, secondRow],
+    draft,
+    completeFits,
+    previous,
+  );
+  assert.ok(added.ok);
+  assert.deepEqual(
+    added.rows.map((row) => row.status),
+    ["calculated", "queued"],
+  );
+  assert.equal(added.rows[0].gm, estimate);
+
+  const edited = prepareComparisonRows(
+    [{ ...firstRow, value: "6" }, secondRow],
+    draft,
+    completeFits,
+    previous,
+  );
+  assert.ok(edited.ok);
+  assert.deepEqual(
+    edited.rows.map((row) => row.status),
+    ["queued", "queued"],
+  );
+
+  const changedPolicy = prepareComparisonRows(
+    [{ ...firstRow, policy: "Projected" }],
+    draft,
+    completeFits,
+    previous,
+  );
+  assert.ok(changedPolicy.ok);
+  assert.equal(changedPolicy.rows[0].status, "queued");
+
+  const retry = prepareComparisonRows([firstRow], draft, completeFits, {
+    ...previous,
+    rows: [{ ...previous.rows[0], status: "cancelled" }],
+  });
+  assert.ok(retry.ok);
+  assert.equal(retry.rows[0].status, "queued");
+
+  draft.simulation.paths = 50000;
+  const changedSetup = prepareComparisonRows(
+    [firstRow, secondRow],
+    draft,
+    completeFits,
+    previous,
+  );
+  assert.ok(changedSetup.ok);
+  assert.deepEqual(
+    changedSetup.rows.map((row) => row.status),
+    ["queued", "queued"],
+  );
+});

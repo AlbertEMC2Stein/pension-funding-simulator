@@ -65,11 +65,14 @@ export function comparisonRowSignature(row: ComparisonRowInput): string {
  * isolated risk-only worker input per nontrivial row. Below the safe boundary
  * no financial hit is possible before the CE horizon, so the GM result is an
  * analytical zero. Invalid rows fail independently and do not block the queue.
+ * Completed results are reused only when the captured shared setup and the
+ * individual row inputs both match the previous run.
  */
 export function prepareComparisonRows(
   rows: readonly ComparisonRowInput[],
   draft: SimulationDraft,
   fits: SharedMortalityFits,
+  previous?: { signature: string; rows: readonly ComparisonRunRow[] } | null,
 ):
   | { ok: true; signature: string; rows: ComparisonRunRow[] }
   | { ok: false; message: string } {
@@ -85,6 +88,12 @@ export function prepareComparisonRows(
   const base = prepareEvaluationRun(capturedDraft, capturedFits);
   if (!base.ok) return { ok: false, message: base.errors.join(" ") };
 
+  const signature = comparisonSetupSignature(draft, fits);
+  const reusableRows =
+    previous?.signature === signature
+      ? new Map(previous.rows.map((row) => [row.id, row]))
+      : new Map<number, ComparisonRunRow>();
+
   const prepared = rows.map((row): ComparisonRunRow => {
     const common = {
       id: row.id,
@@ -93,6 +102,14 @@ export function prepareComparisonRows(
     };
     const ce = calculateWithdrawalRow(context, row.type, row.value);
     if (!ce.ok) return { ...common, status: "error", message: ce.message };
+
+    const cached = reusableRows.get(row.id);
+    if (
+      cached?.status === "calculated" &&
+      cached.gm &&
+      cached.rowSignature === common.rowSignature
+    )
+      return { ...cached, ...common, ce };
 
     if (ce.ceRisk === 0)
       return {
@@ -119,7 +136,7 @@ export function prepareComparisonRows(
 
   return {
     ok: true,
-    signature: comparisonSetupSignature(draft, fits),
+    signature,
     rows: prepared,
   };
 }

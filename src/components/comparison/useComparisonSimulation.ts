@@ -38,7 +38,7 @@ export function useComparisonSimulation(
   /** Capture and start the current rows; invalid rows are reported individually. */
   function start(rows: readonly ComparisonRowInput[]) {
     if (queueRef.current) return;
-    const prepared = prepareComparisonRows(rows, draft, fits);
+    const prepared = prepareComparisonRows(rows, draft, fits, run);
     if (!prepared.ok) {
       setError(prepared.message);
       return;
