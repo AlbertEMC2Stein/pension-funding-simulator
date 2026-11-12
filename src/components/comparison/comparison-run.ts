@@ -4,6 +4,7 @@ import { prepareEvaluationRun } from "../evaluation/evaluation-run-input";
 import type { RunConfigurationInput } from "../../lib/model/simulation/run-configuration";
 import type { RiskEstimate } from "../../lib/model/simulation/risk-estimate";
 import type { RunSchedulerResult } from "../../lib/model/simulation/tensorflow/run-scheduler";
+import type { TensorBackend } from "../../lib/model/simulation/tensorflow/backend";
 import { compatibleGlobalFeasibility } from "../../lib/model/analytical/compatible-policy";
 import { borrowingProperties } from "../evaluation/borrowing-diagnostics";
 import {
@@ -38,6 +39,8 @@ export interface ComparisonRunRow {
   message?: string;
   gm?: RiskEstimate;
   analytical?: boolean;
+  /** Actual computation backend for simulated rows. */
+  backend?: TensorBackend;
   /** Analytical feasibility and GM-weighted borrowing estimates. */
   borrowing?: {
     zeta: number;

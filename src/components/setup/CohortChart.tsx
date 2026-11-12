@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSimulationDraft } from "../SimulationDraftContext";
+import { ChartExport } from "../ChartExport";
 import { buildMarketOptions } from "../../lib/options/simulation-options";
 import { calibrateMarket } from "../../lib/market/calibrate-market";
 import type { CeFit, GmFit } from "../../lib/mortality/mortality-fitting";
@@ -32,10 +33,12 @@ function Plot({
   curve,
   gm,
   ce,
+  view,
 }: {
   curve: Curve;
   gm: GmFit | null;
   ce: CeFit | null;
+  view: string;
 }) {
   const element = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState("light");
@@ -56,6 +59,7 @@ function Plot({
     const node = element.current;
 
     if (!node) return;
+    node.dataset.exportReady = "false";
 
     let disposed = false;
     let cleanup: (() => void) | undefined;
@@ -145,6 +149,8 @@ function Plot({
         return;
       }
 
+      node.dataset.exportReady = "true";
+
       const resize = new ResizeObserver(() => {
         if (node.clientWidth > 0) void plotly.Plots.resize(node);
       });
@@ -169,6 +175,16 @@ function Plot({
       <div
         ref={element}
         aria-label="Cohort survival probability by attained age"
+      />
+      <ChartExport
+        element={element}
+        filename="mortality-survival"
+        context={{
+          title: "Cohort survival and mortality fits",
+          xUnit: "attained age in years",
+          yUnit: "survival probability",
+          view,
+        }}
       />
     </>
   );
@@ -419,7 +435,13 @@ export function CohortChart({
           {running ? "Update fits" : "Fit mortality models"}
         </button>
       </div>
-      <Plot key={`${gmKey}/${!!gm}/${!!ce}`} curve={curve} gm={gm} ce={ce} />
+      <Plot
+        key={`${gmKey}/${!!gm}/${!!ce}`}
+        curve={curve}
+        gm={gm}
+        ce={ce}
+        view={`Cohort ${birthYear}; retirement ${retirementYear}; ${mortality}${mortality === "custom" ? `; male weight ${maleWeight}` : ""}; ${longevity} longevity`}
+      />
       <p className="chart-disclaimer">
         Cohort survival conditional on reaching age {age}. Annual points are
         connected by straight lines. Data end at age 100; the remaining survival

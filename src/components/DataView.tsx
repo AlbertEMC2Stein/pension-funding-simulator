@@ -22,12 +22,10 @@ import { StatusBadge } from "./StatusBadge";
 import { feasibilityForCurrentMarket } from "./evaluation/global-feasibility";
 import type { SetupTableRow } from "../lib/options/setup-file";
 import { SetupFileActions } from "./SetupFileActions";
-import {
-  DemoAction,
-  PageHeading,
-  PreviewBanner,
-  SectionHeading,
-} from "./common";
+import { comparisonTableCsv } from "../lib/export/comparison-table";
+import { downloadText } from "../lib/export/csv";
+import { createResultsExport } from "../lib/export/results";
+import { PageHeading, PreviewBanner, SectionHeading } from "./common";
 
 /** Available comparison-table layouts; each keeps separate editable example rows. */
 type TableType = "withdrawal" | "feasibility";
@@ -63,8 +61,15 @@ const tableDescriptions: Record<TableType, string> = {
 
 /** Compare editable rows against the shared setup; exports and other tables are previews. */
 export function DataView() {
-  const { draft, setDraft, mortalityFits, tables, setTables } =
-    useSimulationDraft();
+  const {
+    draft,
+    setDraft,
+    mortalityFits,
+    tables,
+    setTables,
+    evaluationResult,
+    setupName,
+  } = useSimulationDraft();
   const withdrawalContext = useMemo(
     () => prepareWithdrawalTable(draft, mortalityFits),
     [draft.market, draft.investor, mortalityFits.ce],
@@ -109,6 +114,19 @@ export function DataView() {
     run !== null &&
     !sharedStale &&
     areComparisonRowsCalculated(tables[tableType], run.rows, tableType);
+  const hasTableResults = (["withdrawal", "feasibility"] as const).some(
+    (kind) => {
+      const captured =
+        kind === "withdrawal"
+          ? withdrawalSimulation.run
+          : feasibilitySimulation.run;
+      return captured?.rows.some(
+        (row) =>
+          row.status === "calculated" &&
+          tables[kind].some((item) => item.id === row.id),
+      );
+    },
+  );
   const resultHeading =
     rows.length === 0
       ? "CE RESULT"
@@ -136,6 +154,46 @@ export function DataView() {
     }));
   }
 
+  /** Download the visible table with captured settings and stale indicators. */
+  function exportTable() {
+    const content = comparisonTableCsv({
+      kind: tableType,
+      rows,
+      run,
+      sharedStale,
+      currentSetup: comparisonSetupSignature(draft, mortalityFits, tableType),
+      withdrawalContext,
+      unavailable:
+        tableType === "feasibility"
+          ? !!feasibilityUnavailable
+          : !withdrawalContext.available,
+    });
+    downloadText(
+      `${tableType}-comparison.csv`,
+      content,
+      "text/csv;charset=utf-8",
+    );
+  }
+
+  /** Export completed estimates and their captured inputs without raw trajectories. */
+  function exportResults() {
+    const document = createResultsExport({
+      name: setupName,
+      draft,
+      fits: mortalityFits,
+      tables,
+      evaluation: evaluationResult,
+      withdrawal: withdrawalSimulation.run,
+      feasibility: feasibilitySimulation.run,
+      exportedAt: new Date().toISOString(),
+    });
+    downloadText(
+      "pension-results.json",
+      `${JSON.stringify(document, null, 2)}\n`,
+      "application/json",
+    );
+  }
+
   return (
     <section className="view active">
       <PageHeading
@@ -145,7 +203,7 @@ export function DataView() {
       />
       <PreviewBanner>
         <strong>In progress.</strong> CE values update analytically; GM risk is
-        estimated by simulation. Results export is a preview.
+        estimated by simulation.
       </PreviewBanner>
       <SectionHeading
         eyebrow="YOUR COMPARISON"
@@ -164,9 +222,13 @@ export function DataView() {
           >
             ☷ &nbsp; Simulation settings
           </button>
-          <DemoAction message="Table export is not connected in this design draft.">
+          <button
+            type="button"
+            className="button button-light"
+            onClick={exportTable}
+          >
             ↓ &nbsp; Export table
-          </DemoAction>
+          </button>
         </div>
       </SectionHeading>
       {settingsOpen && (
@@ -389,9 +451,16 @@ export function DataView() {
                           }}
                         />
                         {tableType === "feasibility" && (
-                          <details className="table-details-toggle" open={expanded}>
+                          <details
+                            className="table-details-toggle"
+                            open={expanded}
+                          >
                             <summary
-                              aria-controls={expanded ? `feasibility-details-${row.id}` : undefined}
+                              aria-controls={
+                                expanded
+                                  ? `feasibility-details-${row.id}`
+                                  : undefined
+                              }
                               onClick={(event) => {
                                 event.preventDefault();
                                 setExpandedFeasibilityRows((current) =>
@@ -747,9 +816,14 @@ export function DataView() {
             Save the computed tables and diagnostics, linked to the setup and
             run that produced them.
           </p>
-          <DemoAction message="Results export is not connected in this draft.">
+          <button
+            type="button"
+            className="button button-light"
+            onClick={exportResults}
+            disabled={!evaluationResult && !hasTableResults}
+          >
             ↓ &nbsp; Export results
-          </DemoAction>
+          </button>
         </div>
       </div>
     </section>

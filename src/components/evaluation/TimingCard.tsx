@@ -16,6 +16,7 @@ import {
   type DurbinCdfComparison,
 } from "../../lib/model/analytical/durbin-cdf-comparison";
 import { StatusBadge, type ResultStatus } from "../StatusBadge";
+import { ChartExport } from "../ChartExport";
 import type { EvaluationRun } from "./useEvaluationRun";
 import {
   forecastYAxisRange,
@@ -35,6 +36,8 @@ function TimingPlot({
   conditional,
   density,
   overlay,
+  projected,
+  stale,
 }: {
   points: readonly ImpoverishmentForecastPoint[];
   retirementAge: number;
@@ -43,6 +46,8 @@ function TimingPlot({
   conditional: boolean;
   density: boolean;
   overlay?: Extract<DurbinView, { available: true }>;
+  projected: boolean;
+  stale: boolean;
 }) {
   const element = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState("light");
@@ -83,6 +88,7 @@ function TimingPlot({
   useEffect(() => {
     const node = element.current;
     if (!node) return;
+    node.dataset.exportReady = "false";
 
     let disposed = false;
     let cleanup: (() => void) | undefined;
@@ -169,6 +175,7 @@ function TimingPlot({
             y: [selectedRisk],
             type: "scatter",
             mode: "markers",
+            name: "Selected age",
             marker: { color: accent, size: 9 },
             cliponaxis: false,
             showlegend: false,
@@ -265,6 +272,8 @@ function TimingPlot({
         return;
       }
 
+      node.dataset.exportReady = "true";
+
       const resize = new ResizeObserver(() => {
         if (node.clientWidth > 0) void plotly.Plots.resize(node);
       });
@@ -303,6 +312,18 @@ function TimingPlot({
         ref={element}
         role="img"
         aria-label={`${conditional ? "Conditional" : "Forecast"} ${density ? "impoverishment risk density" : "remaining impoverishment risk"} by attained age`}
+      />
+      <ChartExport
+        element={element}
+        filename="impoverishment-timing"
+        context={{
+          title: density
+            ? "Impoverishment risk density"
+            : "Remaining impoverishment risk",
+          xUnit: "attained age in years",
+          yUnit: density ? "probability per year" : "probability",
+          view: `${projected ? "Projected" : "Unconstrained"} policy; ${conditional ? "Conditional update" : "Forecast"}; selected age ${retirementAge + selectedTime}${stale ? "; previous settings" : ""}`,
+        }}
       />
     </>
   );
@@ -529,6 +550,8 @@ export function TimingCard({
                 horizon={horizon}
                 conditional={conditional}
                 density={density}
+                projected={projected}
+                stale={stale}
                 overlay={
                   durbinView &&
                   "available" in durbinView &&

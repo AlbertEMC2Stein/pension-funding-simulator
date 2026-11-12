@@ -15,6 +15,7 @@ import {
 import { safeWithdrawal } from "../../lib/model/analytical/safe-withdrawal";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import { StatusBadge } from "../StatusBadge";
+import { ChartExport } from "../ChartExport";
 
 /** An analytical CE relationship and the current selection, in euros and probability. */
 export interface ChartData {
@@ -127,6 +128,7 @@ function Plot({ data }: { data: ChartData }) {
   useEffect(() => {
     const node = element.current;
     if (!node) return;
+    node.dataset.exportReady = "false";
 
     let disposed = false;
     let cleanup: (() => void) | undefined;
@@ -159,6 +161,7 @@ function Plot({ data }: { data: ChartData }) {
           y: data.withdrawals,
           type: "scatter",
           mode: "lines",
+          name: "CE withdrawal curve",
           line: { color: accent, width: 3 },
           hoverinfo: "skip",
         },
@@ -167,6 +170,7 @@ function Plot({ data }: { data: ChartData }) {
           y: [data.selectedWithdrawal],
           type: "scatter",
           mode: "markers",
+          name: "Selected risk and withdrawal",
           marker: { color: accent, size: 11 },
           hoverinfo: "skip",
         },
@@ -181,6 +185,7 @@ function Plot({ data }: { data: ChartData }) {
           y: [data.selectedWithdrawal, data.safeWithdrawal],
           type: "scatter",
           mode: "lines",
+          name: "Zero-risk withdrawal range",
           line: { color: accent, width: 2 },
           hoverinfo: "skip",
         });
@@ -254,6 +259,8 @@ function Plot({ data }: { data: ChartData }) {
         return;
       }
 
+      node.dataset.exportReady = "true";
+
       const resize = new ResizeObserver(() => {
         if (node.clientWidth > 0) void plotly.Plots.resize(node);
       });
@@ -279,6 +286,16 @@ function Plot({ data }: { data: ChartData }) {
         ref={element}
         role="img"
         aria-label="Unconstrained CE model annual withdrawal against lifetime impoverishment risk"
+      />
+      <ChartExport
+        element={element}
+        filename="withdrawal-and-risk"
+        context={{
+          title: "Withdrawal and CE risk",
+          xUnit: "probability",
+          yUnit: "EUR per year",
+          view: "Unconstrained CE policy",
+        }}
       />
     </>
   );

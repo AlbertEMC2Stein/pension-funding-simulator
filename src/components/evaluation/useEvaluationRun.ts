@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { SimulationOptions } from "../../lib/options/simulation-options";
-import type { RunNumerics } from "../../lib/model/simulation/run-configuration";
+import type {
+  RunConfigurationInput,
+  RunNumerics,
+} from "../../lib/model/simulation/run-configuration";
+import type { TensorBackend } from "../../lib/model/simulation/tensorflow/backend";
 import type {
   CompactifiedExponentialParameters,
   GompertzMakehamParameters,
@@ -19,10 +23,15 @@ import { prepareEvaluationRun } from "./evaluation-run-input";
 /** Captured evaluation run and its latest worker state. */
 export interface EvaluationRun {
   signature: string;
+  /** Display name captured when the run was started. */
+  setupName?: string;
   phase:
     "starting" | "running" | "cancelling" | "complete" | "cancelled" | "error";
   options: SimulationOptions;
   numerical: RunNumerics;
+  /** Captured validated-worker input, including fitted parameters and provenance. */
+  capturedInput?: RunConfigurationInput;
+  backend?: TensorBackend;
   /** Resolved real annual withdrawal captured by the worker. */
   annualWithdrawal?: number;
   progress?: RunProgress;
@@ -56,8 +65,14 @@ export interface EvaluationRun {
  * Late messages are ignored and the worker is disposed when this view unmounts.
  */
 export function useEvaluationRun() {
-  const { draft, mortalityFits, setPrepared, registerRunGuard } =
-    useSimulationDraft();
+  const {
+    draft,
+    mortalityFits,
+    setPrepared,
+    registerRunGuard,
+    setEvaluationResult,
+    setupName,
+  } = useSimulationDraft();
   const [run, setRun] = useState<EvaluationRun | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const workerRef = useRef<Worker | null>(null);
@@ -68,6 +83,11 @@ export function useEvaluationRun() {
     run?.phase === "starting" ||
     run?.phase === "running" ||
     run?.phase === "cancelling";
+
+  // Publish only complete results; progress updates must not rerender all panels.
+  useEffect(() => {
+    setEvaluationResult(run?.phase === "complete" ? run : null);
+  }, [run?.phase, setEvaluationResult]);
 
   useEffect(
     () => registerRunGuard(() => workerRef.current !== null),
@@ -127,9 +147,11 @@ export function useEvaluationRun() {
     setPrepared({ draft, options: prepared.input.options });
     setRun({
       signature,
+      setupName,
       phase: "starting",
       options: prepared.input.options,
       numerical: prepared.input.numerical,
+      capturedInput: structuredClone(prepared.input),
     });
 
     /** Terminate this worker and avoid clearing a newer worker reference. */
@@ -156,6 +178,7 @@ export function useEvaluationRun() {
             current && {
               ...current,
               phase: current.phase === "cancelling" ? "cancelling" : "running",
+              backend: message.backend,
             },
         );
       else if (message.type === "progress")

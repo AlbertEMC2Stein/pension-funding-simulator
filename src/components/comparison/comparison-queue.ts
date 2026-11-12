@@ -129,7 +129,10 @@ export class ComparisonQueue {
   /** Apply progress or a terminal message from the worker associated with a row. */
   private receive(id: number, message: SimulationWorkerResponse): void {
     if (this.disposed || !this.active.has(id) || message.runId !== id) return;
-    if (message.type === "progress") {
+    if (message.type === "backend") {
+      this.update(id, { backend: message.backend });
+      this.publish();
+    } else if (message.type === "progress") {
       this.update(id, {
         batchProgress: {
           completed: message.progress.completedBatches,

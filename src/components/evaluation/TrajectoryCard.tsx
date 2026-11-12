@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { StatusBadge, type ResultStatus } from "../StatusBadge";
+import { ChartExport } from "../ChartExport";
 import type { EvaluationRun } from "./useEvaluationRun";
 import type { TrajectorySamples } from "../../lib/model/simulation/tensorflow/run-scheduler";
 
@@ -115,6 +116,7 @@ export function TrajectoryCard({
     const node = element.current;
     if (!node || !samples || threshold === undefined || selected.length === 0)
       return;
+    node.dataset.exportReady = "false";
 
     let disposed = false;
     let cleanup: (() => void) | undefined;
@@ -140,6 +142,7 @@ export function TrajectoryCard({
           ],
           type: "scatter",
           mode: "lines",
+          name: "Borrowing region",
           fill: "toself",
           fillcolor: colors.getPropertyValue("--chart-borrowing-fill").trim(),
           line: { width: 0 },
@@ -155,6 +158,7 @@ export function TrajectoryCard({
             y: points.wealth,
             type: "scatter",
             mode: "lines",
+            name: `Sample path ${index + 1}`,
             line: { color, width: 1.5 },
             opacity: trajectoryOpacity(selected.length),
             hoverinfo: "skip",
@@ -166,6 +170,7 @@ export function TrajectoryCard({
         y: samples.safeBoundary,
         type: "scatter",
         mode: "lines",
+        name: "Safe boundary",
         line: { color: text, width: 2, dash: "dash" },
         hoverinfo: "skip",
       });
@@ -218,6 +223,7 @@ export function TrajectoryCard({
         plotly.purge(node);
         return;
       }
+      node.dataset.exportReady = "true";
       const resize = new ResizeObserver(() => {
         if (node.clientWidth > 0) void plotly.Plots.resize(node);
       });
@@ -317,6 +323,37 @@ export function TrajectoryCard({
               </li>
             )}
           </ul>
+          <ChartExport
+            element={element}
+            filename="wealth-trajectories"
+            context={{
+              title: "Illustrative wealth trajectories",
+              xUnit: "years after retirement",
+              yUnit: "EUR wealth",
+              view: `${samples.projected ? "Projected" : "Unconstrained"} policy; ${displayed} sample paths; impoverishment level EUR ${threshold}${stale ? "; previous settings" : ""}`,
+            }}
+            imageLegend={[
+              { name: "Sample paths", colorVariable: "--chart-asset-1" },
+              {
+                name: "Safe boundary",
+                colorVariable: "--text-secondary",
+                dash: "dash",
+              },
+              {
+                name: "Impoverishment level",
+                colorVariable: "--text-secondary",
+                dash: "dot",
+              },
+              ...(samples.borrowingBoundary
+                ? [
+                    {
+                      name: "Borrowing region",
+                      colorVariable: "--chart-borrowing-fill",
+                    },
+                  ]
+                : []),
+            ]}
+          />
           {plotError && (
             <p role="alert">The trajectory chart could not be displayed.</p>
           )}

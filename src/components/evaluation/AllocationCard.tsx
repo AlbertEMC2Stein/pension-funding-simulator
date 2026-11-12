@@ -12,6 +12,7 @@ import {
   type ProjectionCurve,
 } from "../../lib/model/analytical/projection-curve";
 import { StatusBadge } from "../StatusBadge";
+import { ChartExport } from "../ChartExport";
 
 /** Render portfolio fractions without clipping short positions or borrowing. */
 function AllocationPlot({
@@ -19,12 +20,15 @@ function AllocationPlot({
   assetNames,
   startingCapital,
   projected,
+  selectedTime,
 }: {
   data: AllocationData;
   projected: boolean;
   assetNames: readonly string[];
   /** At retirement only, when starting capital is within the plotted interval. */
   startingCapital: number | null;
+  /** Selected time after retirement, in years. */
+  selectedTime: number;
 }) {
   const element = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState("light");
@@ -46,6 +50,7 @@ function AllocationPlot({
   useEffect(() => {
     const node = element.current;
     if (!node) return;
+    node.dataset.exportReady = "false";
 
     let disposed = false;
     let cleanup: (() => void) | undefined;
@@ -135,6 +140,8 @@ function AllocationPlot({
         return;
       }
 
+      node.dataset.exportReady = "true";
+
       const resize = new ResizeObserver(() => {
         if (node.clientWidth > 0) void plotly.Plots.resize(node);
       });
@@ -187,6 +194,36 @@ function AllocationPlot({
           </li>
         )}
       </ul>
+      <ChartExport
+        element={element}
+        filename="portfolio-allocation"
+        context={{
+          title: "Portfolio allocation",
+          xUnit: "EUR wealth",
+          yUnit: "portfolio fraction",
+          view: `${projected ? "Projected" : "Unconstrained"} CE policy; ${selectedTime} years after retirement${startingCapital === null ? "" : `; starting capital EUR ${startingCapital}`}`,
+        }}
+        imageLegend={[
+          ...assetNames.map((name, index) => ({
+            name,
+            colorVariable: `--chart-asset-${index + 1}`,
+          })),
+          {
+            name: "Risk-free asset",
+            colorVariable: "--text-secondary",
+            dash: "dash",
+          },
+          ...(startingCapital === null
+            ? []
+            : [
+                {
+                  name: "Starting capital (t = 0)",
+                  colorVariable: "--text-secondary",
+                  dash: "dot" as const,
+                },
+              ]),
+        ]}
+      />
     </>
   );
 }
@@ -310,6 +347,7 @@ export function AllocationCard({
           <AllocationPlot
             data={chart.data}
             projected={projected}
+            selectedTime={selectedTime ?? 0}
             assetNames={assetNames}
             startingCapital={startingCapitalVisible ? startingCapital : null}
           />

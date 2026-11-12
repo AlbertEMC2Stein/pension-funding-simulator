@@ -14,6 +14,7 @@ import {
   type SimulationOptions,
 } from "../lib/options/simulation-options";
 import type { CeFit, GmFit } from "../lib/mortality/mortality-fitting";
+import type { EvaluationRun } from "./evaluation/useEvaluationRun";
 import {
   initialSetupTables,
   type SetupFile,
@@ -38,6 +39,11 @@ const Context = createContext<{
   setSetupName: React.Dispatch<React.SetStateAction<string>>;
   tables: SetupTables;
   setTables: React.Dispatch<React.SetStateAction<SetupTables>>;
+  /** Most recent completed Evaluation result, for a separate results export. */
+  evaluationResult: EvaluationRun | null;
+  setEvaluationResult: React.Dispatch<
+    React.SetStateAction<EvaluationRun | null>
+  >;
   /** Incremented on import to discard panel-local results and terminate workers. */
   workspaceRevision: number;
   importSetup: (file: SetupFile) => boolean;
@@ -61,6 +67,8 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
     initialSetupTables(draft.investor.impoverishmentLevel),
   );
   const [workspaceRevision, setWorkspaceRevision] = useState(0);
+  const [evaluationResult, setEvaluationResult] =
+    useState<EvaluationRun | null>(null);
   const runGuards = useRef(new Set<() => boolean>());
   const [prepared, setPrepared] = useState<{
     draft: SimulationDraft;
@@ -93,6 +101,7 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
     setSetupName(file.name);
     setTables(file.tables);
     setPrepared(null);
+    setEvaluationResult(null);
     setMortalityFits({ gm: null, ce: null });
     setWorkspaceRevision((revision) => revision + 1);
     return true;
@@ -107,6 +116,8 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
         setSetupName,
         tables,
         setTables,
+        evaluationResult,
+        setEvaluationResult,
         workspaceRevision,
         importSetup,
         registerRunGuard,
