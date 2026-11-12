@@ -11,11 +11,11 @@ market assumptions, but not the original imported price CSV, its provenance
 or historical-estimation diagnostics. Mortality fits, simulation outputs and
 Monte Carlo results are not included; results export is a separate feature.
 
-Import validates the format, field types, supported choices, dimensions and
-identifiers before changing the workspace. Editable text can still contain an
-incomplete or invalid value, which the corresponding input's normal validation
-will flag. A valid import clears existing fits and results; if a simulation or
-mortality fit is running, the user must first confirm its interruption.
+Import validates the format, field types, supported choices, market and investor
+inputs, and comparison-row values before changing the workspace. Export also
+requires valid inputs so that its files can be imported. A valid import clears
+existing fits and results; if a simulation or mortality fit is running, the
+user must first confirm its interruption.
 
 Reusing a seed does not alone guarantee identical results: the numerical
 settings, batch sequence, backend, model and data also matter. Cross-backend

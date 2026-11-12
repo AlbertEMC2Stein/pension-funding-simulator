@@ -58,9 +58,9 @@ export function CorrelationMatrix({
                   {i === j ? (
                     <span
                       className="correlation-diagonal"
-                      aria-label={`Correlation of asset ${i + 1} with itself, fixed at 1`}
+                      aria-label={`Correlation of asset ${i + 1} with itself, fixed at 1, current value ${market.correlations[i][j] || "empty"}`}
                     >
-                      1
+                      {market.correlations[i][j] || "—"}
                     </span>
                   ) : i > j ? (
                     <input

@@ -132,6 +132,16 @@ test("the matrix renders editable lower entries and read-only mirrored upper ent
   assert.equal((html.match(/fixed at 1/g) || []).length, 2);
 });
 
+test("the matrix exposes an invalid diagonal instead of displaying a false 1", () => {
+  const market = initialMarketCalibration();
+  market.correlations[0][0] = "-3";
+  const html = renderToStaticMarkup(
+    <CorrelationMatrix market={market} onChange={() => {}} />,
+  );
+  assert.match(html, /current value -3/);
+  assert.match(html, />-3<\/span>/);
+});
+
 test("adding and removing assets preserves the remaining correlations", () => {
   const initial = setCorrelation(initialMarketCalibration(), 0, 1, "0.4");
   const added = addAsset(initial);

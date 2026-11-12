@@ -1,4 +1,8 @@
-import type { SimulationDraft } from "./simulation-options";
+import {
+  buildSimulationOptions,
+  parseAmount,
+  type SimulationDraft,
+} from "./simulation-options";
 import { MANUAL_BATCH_SIZES } from "./batch-size";
 
 /** Editable comparison row saved as part of a setup, without calculated output. */
@@ -63,12 +67,12 @@ function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Accept bounded editable text, including temporarily incomplete input. */
+/** Check that an editable text field has a bounded string representation. */
 function text(value: unknown, max = 100): value is string {
   return typeof value === "string" && value.length <= max;
 }
 
-/** Validate every shape and enum needed to safely restore a setup into the UI. */
+/** Validate the complete file and its input values before restoring any state. */
 export function parseSetupFile(source: string): SetupFile {
   let value: unknown;
   try {
@@ -205,6 +209,51 @@ export function parseSetupFile(source: string): SetupFile {
   const sourceMarket = sourceFile.draft.market;
   const sourceInvestor = sourceFile.draft.investor;
   const sourceSimulation = sourceFile.draft.simulation;
+  if (
+    sourceMarket.correlations.some(
+      (row, index) => !row[index].trim() || Number(row[index]) !== 1,
+    )
+  )
+    throw new Error(
+      "Invalid correlation matrix: every diagonal entry must equal 1.",
+    );
+
+  const options = buildSimulationOptions(sourceFile.draft);
+
+  if (!options.ok)
+    throw new Error(`Invalid setup inputs: ${options.errors.join(" ")}`);
+
+  if (
+    sourceSimulation.targetRiskPercent <= 0 ||
+    sourceSimulation.targetRiskPercent >= 100 ||
+    sourceSimulation.withdrawalEuros < 0
+  )
+    throw new Error("Invalid saved risk or withdrawal setting.");
+
+  for (const kind of ["withdrawal", "feasibility"] as const) {
+    for (const row of sourceFile.tables[kind]) {
+      const validRisk =
+        /^\d+(?:\.\d+)?$/.test(row.value.trim()) &&
+        Number(row.value.trim()) < 100;
+      const amount = parseAmount(row.value);
+
+      if (row.type === "Target risk" ? !validRisk : amount === null)
+        throw new Error(`Invalid input for ${row.name} in the ${kind} table.`);
+
+      if (kind === "feasibility") {
+        const threshold = parseAmount(row.impoverishmentLevel);
+        if (
+          threshold === null ||
+          threshold < 1 ||
+          threshold >= options.options.investor.initialCapital
+        )
+          throw new Error(
+            `Invalid impoverishment level for ${row.name} in the feasibility table.`,
+          );
+      }
+    }
+  }
+
   /** Copy only supported editable row fields. */
   const copyRows = (rows: SetupTableRow[]): SetupTableRow[] =>
     rows.map((row) => ({

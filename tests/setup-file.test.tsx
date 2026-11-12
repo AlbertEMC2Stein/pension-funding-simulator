@@ -26,9 +26,45 @@ function example(): SetupFile {
 
 test("setup JSON round-trips editable inputs and table configurations", () => {
   const file = example();
-  file.draft.market.assets[0].nominalReturnPercent = "";
   file.tables.feasibility[0].impoverishmentLevel = "250,000";
   assert.deepEqual(parseSetupFile(JSON.stringify(file)), file);
+});
+
+test("invalid market, investor and row values are rejected before import", () => {
+  const diagonal = example();
+  diagonal.draft.market.correlations[0][0] = "-3";
+  assert.throws(() => parseSetupFile(JSON.stringify(diagonal)), /diagonal.*1/i);
+
+  const asymmetric = example();
+  asymmetric.draft.market.correlations[0][1] = "0.3";
+  assert.throws(() => parseSetupFile(JSON.stringify(asymmetric)), /symmetric/i);
+
+  const singular = example();
+  singular.draft.market.correlations[0][1] = "1";
+  singular.draft.market.correlations[1][0] = "1";
+  assert.throws(
+    () => parseSetupFile(JSON.stringify(singular)),
+    /positive definite/i,
+  );
+
+  const emptyRate = example();
+  emptyRate.draft.market.assets[0].nominalReturnPercent = "";
+  assert.throws(() => parseSetupFile(JSON.stringify(emptyRate)), /growth/i);
+
+  const invalidInvestor = example();
+  invalidInvestor.draft.investor.impoverishmentLevel =
+    invalidInvestor.draft.investor.initialCapital;
+  assert.throws(
+    () => parseSetupFile(JSON.stringify(invalidInvestor)),
+    /capital/i,
+  );
+
+  const invalidRow = example();
+  invalidRow.tables.feasibility[0].impoverishmentLevel = "900,000";
+  assert.throws(
+    () => parseSetupFile(JSON.stringify(invalidRow)),
+    /impoverishment level/i,
+  );
 });
 
 test("invalid or unsupported files cannot be applied", () => {
