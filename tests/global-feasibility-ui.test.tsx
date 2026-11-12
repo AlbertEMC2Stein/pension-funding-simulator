@@ -3,7 +3,12 @@ import { test } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { FeasibilityControls } from "../src/components/evaluation/FeasibilityControls";
 import { makeChartData } from "../src/components/evaluation/RiskWithdrawalChart";
-import { evaluateGlobalFeasibility } from "../src/components/evaluation/global-feasibility";
+import {
+  evaluateGlobalFeasibility,
+  feasibilityForCurrentMarket,
+} from "../src/components/evaluation/global-feasibility";
+import { initialMarketCalibration } from "../src/lib/market/market-calibration";
+import { BorrowingCard } from "../src/components/evaluation/Evaluation";
 import type { CompatiblePolicyInputs } from "../src/lib/model/analytical/compatible-policy";
 
 const rate = Math.LN2 / 10;
@@ -99,4 +104,26 @@ test("unconstrained policy retains its diagnostic and enabled threshold action",
   assert.match(html, /data-status="borrowing"/);
   assert.match(html, /Borrowing possible/);
   assert.doesNotMatch(html, /disabled=""/);
+});
+
+test("current negative Merton direction is detected even when mortality fit is stale", () => {
+  const market = initialMarketCalibration();
+  market.assets[0].nominalReturnPercent = "-5.75";
+  const result = feasibilityForCurrentMarket(market, {
+    status: "unavailable",
+    message: "The CE mortality fit needs updating.",
+  });
+
+  assert.equal(result.status, "negative-merton");
+  const html = renderToStaticMarkup(
+    <BorrowingCard
+      feasibility={result}
+      projected={false}
+      run={null}
+      stale={true}
+    />,
+  );
+  assert.match(html, /NOT AVAILABLE/);
+  assert.match(html, /short selling/);
+  assert.doesNotMatch(html, /0 years/);
 });

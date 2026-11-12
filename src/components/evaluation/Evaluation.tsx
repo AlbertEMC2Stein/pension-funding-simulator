@@ -14,6 +14,7 @@ import {
 } from "./RiskWithdrawalChart";
 import {
   evaluateGlobalFeasibility,
+  feasibilityForCurrentMarket,
   type FeasibilityResult,
 } from "./global-feasibility";
 import { findFeasibilityThreshold } from "./feasibility-threshold";
@@ -418,7 +419,7 @@ export function CapitalCard({ comparison }: { comparison: CapitalComparison }) {
 }
 
 /** Show unconstrained borrowing diagnostics or explain why projection excludes borrowing. */
-function BorrowingCard({
+export function BorrowingCard({
   feasibility,
   projected,
   run,
@@ -429,24 +430,29 @@ function BorrowingCard({
   run: EvaluationRun | null;
   stale: boolean;
 }) {
-  const occupation = run?.borrowingOccupation;
+  const hasNegativeMerton = feasibility.status === "negative-merton";
+  const analyticalZero = feasibility.status === "feasible";
+  const occupation = analyticalZero ? undefined : run?.borrowingOccupation;
   const running =
     run?.phase === "starting" ||
     run?.phase === "running" ||
     run?.phase === "cancelling";
-  const status: ResultStatus = projected
-    ? "not-available"
-    : running
-      ? "running"
-      : stale && occupation
-        ? "needs-updating"
-        : run?.phase === "error"
-          ? "error"
-          : run?.phase === "cancelled"
-            ? "cancelled"
-            : occupation
-              ? "calculated"
-              : "not-calculated";
+  const status: ResultStatus =
+    projected || hasNegativeMerton
+      ? "not-available"
+      : analyticalZero
+        ? "calculated"
+        : running
+          ? "running"
+          : stale && occupation
+            ? "needs-updating"
+            : run?.phase === "error"
+              ? "error"
+              : run?.phase === "cancelled"
+                ? "cancelled"
+                : occupation
+                  ? "calculated"
+                  : "not-calculated";
 
   return (
     <article className="chart-card borrowing-card">
@@ -459,12 +465,7 @@ function BorrowingCard({
             borrowing may last.
           </p>
         </div>
-        <StatusBadge
-          status={status}
-          label={
-            status === "calculated" ? "BORROWING TIME CALCULATED" : undefined
-          }
-        />
+        <StatusBadge status={status} />
       </div>
       {projected ? (
         <p role="status">
@@ -472,19 +473,28 @@ function BorrowingCard({
           off projection to view it. The projected policy prevents borrowing by
           keeping allocations within the simplex.
         </p>
+      ) : hasNegativeMerton ? (
+        <p role="status">
+          This diagnostic is unavailable because a Merton-vector component is
+          negative. The unconstrained strategy can require short selling and is
+          not globally simplex-feasible.
+        </p>
       ) : (
         <>
           <div className="borrowing-metrics">
             <Metric
               label="Probability of ever borrowing"
+              value={analyticalZero ? "0%" : "—"}
               note="While alive and before impoverishment"
             />
             <Metric
               label="Expected time borrowing"
               value={
-                occupation
-                  ? `${occupation.estimateYears.toFixed(2)} years`
-                  : "—"
+                analyticalZero
+                  ? "0 years"
+                  : occupation
+                    ? `${occupation.estimateYears.toFixed(2)} years`
+                    : "—"
               }
               note="Average time alive while borrowing before impoverishment or the run horizon"
             />
@@ -535,16 +545,22 @@ function BorrowingCard({
               Possibility does not imply borrowing on a particular path.
             </p>
             <p>
-              Simulation uncertainty and numerical approximations will be
-              reported with calculated results. Some diagnostics require
-              additional assumptions.
+              {analyticalZero
+                ? "Both zeros follow analytically from global feasibility, so Monte Carlo uncertainty does not apply."
+                : "Monte Carlo uncertainty applies to the simulated borrowing time only; some diagnostics require additional assumptions."}
             </p>
           </details>
           <p className="chart-disclaimer">
-            {occupation
-              ? "Borrowing time uses interpolated crossings and GM survival; short excursions can be missed. Monte Carlo uncertainty does not include time-step or bridge error."
-              : "Borrowing time has not been calculated. The global feasibility diagnostic is analytical when available."}{" "}
-            The probability of ever borrowing is not calculated yet.
+            {analyticalZero ? (
+              "The globally feasible unconstrained policy does not borrow. Both values are analytical and do not require a simulation."
+            ) : (
+              <>
+                {occupation
+                  ? "Borrowing time uses interpolated crossings and GM survival; short excursions can be missed. Monte Carlo uncertainty does not include time-step or bridge error."
+                  : "Borrowing time has not been calculated. The global feasibility diagnostic is analytical when available."}{" "}
+                The probability of ever borrowing is not calculated yet.
+              </>
+            )}
           </p>
         </>
       )}
@@ -561,7 +577,14 @@ export function Evaluation() {
   const { draft, setDraft } = useSimulationDraft();
   const { run, errors, stale, start, cancel } = useEvaluationRun();
   const ceResult = useRiskWithdrawalResult();
-  const feasibility = evaluateGlobalFeasibility(ceResult);
+  const feasibility = useMemo(
+    () =>
+      feasibilityForCurrentMarket(
+        draft.market,
+        evaluateGlobalFeasibility(ceResult),
+      ),
+    [draft.market, ceResult],
+  );
   const assetNames = useMemo(
     () => draft.market.assets.map((asset) => asset.name.trim()),
     [draft.market.assets],
