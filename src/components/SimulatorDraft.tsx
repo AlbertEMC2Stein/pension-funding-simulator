@@ -9,6 +9,12 @@ import {
   useState,
 } from "react";
 import { DraftContext, type View } from "./common";
+import {
+  DEFAULT_DISPLAY_PREFERENCES,
+  readDisplayPreferences,
+  writeDisplayPreferences,
+  type DisplayPreferences,
+} from "../lib/options/display-preferences";
 import { Evaluation } from "./evaluation/Evaluation";
 import { Setup } from "./setup/Setup";
 import { DataView } from "./DataView";
@@ -78,14 +84,15 @@ function DraftStorageNotice() {
 
 /**
  * Application shell: switches workspace panels and supplies navigation and
- * temporary notices. Navigation and theme are local UI state; editable setup
- * data are managed separately by the shared draft provider.
+ * temporary notices. Display preferences are stored independently of editable
+ * setup data, which are managed by the shared draft provider.
  */
 export function SimulatorDraft() {
   const [view, setView] = useState<View>("evaluation");
-  const [dark, setDark] = useState(false);
-  // The selector previews the control; it does not translate the interface.
-  const [language, setLanguage] = useState("en");
+  const [display, setDisplay] = useState<DisplayPreferences>(
+    DEFAULT_DISPLAY_PREFERENCES,
+  );
+  const dark = display.theme === "dark";
   const [toast, setToast] = useState("");
   // When navigation originates from a term link, HelpView focuses this entry.
   const [term, setTerm] = useState<string | null>(null);
@@ -99,6 +106,28 @@ export function SimulatorDraft() {
 
     timer.current = setTimeout(() => setToast(""), 3500);
   }, []);
+  // Read only after hydration; never overwrite saved choices with initial defaults.
+  useEffect(() => {
+    try {
+      setDisplay(readDisplayPreferences(window.localStorage));
+    } catch {
+      notice("Display preferences could not be restored from this browser.");
+    }
+  }, [notice]);
+
+  /** Apply a display choice immediately and retain it for the next visit. */
+  function updateDisplay(next: DisplayPreferences) {
+    setDisplay(next);
+
+    try {
+      writeDisplayPreferences(window.localStorage, next);
+      return true;
+    } catch {
+      notice("Display preferences could not be saved in this browser.");
+      return false;
+    }
+  }
+
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current);
@@ -187,7 +216,12 @@ export function SimulatorDraft() {
                   type="button"
                   aria-pressed={dark}
                   aria-label={`Switch to ${dark ? "light" : "dark"} theme`}
-                  onClick={() => setDark(!dark)}
+                  onClick={() =>
+                    updateDisplay({
+                      ...display,
+                      theme: dark ? "light" : "dark",
+                    })
+                  }
                 >
                   {dark ? "☀" : "☾"}{" "}
                   <span>{dark ? "Light mode" : "Dark mode"}</span>
@@ -197,15 +231,17 @@ export function SimulatorDraft() {
                     Language (preview only)
                   </span>
                   <select
-                    value={language}
+                    value={display.language}
                     aria-label="Language (preview only)"
                     onChange={(event) => {
-                      setLanguage(event.target.value);
-                      notice(
-                        event.target.value === "de"
-                          ? "German selected for preview. The interface is still in English; translations are not implemented yet."
-                          : "English selected. Language switching is a preview.",
-                      );
+                      const language =
+                        event.target.value === "de" ? "de" : "en";
+                      if (updateDisplay({ ...display, language }))
+                        notice(
+                          language === "de"
+                            ? "German selected for preview. The interface is still in English; translations are not implemented yet."
+                            : "English selected. Language switching is a preview.",
+                        );
                     }}
                   >
                     <option value="en">EN</option>

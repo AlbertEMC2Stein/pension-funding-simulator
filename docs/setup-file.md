@@ -25,6 +25,8 @@ The app also saves an editable draft in this browser's local storage after each
 change. That separate, versioned format can retain incomplete inputs; it is
 not an importable setup file. It includes table variations but not fits,
 simulated results, raw price files or imported-price diagnostics. Restoring a
-draft does not automatically run a mortality fit. Browser data can be cleared
+valid draft starts an automatic mortality fit on reload. The theme and language
+selector are saved separately in this browser and are not part of setup exports.
+Browser data can be cleared
 by the user or browser, and another tab on the same origin can overwrite the
 draft, so exporting a setup remains the way to keep a portable copy.
