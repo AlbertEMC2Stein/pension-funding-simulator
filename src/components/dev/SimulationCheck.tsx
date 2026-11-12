@@ -27,6 +27,9 @@ import type {
 import { useSimulationDraft } from "../SimulationDraftContext";
 import styles from "./developer.module.css";
 
+/** Maximum path count for an interactive development run. */
+const MAX_DEVELOPMENT_PATHS = 250_000;
+
 /** Captured worker state and settings for one development-only check. */
 interface CheckRun {
   signature: string;
@@ -129,6 +132,21 @@ export function SimulationCheck() {
     /** Display a preparation error without creating a worker. */
     const fail = (message: string) =>
       setRun({ signature, phase: "error", message });
+    const pathCount = Number(paths);
+    const horizonYears = Number(horizon);
+
+    if (
+      !Number.isSafeInteger(pathCount) ||
+      pathCount < 1 ||
+      pathCount > MAX_DEVELOPMENT_PATHS
+    )
+      return fail(
+        `Enter a whole number of paths between 1 and ${MAX_DEVELOPMENT_PATHS.toLocaleString("en-US")}.`,
+      );
+    if (!Number.isFinite(horizonYears) || horizonYears <= 0)
+      return fail("Enter a positive maximum horizon.");
+    if (!seed.trim()) return fail("Enter a seed for the development check.");
+
     const options = buildSimulationOptions(draft);
     if (!options.ok) return fail(options.errors.join(" "));
 
@@ -151,14 +169,6 @@ export function SimulationCheck() {
       return fail(
         "Both current mortality fits must have converged before running this check.",
       );
-
-    const pathCount = Number(paths);
-    const horizonYears = Number(horizon);
-    if (!Number.isSafeInteger(pathCount) || pathCount <= 0)
-      return fail("Enter a positive whole number of paths.");
-    if (!Number.isFinite(horizonYears) || horizonYears <= 0)
-      return fail("Enter a positive maximum horizon.");
-    if (!seed.trim()) return fail("Enter a seed for the development check.");
 
     const effectiveHorizon = Math.min(
       horizonYears,
@@ -332,10 +342,11 @@ export function SimulationCheck() {
       </p>
       <div className={styles.simulationForm}>
         <label>
-          Paths
+          Paths (maximum {MAX_DEVELOPMENT_PATHS.toLocaleString("en-US")})
           <input
             type="number"
             min="1"
+            max={MAX_DEVELOPMENT_PATHS}
             step="1"
             value={paths}
             onChange={(event) => setPaths(event.target.value)}
