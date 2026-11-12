@@ -687,60 +687,60 @@ export function Evaluation() {
         your current inputs. Simulation results use the latest completed run.
       </PreviewBanner>
       <div
-        className={`workspace-grid ${settingsOpen ? "" : "settings-closed"}`}
+        className={`workspace-grid evaluation-workspace ${settingsOpen ? "" : "settings-closed"}`}
       >
-        <div className="evaluation-content">
-          <div className="scenario-strip">
-            <div className="scenario-intro">
-              <span className="tiny-label">YOUR SETUP</span>
-              <strong>
-                A thoughtful start <span>✳</span>
-              </strong>
-            </div>
-            <div className="scenario-item">
-              <span>Retirement age</span>
-              <strong>
-                {/^\d{4}$/.test(draft.investor.birthYear) &&
-                /^\d{4}$/.test(draft.investor.retirementYear)
-                  ? Number(draft.investor.retirementYear) -
-                    Number(draft.investor.birthYear)
-                  : "—"}{" "}
-                <small>years</small>
-              </strong>
-            </div>
-            <div className="scenario-item">
-              <span>Starting capital</span>
-              <strong>€{draft.investor.initialCapital || "—"}</strong>
-            </div>
-            <div className="scenario-item">
-              <span>Impoverishment level</span>
-              <strong>€{draft.investor.impoverishmentLevel || "—"}</strong>
-            </div>
-            <div className="scenario-item">
-              <span>{custom ? "Annual withdrawal" : "Target risk"}</span>
-              <strong>
-                {custom
-                  ? `€${withdrawal.toLocaleString("en-US")}`
-                  : `${target.toFixed(1)}%`}
-              </strong>
-            </div>
-            <button
-              className="button button-light scenario-edit"
-              type="button"
-              onClick={() => navigate("setup")}
-            >
-              Edit setup
-            </button>
-            <SimulationRunControl
-              run={run}
-              stale={stale}
-              errors={errors}
-              settingsOpen={settingsOpen}
-              onToggleSettings={() => setSettingsOpen(!settingsOpen)}
-              onStart={() => start(visuals.trajectories)}
-              onCancel={cancel}
-            />
+        <div className="scenario-strip">
+          <div className="scenario-intro">
+            <span className="tiny-label">YOUR SETUP</span>
+            <strong>
+              A thoughtful start <span>✳</span>
+            </strong>
           </div>
+          <div className="scenario-item">
+            <span>Retirement age</span>
+            <strong>
+              {/^\d{4}$/.test(draft.investor.birthYear) &&
+              /^\d{4}$/.test(draft.investor.retirementYear)
+                ? Number(draft.investor.retirementYear) -
+                  Number(draft.investor.birthYear)
+                : "—"}{" "}
+              <small>years</small>
+            </strong>
+          </div>
+          <div className="scenario-item">
+            <span>Starting capital</span>
+            <strong>€{draft.investor.initialCapital || "—"}</strong>
+          </div>
+          <div className="scenario-item">
+            <span>Impoverishment level</span>
+            <strong>€{draft.investor.impoverishmentLevel || "—"}</strong>
+          </div>
+          <div className="scenario-item">
+            <span>{custom ? "Annual withdrawal" : "Target risk"}</span>
+            <strong>
+              {custom
+                ? `€${withdrawal.toLocaleString("en-US")}`
+                : `${target.toFixed(1)}%`}
+            </strong>
+          </div>
+          <button
+            className="button button-light scenario-edit"
+            type="button"
+            onClick={() => navigate("setup")}
+          >
+            Edit setup
+          </button>
+          <SimulationRunControl
+            run={run}
+            stale={stale}
+            errors={errors}
+            settingsOpen={settingsOpen}
+            onToggleSettings={() => setSettingsOpen(!settingsOpen)}
+            onStart={() => start(visuals.trajectories)}
+            onCancel={cancel}
+          />
+        </div>
+        <div className="evaluation-content">
           <div className="visual-picker-trigger">{visualPickerButton}</div>
           {pickerOpen && (
             <div className="visual-options visual-picker">

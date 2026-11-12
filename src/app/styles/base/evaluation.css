@@ -10,6 +10,28 @@
     grid-template-columns: minmax(0, 1fr)
 }
 
+/* Keep the setup above the results while the settings span both rows. */
+.evaluation-workspace {
+    grid-template-areas: "setup settings" "content settings";
+    row-gap: 0
+}
+
+.evaluation-workspace.settings-closed {
+    grid-template-areas: "setup" "content"
+}
+
+.evaluation-workspace > .scenario-strip {
+    grid-area: setup
+}
+
+.evaluation-workspace > .evaluation-content {
+    grid-area: content
+}
+
+.evaluation-workspace > .settings-panel {
+    grid-area: settings
+}
+
 .evaluation-content {
     min-width: 0
 }

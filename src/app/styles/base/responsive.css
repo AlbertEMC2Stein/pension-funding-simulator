@@ -73,6 +73,18 @@
         grid-row: 1
     }
 
+    .evaluation-workspace {
+        grid-template-areas: "setup" "settings" "content"
+    }
+
+    .evaluation-workspace.settings-closed {
+        grid-template-areas: "setup" "content"
+    }
+
+    .evaluation-workspace > .settings-panel {
+        margin-top: 20px
+    }
+
     .insight-card {
         margin: 0
     }
