@@ -146,5 +146,8 @@ captured GM mortality fit and the selected policy's hit times from the same run.
 The timing panel's density view bins the full cumulative curve into one-year
 forecast intervals or 30 conditional intervals from the selected time to the
 horizon. Each probability increment is divided by its interval width. The area
-of each bar is its estimated risk; it is not normalized to integrate to one. The Durbin overlay and its bound
-are placeholders and are not used in either timing calculation.
+of each bar is its estimated risk; it is not normalized to integrate to one.
+An optional Durbin overlay is calculated separately from the Monte Carlo curve.
+The displayed CE total-variation diagnostic applies to the distribution given
+impoverishment before death under CE mortality, not to this GM timing chart or
+its age-conditioned view.

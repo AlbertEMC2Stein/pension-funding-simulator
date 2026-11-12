@@ -23,8 +23,20 @@ function sampleRun(): EvaluationRun {
       batchSize: 3,
       recordTrajectories: false,
     },
+    risk: {
+      ce: { estimate: 0.05, standardError: null, interval95: null },
+      gm: { estimate: 0.05, standardError: null, interval95: null },
+      ceBenchmark: 0.05,
+      horizonYears: 10,
+      ceEndpoint: 10,
+    },
     timing: {
       gm: { alpha: 0.01, beta: 0.1, lambda: 0.02 },
+      durbin: {
+        realRiskFreeRate: 0.05,
+        rho: 0.01,
+        ce: { tau: 10, p: 2, kappa: 0.05, lambda: 0.1 },
+      },
       firstHitTimes: new Float32Array([-1, 1, 2]),
       projectedFirstHitTimes: new Float32Array([-1, -1, 2]),
     },
@@ -42,8 +54,13 @@ test("timing card presents captured GM forecast and age control", () => {
   assert.match(html, /Selected age/);
   assert.match(html, /assessed at retirement/);
   assert.match(html, /Show Durbin approximation/);
-  assert.match(html, /Coming soon/);
+  assert.doesNotMatch(html, /Coming soon/);
+  assert.match(html, /<input type="checkbox"\/>/);
   assert.match(html, /Approximation error &amp; diagnostics/);
+  assert.ok(
+    html.indexOf("Approximation error &amp; diagnostics") <
+      html.indexOf("Show Durbin approximation"),
+  );
   assert.match(html, /GM mortality may extend beyond this horizon/);
 });
 
@@ -53,6 +70,7 @@ test("timing card labels projected and stale results without silently substituti
     <TimingCard run={run} stale projected />,
   );
   assert.match(projected, /PROJECTED POLICY/);
+  assert.doesNotMatch(projected, /Show Durbin approximation/);
   assert.match(projected, /NEEDS UPDATING/);
   assert.match(projected, /earlier settings/);
 
@@ -75,5 +93,6 @@ test("timing card remains a prompt until a run is available", () => {
     <TimingCard run={null} stale={false} projected={false} />,
   );
   assert.match(html, /Run a simulation to see this chart/);
+  assert.doesNotMatch(html, /Show Durbin approximation/);
   assert.match(html, /NOT CALCULATED/);
 });

@@ -78,9 +78,31 @@ on the impoverishment level.
 The preparer enumerates the simplex faces for the validated market (at most ten
 assets). For each face, affine KKT inequalities determine where it is optimal;
 the resulting breakpoints and projected allocations define a piecewise-linear
-curve. `interpolateProjection` evaluates that curve in double precision. This
-The allocation chart uses this curve, and a standalone TensorFlow wealth step
-can evaluate it in Float32. The step is not yet integrated into a batch run;
-GPU behavior, near-degenerate markets, and preparation/run-time performance
-still need assessment before doing so. Tests compare against the existing
+curve. `interpolateProjection` evaluates that curve in double precision. The
+allocation chart and projected batch wealth step use the curve. GPU behavior,
+near-degenerate markets, and preparation/run-time performance need further
+assessment. Tests compare against the existing
 point-by-point solver across several correlated markets and boundary cases.
+
+
+## Durbin first-passage approximation
+
+`durbin-approximation.ts` evaluates the first tangent term in the manuscript's
+`sections/5_first_passage.tex` and the log-space expression used in
+`code/+studies/+dataGeneration/generateFirstPassageData.m`. Those files were
+read as reference only; the website has no runtime dependency on the research
+project. The approximation applies to the unconstrained compatible CE feedback,
+with a positive initial CE risk and capital below the safe boundary. At zero
+risk the implemented safe-region result is zero.
+
+The plotted financial first-passage density is weighted by the captured GM
+survival law and integrated through the run horizon. An age-conditioned
+update divides by GM survival and one minus the approximate financial hit mass
+before the selected age. Since the first term need not integrate to one, this
+conditional expression is unavailable if its denominator is non-positive or
+its implied risk exceeds one; it is never normalized to force a probability.
+The optional CE conditional-on-event TV diagnostic uses the full CE horizon
+and is not a bound on GM or age-conditioned chart errors. Adaptive quadrature
+has an estimated numerical error, not a certified enclosure. Tests compare an
+independent boundary-density expression and the manuscript's rounded baseline;
+no MATLAB code was run as part of this implementation.

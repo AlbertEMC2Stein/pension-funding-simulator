@@ -6,6 +6,11 @@ import {
   type ImpoverishmentForecastPoint,
 } from "../../lib/model/simulation/impoverishment-forecast";
 import { prepareConditionalImpoverishmentForecast } from "../../lib/model/simulation/conditional-impoverishment-forecast";
+import {
+  prepareDurbinApproximation,
+  type DurbinApproximation,
+  type DurbinView,
+} from "../../lib/model/analytical/durbin-approximation";
 import { StatusBadge, type ResultStatus } from "../StatusBadge";
 import type { EvaluationRun } from "./useEvaluationRun";
 import {
@@ -24,6 +29,7 @@ function TimingPlot({
   horizon,
   conditional,
   density,
+  overlay,
 }: {
   points: readonly ImpoverishmentForecastPoint[];
   retirementAge: number;
@@ -31,6 +37,7 @@ function TimingPlot({
   horizon: number;
   conditional: boolean;
   density: boolean;
+  overlay?: Extract<DurbinView, { available: true }>;
 }) {
   const element = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState("light");
@@ -84,6 +91,9 @@ function TimingPlot({
       const text = colors.getPropertyValue("--text-secondary").trim();
       const grid = colors.getPropertyValue("--chart-grid").trim();
       const accent = colors.getPropertyValue("--accent").trim();
+      const approximationColor = colors
+        .getPropertyValue("--chart-asset-2")
+        .trim();
       const chosenAge = retirementAge + selectedTime;
       const selectedRisk = density
         ? timingDensityAt(bins, selectedTime)
@@ -101,6 +111,7 @@ function TimingPlot({
                   y: bins.map((bin) => bin.density),
                   width: bins.map((bin) => bin.endTime - bin.startTime),
                   type: "bar",
+                  name: "Simulation",
                   marker: { color: accent },
                   opacity: 0.65,
                   hoverinfo: "skip",
@@ -114,10 +125,28 @@ function TimingPlot({
                   y: displayPoints.map((point) => point.cumulativeRisk),
                   type: "scatter",
                   mode: "lines",
+                  name: "Simulation",
                   line: { color: accent, width: 2.5, shape: "hv" },
                   hoverinfo: "skip",
                 },
               ]),
+          ...(overlay
+            ? [
+                {
+                  x: (density ? overlay.density : overlay.tail).map(
+                    (point) => retirementAge + point.timeYears,
+                  ),
+                  y: (density ? overlay.density : overlay.tail).map(
+                    (point) => point.value,
+                  ),
+                  type: "scatter",
+                  mode: "lines",
+                  name: "Durbin approximation",
+                  line: { color: approximationColor, width: 2, dash: "dash" },
+                  hoverinfo: "skip",
+                },
+              ]
+            : []),
           {
             x: [chosenAge],
             y: [selectedRisk],
@@ -125,13 +154,14 @@ function TimingPlot({
             mode: "markers",
             marker: { color: accent, size: 9 },
             cliponaxis: false,
+            showlegend: false,
             hoverinfo: "skip",
           },
         ],
         {
           autosize: true,
           height: 300,
-          margin: { l: 72, r: 15, t: 15, b: 60 },
+          margin: { l: 72, r: 15, t: overlay ? 45 : 15, b: 60 },
           paper_bgcolor: "rgba(0,0,0,0)",
           plot_bgcolor: "rgba(0,0,0,0)",
           font: { color: text },
@@ -201,7 +231,8 @@ function TimingPlot({
                 ]
               : []),
           ],
-          showlegend: false,
+          showlegend: Boolean(overlay),
+          legend: { orientation: "h", x: 0, y: 1.12 },
         },
         {
           responsive: true,
@@ -237,6 +268,7 @@ function TimingPlot({
     displayPoints,
     bins,
     density,
+    overlay,
     retirementAge,
     selectedTime,
     horizon,
@@ -270,6 +302,7 @@ export function TimingCard({
 }) {
   const [conditional, setConditional] = useState(false);
   const [density, setDensity] = useState(false);
+  const [showDurbin, setShowDurbin] = useState(false);
   const [selectedTime, setSelectedTime] = useState(0);
   const running =
     run?.phase === "starting" ||
@@ -301,6 +334,43 @@ export function TimingCard({
       conditional: prepareConditionalImpoverishmentForecast(input),
     };
   }, [hits, run?.timing, horizon]);
+  const durbin = useMemo(():
+    { approximation: DurbinApproximation } | { message: string } | null => {
+    if (!showDurbin || projected || !run?.timing?.durbin || !run.risk)
+      return null;
+
+    try {
+      return {
+        approximation: prepareDurbinApproximation({
+          ...run.timing.durbin,
+          gm: run.timing.gm,
+          ceRisk: run.risk.ceBenchmark,
+          horizonYears: horizon,
+        }),
+      };
+    } catch (error) {
+      return {
+        message:
+          error instanceof Error
+            ? error.message
+            : "The Durbin approximation could not be calculated.",
+      };
+    }
+  }, [showDurbin, projected, run?.timing, run?.risk, horizon]);
+  const durbinView = useMemo((): DurbinView | { message: string } | null => {
+    if (!durbin || "message" in durbin) return durbin;
+
+    try {
+      return durbin.approximation.view(conditional ? time : null);
+    } catch (error) {
+      return {
+        message:
+          error instanceof Error
+            ? error.message
+            : "The Durbin approximation could not be evaluated.",
+      };
+    }
+  }, [durbin, conditional, time]);
   const update = useMemo(
     () => (conditional ? prepared?.conditional.atTime(time) : undefined),
     [conditional, prepared, time],
@@ -398,14 +468,6 @@ export function TimingCard({
           </div>
         </fieldset>
       </div>
-      {!projected && (
-        <label className="timing-approximation">
-          <input type="checkbox" disabled />
-          <span>
-            Show Durbin approximation <small>Coming soon</small>
-          </span>
-        </label>
-      )}
       {running && (
         <p role="status">
           Simulation running; timing results appear after the run completes.
@@ -429,6 +491,13 @@ export function TimingCard({
                 horizon={horizon}
                 conditional={conditional}
                 density={density}
+                overlay={
+                  durbinView &&
+                  "available" in durbinView &&
+                  durbinView.available
+                    ? durbinView
+                    : undefined
+                }
               />
             </div>
           )}
@@ -480,6 +549,38 @@ export function TimingCard({
           </p>
           <details className="borrowing-details timing-diagnostics">
             <summary>Approximation error &amp; diagnostics</summary>
+            {!projected && (
+              <>
+                <label className="timing-approximation">
+                  <input
+                    type="checkbox"
+                    checked={showDurbin}
+                    disabled={running || !run?.timing?.durbin || !run?.risk}
+                    onChange={(event) => setShowDurbin(event.target.checked)}
+                  />
+                  <span>Show Durbin approximation</span>
+                </label>
+                {showDurbin &&
+                  !projected &&
+                  durbinView &&
+                  ("message" in durbinView || !durbinView.available) && (
+                    <p role="status">
+                      {"message" in durbinView
+                        ? durbinView.message
+                        : durbinView.reason === "unstable-conditioning"
+                          ? "The approximation is unavailable at this age because its estimated probability of avoiding an earlier hit is not positive."
+                          : durbinView.reason === "invalid-probability"
+                            ? "The approximation is unavailable here because it produced an invalid risk."
+                            : "Select an age before the end of the simulation."}
+                    </p>
+                  )}
+                {!run?.timing?.durbin && (
+                  <p>
+                    Run a new simulation to enable the Durbin approximation.
+                  </p>
+                )}
+              </>
+            )}
             <dl>
               <div>
                 <dt>Simulated paths</dt>
@@ -500,18 +601,24 @@ export function TimingCard({
                 <dd>Not calculated yet</dd>
               </div>
               <div>
-                <dt>Durbin approximation error bound</dt>
+                <dt>CE conditional-on-impoverishment TV bound (approx.)</dt>
                 <dd>
                   {projected
                     ? "Not applicable to the projected policy"
-                    : "Not calculated yet"}
+                    : durbin && "approximation" in durbin
+                      ? durbin.approximation.ceConditionalEventTvBound === null
+                        ? "Not available"
+                        : `${(durbin.approximation.ceConditionalEventTvBound * 100).toFixed(2)}%`
+                      : "Enable the approximation to calculate"}
                 </dd>
               </div>
             </dl>
             <p>
-              The simulation also has time-step and bridge approximation errors.
-              The Monte Carlo interval and Durbin error bound describe different
-              sources of uncertainty.
+              The CE bound concerns the timing distribution conditional on
+              impoverishment before death under CE mortality. It is not a bound
+              for this GM chart or for the age-conditional update. Its numerical
+              value uses approximate quadrature. The simulation also has Monte
+              Carlo, time-step and bridge errors.
             </p>
           </details>
         </>

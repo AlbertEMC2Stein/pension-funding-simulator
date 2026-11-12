@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { SimulationOptions } from "../../lib/options/simulation-options";
 import type { RunNumerics } from "../../lib/model/simulation/run-configuration";
-import type { GompertzMakehamParameters } from "../../lib/mortality/mortality-models";
+import type {
+  CompactifiedExponentialParameters,
+  GompertzMakehamParameters,
+} from "../../lib/mortality/mortality-models";
 import type { MortalityRiskResults } from "../../lib/model/simulation/risk-estimate";
 import type { RunProgress } from "../../lib/model/simulation/tensorflow/run-scheduler";
 import type {
@@ -31,6 +34,12 @@ export interface EvaluationRun {
     gm: GompertzMakehamParameters;
     firstHitTimes: Float32Array;
     projectedFirstHitTimes?: Float32Array;
+    /** Market and compatible CE fit captured alongside the simulated paths. */
+    durbin: {
+      realRiskFreeRate: number;
+      rho: number;
+      ce: CompactifiedExponentialParameters;
+    };
   };
   message?: string;
 }
@@ -92,6 +101,11 @@ export function useEvaluationRun() {
 
     // Capture the fit independently of later draft or calibration edits.
     const gm = structuredClone(prepared.input.mortality.gm.parameters);
+    const durbin = {
+      realRiskFreeRate: prepared.input.market.realRiskFreeRate,
+      rho: prepared.input.market.rho,
+      ce: structuredClone(prepared.input.mortality.ce.parameters),
+    };
     const runId = ++runIdRef.current;
     workerRef.current = worker;
     setPrepared({ draft, options: prepared.input.options });
@@ -147,6 +161,7 @@ export function useEvaluationRun() {
               risk: message.risk,
               timing: {
                 gm,
+                durbin,
                 firstHitTimes: message.result.firstHitTimes,
                 projectedFirstHitTimes: message.result.projected?.firstHitTimes,
               },
