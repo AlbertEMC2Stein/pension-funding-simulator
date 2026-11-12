@@ -78,7 +78,7 @@ export function disposeTensorProjectedPolicy(
  * Advance one batch with the projected CE feedback using Euler–Maruyama in
  * the risky region and the exact risk-free update in the safe region.
  * First-passage detection is deliberately separate: this returns the frozen
- * diffusion variance rate needed by a future projected bridge adapter.
+ * diffusion variance rate used by the projected bridge adapter.
  * Previously stopped paths remain unchanged. Tensors in the result belong to
  * the caller; temporary tensors are disposed before this function returns.
  */

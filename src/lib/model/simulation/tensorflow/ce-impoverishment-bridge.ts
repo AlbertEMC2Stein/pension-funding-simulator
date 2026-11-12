@@ -43,6 +43,8 @@ export function detectCeImpoverishment(
       logGapVarianceRate,
       draws,
     } = input;
+    // The CE gap coordinate is valid only while both safe gaps are positive.
+    // Near the endpoint, use the wealth-coordinate fallback instead.
     const startGap = tf.scalar(currentSafeBoundary).sub(currentWealth);
     const endGap = tf.scalar(nextSafeBoundary).sub(proposedWealth);
     const risky = active.logicalAnd(startGap.greater(0));
@@ -61,6 +63,8 @@ export function detectCeImpoverishment(
     const endDistance = proposedWealth.sub(impoverishmentLevel);
     const safeStartGap = tf.where(useLog, startGap, tf.onesLike(startGap));
     const safeEndGap = tf.where(useLog, endGap, tf.onesLike(endGap));
+    // ln((x_safe - x_imp) / (x_safe - x)) gives the signed
+    // distance to the moving impoverishment boundary in log-gap space.
     const logStart = tf.log1p(
       tf
         .where(useLog, startDistance, tf.zerosLike(startDistance))

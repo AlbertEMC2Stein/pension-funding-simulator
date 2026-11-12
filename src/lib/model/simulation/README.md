@@ -106,3 +106,14 @@ panel displays these provisional results; the evaluation panel remains guarded.
 CPU tests include a known CE reference where projection does not bind. Projected
 risk depends on Euler and bridge approximations, and its time-step sensitivity,
 GPU behavior and performance require further checks before production use.
+
+
+## Policy wealth steps
+
+`tensorflow/unconstrained-wealth-step.ts` advances the exact CE safe-gap
+dynamics, while `tensorflow/projected-wealth-step.ts` advances the projected
+Euler dynamics. The batch loop invokes each step and then its corresponding
+first-passage adapter. Both policies share the same hit-recording logic and
+market and bridge draws, but keep separate path states. The unconstrained
+bridge retains its log-gap coordinate and endpoint fallback; the projected
+bridge uses a frozen wealth variance.

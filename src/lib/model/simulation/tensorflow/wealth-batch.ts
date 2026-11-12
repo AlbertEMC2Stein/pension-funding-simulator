@@ -5,8 +5,9 @@ import { generateTimeGrid } from "../time-grid";
 import { prepareWealthGrid } from "../prepared-grid";
 import type { RandomStream } from "../random";
 import { detectCeImpoverishment } from "./ce-impoverishment-bridge";
+import { advanceUnconstrainedWealthStep } from "./unconstrained-wealth-step";
 import { createTensorBridgeDraws } from "./bridge-random";
-import type { BridgeDraws } from "./bridge-hit";
+import type { BridgeDraws, BridgeHitResult } from "./bridge-hit";
 import type { ProjectionCurve } from "../../analytical/projection-curve";
 import {
   advanceProjectedWealthStep,
@@ -67,6 +68,47 @@ export interface TensorWealthBatchResult {
   };
 }
 
+/** Wealth and first-hit observations for one policy's paths. */
+interface TensorPathState {
+  wealth: tf.Tensor1D;
+  firstHit: tf.Tensor1D;
+  firstHitTime: tf.Tensor1D;
+}
+
+/**
+ * Apply newly detected hits to a policy's proposed wealth and first-hit state.
+ * This runs inside the enclosing step's tidy scope; the caller retains the
+ * returned tensors and disposes the previous state after the step completes.
+ */
+function recordFirstHits(
+  proposedWealth: tf.Tensor1D,
+  firstHit: tf.Tensor1D,
+  firstHitTime: tf.Tensor1D,
+  crossing: BridgeHitResult,
+  threshold: number,
+  endIndex: number,
+  startTime: number,
+  timeStepYears: number,
+): TensorPathState {
+  return {
+    wealth: tf.where(
+      crossing.hit,
+      tf.fill(proposedWealth.shape, threshold),
+      proposedWealth,
+    ) as tf.Tensor1D,
+    firstHit: tf.where(
+      crossing.hit,
+      tf.fill(firstHit.shape, endIndex, "int32"),
+      firstHit,
+    ) as tf.Tensor1D,
+    firstHitTime: tf.where(
+      crossing.hit,
+      crossing.fraction.mul(timeStepYears).add(startTime),
+      firstHitTime,
+    ) as tf.Tensor1D,
+  };
+}
+
 /**
  * Internal batched counterpart of advanceUnconstrainedWealth. This accepts
  * supplied increments so it can be checked against the double-precision scalar
@@ -92,6 +134,7 @@ export async function simulateTensorWealthBatch(
   const { initialCapital, impoverishmentLevel: threshold } = investor;
   const { realRiskFreeRate: r, mertonDirection } = market;
   const { p: delta } = mortality;
+  const logGapVarianceRate = (2 * market.rho) / (delta - 1) ** 2;
   const count = pathCount;
   const assets = mertonDirection.length;
 
@@ -141,57 +184,27 @@ export async function simulateTensorWealthBatch(
             ? increments(step, dt)
             : increments[step];
 
-        // Previously stopped paths do not participate in another crossing.
-        const active = firstHit.equal(-1) as tf.Tensor1D;
-        const risky = wealth.less(prepared.currentBoundary);
-
-        // z has shape [paths, assets] and covariance Sigma * dt. Multiplying
-        // by the Merton direction m gives m^T Delta Z for every path. The
-        // increments already include volatility and sqrt(dt) scaling.
+        // Both policies see the same asset-ordered market increments.
         const z =
           stepIncrements instanceof tf.Tensor
             ? stepIncrements
             : tf.tensor2d(stepIncrements as number[], [count, assets]);
-        const noise = z.matMul(direction).reshape([count]);
+        const draws = bridgeDraws(step);
 
-        // In the risky region, Y = x_safe - X follows a geometric diffusion.
-        // Its exact log-gap increment is
-        //   ln(Y_next / Y) = [r - 2*rho/(delta-1) - rho/(delta-1)^2] * dt
-        //                    - m^T Delta Z/(delta-1).
-        // `logGapDriftTimesStep` contains the bracketed drift times dt.
-        const gap = tf
-          .scalar(prepared.currentBoundary)
-          .sub(wealth)
-          .mul(
-            tf.exp(
-              tf
-                .scalar(prepared.logGapDriftTimesStep)
-                .sub(noise.div(delta - 1)),
-            ),
-          );
-
-        // Convert the updated gap back to wealth at the next safe boundary.
-        const riskyWealth = tf.scalar(prepared.nextBoundary).sub(gap);
-
-        // At or above the safe boundary, the risky allocation is zero. Solve
-        // dX/dt = r*X - C exactly using (exp(r*dt) - 1)/r from the prepared step.
-        const safeWealth = wealth.add(
-          wealth
-            .mul(r)
-            .sub(annualWithdrawal)
-            .mul(prepared.riskFreeAnnuityFactor),
-        );
-
-        // Choose the appropriate update and freeze paths with a prior hit.
-        const proposedWealth = tf.where(
-          active,
-          tf.where(risky, riskyWealth, safeWealth),
+        // Advance and detect impoverishment for the unconstrained policy.
+        const active = firstHit.equal(-1) as tf.Tensor1D;
+        const proposedWealth = advanceUnconstrainedWealthStep({
           wealth,
-        ) as tf.Tensor1D;
-
+          active,
+          increments: z,
+          mertonDirection: direction,
+          realRiskFreeRate: r,
+          annualWithdrawal,
+          delta,
+          step: prepared,
+        });
         // Apply the CE-specific coordinate adapter to the proposed step. The
         // policy-independent primitive detects and times the first crossing.
-        const draws = bridgeDraws(step);
         const crossing = detectCeImpoverishment({
           currentWealth: wealth,
           proposedWealth,
@@ -200,24 +213,19 @@ export async function simulateTensorWealthBatch(
           currentSafeBoundary: prepared.currentBoundary,
           nextSafeBoundary: prepared.nextBoundary,
           timeStepYears: dt,
-          logGapVarianceRate: (2 * model.market.rho) / (delta - 1) ** 2,
+          logGapVarianceRate,
           draws,
         });
-        const nextWealth = tf.where(
-          crossing.hit,
-          tf.fill([count], threshold),
+        const unconstrained = recordFirstHits(
           proposedWealth,
-        ) as tf.Tensor1D;
-        const nextHit = tf.where(
-          crossing.hit,
-          tf.fill([count], step + 1, "int32"),
           firstHit,
-        ) as tf.Tensor1D;
-        const nextHitTime = tf.where(
-          crossing.hit,
-          crossing.fraction.mul(dt).add(times[step]),
           firstHitTime,
-        ) as tf.Tensor1D;
+          crossing,
+          threshold,
+          step + 1,
+          times[step],
+          dt,
+        );
 
         if (
           projectedPolicy &&
@@ -249,33 +257,26 @@ export async function simulateTensorWealthBatch(
             draws,
           });
 
+          const updatedProjected = recordFirstHits(
+            projectedStep.wealth,
+            projectedHit,
+            projectedHitTime,
+            projectedCrossing,
+            threshold,
+            step + 1,
+            times[step],
+            dt,
+          );
+
           return {
-            wealth: nextWealth,
-            firstHit: nextHit,
-            firstHitTime: nextHitTime,
-            projectedWealth: tf.where(
-              projectedCrossing.hit,
-              tf.fill([count], threshold),
-              projectedStep.wealth,
-            ) as tf.Tensor1D,
-            projectedHit: tf.where(
-              projectedCrossing.hit,
-              tf.fill([count], step + 1, "int32"),
-              projectedHit,
-            ) as tf.Tensor1D,
-            projectedHitTime: tf.where(
-              projectedCrossing.hit,
-              projectedCrossing.fraction.mul(dt).add(times[step]),
-              projectedHitTime,
-            ) as tf.Tensor1D,
+            ...unconstrained,
+            projectedWealth: updatedProjected.wealth,
+            projectedHit: updatedProjected.firstHit,
+            projectedHitTime: updatedProjected.firstHitTime,
           };
         }
 
-        return {
-          wealth: nextWealth,
-          firstHit: nextHit,
-          firstHitTime: nextHitTime,
-        };
+        return { ...unconstrained };
       });
 
       // Retain only the new states; all intermediate tensors were released by tidy.
