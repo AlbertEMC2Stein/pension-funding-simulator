@@ -306,14 +306,7 @@ export function DataView() {
             <thead>
               <tr>
                 <th>VARIATION</th>
-                {tableType === "withdrawal" ? (
-                  <>
-                    <th>INPUT TYPE</th>
-                    <th>INPUT VALUE</th>
-                  </>
-                ) : (
-                  <th>RISK OR WITHDRAWAL</th>
-                )}
+                <th>RISK OR WITHDRAWAL</th>
                 {tableType === "withdrawal" && (
                   <>
                     <th>POLICY</th>
@@ -422,13 +415,7 @@ export function DataView() {
                           </button>
                         )}
                       </td>
-                      <td
-                        className={
-                          tableType === "feasibility"
-                            ? "table-combined-input"
-                            : undefined
-                        }
-                      >
+                      <td className="table-combined-input">
                         <select
                           aria-label={`Input type for variation ${row.id}`}
                           value={row.type}
@@ -446,9 +433,8 @@ export function DataView() {
                           <option>Target risk</option>
                           <option>Withdrawal</option>
                         </select>
-                        {tableType === "feasibility" && inputValue}
+                        {inputValue}
                       </td>
-                      {tableType === "withdrawal" && <td>{inputValue}</td>}
                       {tableType === "feasibility" && (
                         <td>
                           <div className="input-suffix table-input-suffix">
