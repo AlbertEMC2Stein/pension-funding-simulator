@@ -131,6 +131,10 @@ export class ComparisonQueue {
     if (this.disposed || !this.active.has(id) || message.runId !== id) return;
     if (message.type === "progress") {
       this.update(id, {
+        batchProgress: {
+          completed: message.progress.completedBatches,
+          total: message.progress.totalBatches,
+        },
         completedPaths: message.progress.completedPaths,
         totalPaths: message.progress.totalPaths,
         elapsedMs: message.batchElapsedMs,
@@ -152,6 +156,12 @@ export class ComparisonQueue {
         this.finish(id, {
           status: "calculated",
           gm,
+          batchProgress: row.batchProgress
+            ? {
+                completed: row.batchProgress.total,
+                total: row.batchProgress.total,
+              }
+            : undefined,
           elapsedMs: message.elapsedMs,
         });
     } else if (message.type === "cancelled")
@@ -171,6 +181,20 @@ export class ComparisonQueue {
     this.update(id, change);
     if (reschedule) this.schedule();
   }
+}
+
+/** Sum completed and scheduled batches for this run, excluding reused results. */
+export function comparisonBatchProgress(rows: readonly ComparisonRunRow[]): {
+  completed: number;
+  total: number;
+} {
+  return rows.reduce(
+    (sum, row) => ({
+      completed: sum.completed + (row.batchProgress?.completed ?? 0),
+      total: sum.total + (row.batchProgress?.total ?? 0),
+    }),
+    { completed: 0, total: 0 },
+  );
 }
 
 /** Estimate a running row's remaining time from its cumulative batch throughput. */

@@ -242,6 +242,8 @@ test("completed rows are reused until their inputs or shared settings change", (
     ["calculated", "queued"],
   );
   assert.equal(added.rows[0].gm, estimate);
+  assert.equal(added.rows[0].batchProgress, undefined);
+  assert.deepEqual(added.rows[1].batchProgress, { completed: 0, total: 4 });
 
   const edited = prepareComparisonRows(
     [{ ...firstRow, value: "6" }, secondRow],

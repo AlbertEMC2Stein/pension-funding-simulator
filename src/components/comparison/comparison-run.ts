@@ -27,6 +27,8 @@ export interface ComparisonRunRow {
   message?: string;
   gm?: RiskEstimate;
   analytical?: boolean;
+  /** Batches scheduled in this table run; absent for reused or analytical rows. */
+  batchProgress?: { completed: number; total: number };
   completedPaths?: number;
   totalPaths?: number;
   elapsedMs?: number;
@@ -109,7 +111,7 @@ export function prepareComparisonRows(
       cached.gm &&
       cached.rowSignature === common.rowSignature
     )
-      return { ...cached, ...common, ce };
+      return { ...cached, ...common, ce, batchProgress: undefined };
 
     if (ce.ceRisk === 0)
       return {
@@ -131,7 +133,18 @@ export function prepareComparisonRows(
         ? "tensorflow-paired-euler-1"
         : "tensorflow-bridge-2";
 
-    return { ...common, ce, input, status: "queued" };
+    return {
+      ...common,
+      ce,
+      input,
+      status: "queued",
+      batchProgress: {
+        completed: 0,
+        total: Math.ceil(
+          input.options.numerical.paths / input.numerical.batchSize,
+        ),
+      },
+    };
   });
 
   return {

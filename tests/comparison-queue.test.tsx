@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   ComparisonQueue,
+  comparisonBatchProgress,
   comparisonQueueRemaining,
   comparisonRowRemaining,
   type ComparisonQueueState,
@@ -216,4 +217,62 @@ test("overall ETA estimates a first batch using previous same-policy rows", () =
     elapsedMs: 1000,
   };
   assert.equal(comparisonQueueRemaining([completed, measured], 3000), 1000);
+});
+
+test("table progress counts each scheduled batch and excludes reused results", () => {
+  const workers: FakeWorker[] = [];
+  let state: ComparisonQueueState | null = null;
+  const jobs = [row(1), row(2), row(3)].map((item) => ({
+    ...item,
+    batchProgress: { completed: 0, total: 4 },
+  }));
+  const cached = { ...row(4), status: "calculated" as const, input: undefined };
+  const queue = new ComparisonQueue(
+    [...jobs, cached],
+    () => {
+      const worker = new FakeWorker();
+      workers.push(worker);
+      return worker;
+    },
+    (next) => {
+      state = next;
+    },
+  );
+  queue.start();
+  assert.deepEqual(comparisonBatchProgress(state!.rows), {
+    completed: 0,
+    total: 12,
+  });
+  workers[0].emit({
+    type: "progress",
+    runId: 1,
+    batchElapsedMs: 100,
+    progress: {
+      completedPaths: 25,
+      totalPaths: 100,
+      completedBatches: 1,
+      totalBatches: 4,
+    },
+  });
+  workers[1].emit({
+    type: "progress",
+    runId: 2,
+    batchElapsedMs: 200,
+    progress: {
+      completedPaths: 50,
+      totalPaths: 100,
+      completedBatches: 2,
+      totalBatches: 4,
+    },
+  });
+  assert.deepEqual(comparisonBatchProgress(state!.rows), {
+    completed: 3,
+    total: 12,
+  });
+  workers[0].emit(complete(1));
+  assert.deepEqual(comparisonBatchProgress(state!.rows), {
+    completed: 6,
+    total: 12,
+  });
+  queue.dispose();
 });

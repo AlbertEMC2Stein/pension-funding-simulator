@@ -9,6 +9,7 @@ import {
   comparisonRowSignature,
 } from "./comparison/comparison-run";
 import {
+  comparisonBatchProgress,
   comparisonQueueRemaining,
   comparisonRowRemaining,
 } from "./comparison/comparison-queue";
@@ -73,6 +74,7 @@ export function DataView() {
     : false;
   const overallEta =
     run?.running && !run.cancelling ? comparisonQueueRemaining(run.rows) : null;
+  const batchProgress = run ? comparisonBatchProgress(run.rows) : null;
   const [tableType, setTableType] = useState<TableType>("withdrawal");
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [tables, setTables] = useState<Record<TableType, ExampleRow[]>>({
@@ -480,16 +482,19 @@ export function DataView() {
                           ? "Estimating overall time…"
                           : formatComparisonEta(overallEta)}
                     </span>
-                    <progress
-                      aria-label="Table simulation progress"
-                      max={run!.rows.length}
-                      value={
-                        run!.rows.filter(
-                          (row) =>
-                            row.status !== "queued" && row.status !== "running",
-                        ).length
-                      }
-                    />
+                    {batchProgress && batchProgress.total > 0 && (
+                      <>
+                        <progress
+                          aria-label="Table simulation progress"
+                          max={batchProgress.total}
+                          value={batchProgress.completed}
+                        />
+                        <small>
+                          {batchProgress.completed.toLocaleString("en-US")} /{" "}
+                          {batchProgress.total.toLocaleString("en-US")} batches
+                        </small>
+                      </>
+                    )}
                     {sharedStale && (
                       <small>
                         Settings changed; this run continues with its captured
