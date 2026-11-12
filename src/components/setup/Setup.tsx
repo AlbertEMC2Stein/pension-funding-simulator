@@ -104,20 +104,13 @@ function MarketSetup() {
               <button
                 type="button"
                 className="button button-light"
-                onClick={() => applyMarketAction({ type: "reset" })}
-                disabled={isExample}
+                onClick={() =>
+                  applyMarketAction({ type: undo ? "undo" : "reset" })
+                }
+                disabled={!undo && isExample}
               >
-                ↺ &nbsp; Reset to example
+                ↺ &nbsp; {undo ? "Undo market change" : "Reset to example"}
               </button>
-              {undo && (
-                <button
-                  type="button"
-                  className="button button-light"
-                  onClick={() => applyMarketAction({ type: "undo" })}
-                >
-                  Undo market change
-                </button>
-              )}
             </div>
           </div>
           <p>
