@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useSimulationDraft } from "./SimulationDraftContext";
 import { SimulationDetailFields } from "./SimulationDetailFields";
 import { useComparisonSimulation } from "./comparison/useComparisonSimulation";
@@ -106,6 +106,9 @@ export function DataView() {
   const batchProgress = run ? comparisonBatchProgress(run.rows) : null;
   const [tableType, setTableType] = useState<TableType>("withdrawal");
   const [settingsOpen, setSettingsOpen] = useState(true);
+  const [expandedFeasibilityRows, setExpandedFeasibilityRows] = useState<
+    number[]
+  >([]);
   const [tables, setTables] = useState<Record<TableType, ExampleRow[]>>({
     withdrawal: initialRows(draft.investor.impoverishmentLevel),
     feasibility: initialRows(draft.investor.impoverishmentLevel),
@@ -287,8 +290,14 @@ export function DataView() {
             <thead>
               <tr>
                 <th>VARIATION</th>
-                <th>INPUT TYPE</th>
-                <th>INPUT VALUE</th>
+                {tableType === "withdrawal" ? (
+                  <>
+                    <th>INPUT TYPE</th>
+                    <th>INPUT VALUE</th>
+                  </>
+                ) : (
+                  <th>RISK OR WITHDRAWAL</th>
+                )}
                 {tableType === "withdrawal" && (
                   <>
                     <th>POLICY</th>
@@ -299,10 +308,7 @@ export function DataView() {
                 {tableType === "feasibility" && (
                   <>
                     <th>IMPOVERISHMENT LEVEL</th>
-                    <th>{resultHeading}</th>
                     <th>RELATIVE BANDWIDTH ζ</th>
-                    <th>BORROWING AT RETIREMENT</th>
-                    <th>LAST POSSIBLE BORROWING</th>
                     <th>EVER BORROWING (GM)</th>
                     <th>EXPECTED BORROWING TIME (GM)</th>
                   </>
@@ -352,182 +358,243 @@ export function DataView() {
                 const rowEta = captured
                   ? comparisonRowRemaining(captured)
                   : null;
+                const expanded = expandedFeasibilityRows.includes(row.id);
+                const inputValue = (
+                  <div className="input-suffix table-input-suffix">
+                    <input
+                      aria-label={`Input value for variation ${row.id}, ${row.type === "Target risk" ? "percent" : "euros per year"}`}
+                      value={row.value}
+                      disabled={running}
+                      onChange={(event) =>
+                        changeRow(row.id, { value: event.target.value })
+                      }
+                    />
+                    <span aria-hidden="true">
+                      {row.type === "Target risk" ? "%" : "€ / year"}
+                    </span>
+                  </div>
+                );
 
                 return (
-                  <tr key={row.id}>
-                    <td>
-                      <b>Variation {String(row.id).padStart(2, "0")}</b>
-                    </td>
-                    <td>
-                      <select
-                        aria-label={`Input type for variation ${row.id}`}
-                        value={row.type}
-                        disabled={running}
-                        onChange={(event) =>
-                          changeRow(row.id, {
-                            type: event.target.value as ExampleRow["type"],
-                            value:
-                              event.target.value === "Target risk"
-                                ? "5.0"
-                                : "24800",
-                          })
+                  <Fragment key={row.id}>
+                    <tr>
+                      <td>
+                        <b>Variation {String(row.id).padStart(2, "0")}</b>
+                        {tableType === "feasibility" && (
+                          <button
+                            type="button"
+                            className="table-details-toggle"
+                            aria-expanded={expanded}
+                            aria-controls={
+                              expanded
+                                ? `feasibility-details-${row.id}`
+                                : undefined
+                            }
+                            onClick={() =>
+                              setExpandedFeasibilityRows((current) =>
+                                expanded
+                                  ? current.filter((id) => id !== row.id)
+                                  : [...current, row.id],
+                              )
+                            }
+                          >
+                            {expanded ? "Hide details" : "View details"}
+                          </button>
+                        )}
+                      </td>
+                      <td
+                        className={
+                          tableType === "feasibility"
+                            ? "table-combined-input"
+                            : undefined
                         }
                       >
-                        <option>Target risk</option>
-                        <option>Withdrawal</option>
-                      </select>
-                    </td>
-                    <td>
-                      <div className="input-suffix table-input-suffix">
-                        <input
-                          aria-label={`Input value for variation ${row.id}, ${row.type === "Target risk" ? "percent" : "euros per year"}`}
-                          value={row.value}
-                          disabled={running}
-                          onChange={(event) =>
-                            changeRow(row.id, { value: event.target.value })
-                          }
-                        />
-                        <span aria-hidden="true">
-                          {row.type === "Target risk" ? "%" : "€ / year"}
-                        </span>
-                      </div>
-                    </td>
-                    {tableType === "feasibility" && (
-                      <td>
-                        <div className="input-suffix table-input-suffix">
-                          <input
-                            aria-label={`Impoverishment level for variation ${row.id}, euros`}
-                            value={row.impoverishmentLevel}
-                            disabled={running}
-                            onChange={(event) =>
-                              changeRow(row.id, {
-                                impoverishmentLevel: event.target.value,
-                              })
-                            }
-                          />
-                          <span aria-hidden="true">€</span>
-                        </div>
-                      </td>
-                    )}
-                    {tableType === "withdrawal" && (
-                      <td>
                         <select
-                          aria-label={`Policy for variation ${row.id}`}
-                          value={row.policy}
+                          aria-label={`Input type for variation ${row.id}`}
+                          value={row.type}
                           disabled={running}
                           onChange={(event) =>
                             changeRow(row.id, {
-                              policy: event.target
-                                .value as ExampleRow["policy"],
+                              type: event.target.value as ExampleRow["type"],
+                              value:
+                                event.target.value === "Target risk"
+                                  ? "5.0"
+                                  : "24800",
                             })
                           }
                         >
-                          <option>Unconstrained</option>
-                          <option>Projected</option>
+                          <option>Target risk</option>
+                          <option>Withdrawal</option>
                         </select>
+                        {tableType === "feasibility" && inputValue}
                       </td>
-                    )}
-                    {tableType === "withdrawal" ? (
-                      <>
+                      {tableType === "withdrawal" && <td>{inputValue}</td>}
+                      {tableType === "feasibility" && (
                         <td>
-                          {result?.ok
-                            ? row.type === "Target risk"
-                              ? `€${result.annualWithdrawal.toLocaleString("en-US", { maximumFractionDigits: 2 })} / year`
-                              : `${(result.ceRisk * 100).toFixed(2)}%`
-                            : "—"}
-                        </td>
-                        <td>
-                          {captured?.gm ? (
-                            <>
-                              <span>
-                                {(captured.gm.estimate * 100).toFixed(3)}%
-                              </span>
-                              {rowStale && !running && (
-                                <small className="table-result-detail">
-                                  Previous setup or row inputs
-                                </small>
-                              )}
-                              <small className="table-result-detail">
-                                {captured.analytical
-                                  ? "Analytical zero"
-                                  : captured.gm.interval95
-                                    ? `95% MC: ${(captured.gm.interval95.lower * 100).toFixed(3)}% – ${(captured.gm.interval95.upper * 100).toFixed(3)}%`
-                                    : "MC interval unavailable"}
-                              </small>
-                            </>
-                          ) : captured?.status === "running" ? (
-                            <span
-                              className="table-cell-spinner"
-                              role="status"
-                              aria-label="Calculating GM risk"
+                          <div className="input-suffix table-input-suffix">
+                            <input
+                              aria-label={`Impoverishment level for variation ${row.id}, euros`}
+                              value={row.impoverishmentLevel}
+                              disabled={running}
+                              onChange={(event) =>
+                                changeRow(row.id, {
+                                  impoverishmentLevel: event.target.value,
+                                })
+                              }
                             />
-                          ) : (
-                            "—"
-                          )}
+                            <span aria-hidden="true">€</span>
+                          </div>
                         </td>
-                      </>
-                    ) : (
-                      <>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                      </>
-                    )}
-                    <td>
-                      <StatusBadge status={status} />
-                      {captured?.status === "running" && (
-                        <small className="table-result-detail">
-                          {run?.cancelling
-                            ? "Stopping after current batch…"
-                            : rowEta === null
-                              ? "ETA after first batch"
-                              : rowEta > 0
-                                ? formatComparisonEta(rowEta)
-                                : "Finishing…"}
-                        </small>
                       )}
-                      {captured?.message && (
-                        <small className="table-row-error" role="status">
-                          {captured.message}
-                        </small>
+                      {tableType === "withdrawal" && (
+                        <td>
+                          <select
+                            aria-label={`Policy for variation ${row.id}`}
+                            value={row.policy}
+                            disabled={running}
+                            onChange={(event) =>
+                              changeRow(row.id, {
+                                policy: event.target
+                                  .value as ExampleRow["policy"],
+                              })
+                            }
+                          >
+                            <option>Unconstrained</option>
+                            <option>Projected</option>
+                          </select>
+                        </td>
                       )}
-                      {result &&
-                        !result.ok &&
-                        result.message !== captured?.message && (
-                          <small className="table-row-error" role="status">
-                            {result.message}
+                      {tableType === "withdrawal" ? (
+                        <>
+                          <td>
+                            {result?.ok
+                              ? row.type === "Target risk"
+                                ? `€${result.annualWithdrawal.toLocaleString("en-US", { maximumFractionDigits: 2 })} / year`
+                                : `${(result.ceRisk * 100).toFixed(2)}%`
+                              : "—"}
+                          </td>
+                          <td>
+                            {captured?.gm ? (
+                              <>
+                                <span>
+                                  {(captured.gm.estimate * 100).toFixed(3)}%
+                                </span>
+                                {rowStale && !running && (
+                                  <small className="table-result-detail">
+                                    Previous setup or row inputs
+                                  </small>
+                                )}
+                                <small className="table-result-detail">
+                                  {captured.analytical
+                                    ? "Analytical zero"
+                                    : captured.gm.interval95
+                                      ? `95% MC: ${(captured.gm.interval95.lower * 100).toFixed(3)}% – ${(captured.gm.interval95.upper * 100).toFixed(3)}%`
+                                      : "MC interval unavailable"}
+                                </small>
+                              </>
+                            ) : captured?.status === "running" ? (
+                              <span
+                                className="table-cell-spinner"
+                                role="status"
+                                aria-label="Calculating GM risk"
+                              />
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td>—</td>
+                          <td>—</td>
+                          <td>—</td>
+                        </>
+                      )}
+                      <td>
+                        <StatusBadge status={status} />
+                        {captured?.status === "running" && (
+                          <small className="table-result-detail">
+                            {run?.cancelling
+                              ? "Stopping after current batch…"
+                              : rowEta === null
+                                ? "ETA after first batch"
+                                : rowEta > 0
+                                  ? formatComparisonEta(rowEta)
+                                  : "Finishing…"}
                           </small>
                         )}
-                    </td>
-                    <td>
-                      <button
-                        className="row-remove"
-                        type="button"
-                        aria-label={`Remove variation ${row.id}`}
-                        disabled={running}
-                        onClick={() => {
-                          if (
-                            (captured?.gm || result?.ok) &&
-                            !window.confirm(
-                              "Delete this variation and its calculated values?",
+                        {captured?.message && (
+                          <small className="table-row-error" role="status">
+                            {captured.message}
+                          </small>
+                        )}
+                        {result &&
+                          !result.ok &&
+                          result.message !== captured?.message && (
+                            <small className="table-row-error" role="status">
+                              {result.message}
+                            </small>
+                          )}
+                      </td>
+                      <td>
+                        <button
+                          className="row-remove"
+                          type="button"
+                          aria-label={`Remove variation ${row.id}`}
+                          disabled={running}
+                          onClick={() => {
+                            if (
+                              (captured?.gm || result?.ok) &&
+                              !window.confirm(
+                                "Delete this variation and its calculated values?",
+                              )
                             )
-                          )
-                            return;
-                          setTables((current) => ({
-                            ...current,
-                            [tableType]: current[tableType].filter(
-                              (item) => item.id !== row.id,
-                            ),
-                          }));
-                        }}
-                      >
-                        ×
-                      </button>
-                    </td>
-                  </tr>
+                              return;
+                            setTables((current) => ({
+                              ...current,
+                              [tableType]: current[tableType].filter(
+                                (item) => item.id !== row.id,
+                              ),
+                            }));
+                          }}
+                        >
+                          ×
+                        </button>
+                      </td>
+                    </tr>
+                    {tableType === "feasibility" && expanded && (
+                      <tr id={`feasibility-details-${row.id}`}>
+                        <td colSpan={8} className="feasibility-row-details">
+                          <div className="feasibility-detail-grid">
+                            <div>
+                              <span>
+                                {row.type === "Target risk"
+                                  ? "Annual withdrawal"
+                                  : "CE lifetime risk"}
+                              </span>
+                              <strong>—</strong>
+                            </div>
+                            <div>
+                              <span>Borrowing at retirement</span>
+                              <strong>—</strong>
+                            </div>
+                            <div>
+                              <span>Last possible borrowing time</span>
+                              <strong>—</strong>
+                            </div>
+                            <div>
+                              <span>Monte Carlo uncertainty</span>
+                              <strong>—</strong>
+                            </div>
+                          </div>
+                          <p>
+                            Details will appear here when feasibility
+                            calculations are available.
+                          </p>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 );
               })}
             </tbody>
@@ -601,7 +668,11 @@ export function DataView() {
                 ⓘ &nbsp; Analytical and simulation outputs will appear here.
               </span>
               {feasibilityUnavailable ? (
-                <button type="button" className="button button-primary" disabled>
+                <button
+                  type="button"
+                  className="button button-primary"
+                  disabled
+                >
                   ▶ &nbsp; Compute rows
                 </button>
               ) : (

@@ -201,6 +201,48 @@ input[aria-invalid="true"] {
   min-width: 0;
 }
 
+.table-combined-input select {
+  width: 165px;
+  max-width: 100%;
+  margin-bottom: 6px;
+}
+
+.table-details-toggle {
+  display: block;
+  margin-top: 7px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.feasibility-row-details {
+  background: var(--surface-subtle, transparent);
+}
+
+.feasibility-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.feasibility-detail-grid span,
+.feasibility-detail-grid strong {
+  display: block;
+}
+
+.feasibility-detail-grid strong {
+  margin-top: 6px;
+}
+
+.feasibility-row-details p {
+  margin: 14px 0 0;
+  color: var(--text-muted);
+}
+
 .table-result-detail {
   display: block;
   margin-top: 5px;
