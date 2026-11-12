@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
+import { MarketValidation } from "../src/components/setup/MarketValidation";
 import { MarketAssumptionChecks } from "../src/components/setup/MarketAssumptionChecks";
 import { initialMarketCalibration } from "../src/lib/market/market-calibration";
 
@@ -57,4 +58,21 @@ test("zero market premium is identified as outside the CE model", () => {
   const html = renderToStaticMarkup(<MarketAssumptionChecks market={market} />);
   assert.match(html, /risk premium is zero/);
   assert.match(html, /require ρ &gt; 0/);
+});
+
+test("market input validation uses the shared good and invalid status styles", () => {
+  const market = initialMarketCalibration();
+  const valid = renderToStaticMarkup(<MarketValidation market={market} />);
+  assert.match(
+    valid,
+    /class="feasibility-status market-validation" data-status="feasible"/,
+  );
+  assert.match(valid, /Market input validation/);
+  market.assets[0].volatilityPercent = "0";
+  const invalid = renderToStaticMarkup(<MarketValidation market={market} />);
+  assert.match(
+    invalid,
+    /class="feasibility-status market-validation" data-status="invalid"/,
+  );
+  assert.match(invalid, /positive annual volatility/);
 });

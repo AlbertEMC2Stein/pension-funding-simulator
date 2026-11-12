@@ -263,7 +263,8 @@ table.capital-table {
 }
 
 .feasibility-status[data-status="negative-merton"],
-.feasibility-status[data-status="borrowing"] {
+.feasibility-status[data-status="borrowing"],
+.feasibility-status[data-status="invalid"] {
   background: var(--feasibility-bad-bg);
   border-color: var(--feasibility-bad-border);
 }
@@ -288,7 +289,8 @@ table.capital-table {
 }
 
 .feasibility-status[data-status="negative-merton"] strong span,
-.feasibility-status[data-status="borrowing"] strong span {
+.feasibility-status[data-status="borrowing"] strong span,
+.feasibility-status[data-status="invalid"] strong span {
   color: var(--feasibility-bad-text);
   font-weight: 600;
 }

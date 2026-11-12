@@ -123,31 +123,10 @@ table.correlation-table {
   font-size: 10px;
 }
 
-.market-validation {
-  margin-top: 18px;
-  padding: 12px;
-  border-radius: 6px;
-  background: var(--surface-soft);
-  color: var(--text-secondary);
-  font-size: 10px;
-  line-height: 1.6;
-}
-
-.market-validation strong {
-  color: var(--text-strong);
-}
-
 .market-validation ul {
   margin: 7px 0;
   padding-left: 18px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.5;
 }
-
-.market-validation small {
-  display: block;
-  margin-top: 5px;
-}
-
-.market-validation-error {
-  border-left: 3px solid var(--accent);
-}
-

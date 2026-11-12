@@ -14,7 +14,6 @@ import {
   setCorrelation,
   type MarketAsset,
   type MarketCalibrationDraft,
-  marketValidationErrors,
   isEditableDecimal,
 } from "../../lib/market/market-calibration";
 
@@ -96,8 +95,8 @@ export function CorrelationMatrix({
 
 /**
  * Edit asset rows and optionally show the correlation matrix. The parent owns
- * `market`; edits are returned through `onChange`. Validation runs locally,
- * and none of these values are connected to simulations yet.
+ * `market`; edits are returned through `onChange`. Shared market validation
+ * is displayed separately beneath the market input sections.
  */
 export function MarketEditor({
   market,
@@ -106,7 +105,6 @@ export function MarketEditor({
 }: MarketEditorProps) {
   // Expansion is a display preference; closing the matrix preserves its data.
   const [matrixOpen, setMatrixOpen] = useState(false);
-  const errors = marketValidationErrors(market);
   const fileInput = useRef<HTMLInputElement>(null);
   const latestMarket = useRef(market);
   const latestOnImport = useRef(onImport);
@@ -301,28 +299,6 @@ export function MarketEditor({
           <CorrelationMatrix market={market} onChange={onChange} />
         </div>
       )}
-      <div
-        className={`market-validation ${errors.length ? "market-validation-error" : "market-validation-valid"}`}
-        role="status"
-        aria-live="polite"
-      >
-        <strong>
-          {errors.length
-            ? "Market inputs need attention"
-            : "Market inputs are valid"}
-        </strong>
-        {errors.length > 0 && (
-          <ul>
-            {errors.map((error) => (
-              <li key={error}>{error}</li>
-            ))}
-          </ul>
-        )}
-        <small>
-          Validation is local to this panel. These values are not yet connected
-          to pension results.
-        </small>
-      </div>
       {imported && (
         <ImportedMarketDiagnostics
           name={imported.name}

@@ -17,11 +17,8 @@ export function MarketAssumptionChecks({
   const calibration = input.ok ? calibrateMarket(input.market) : null;
 
   if (!input.ok || !calibration?.ok) {
-    const reason = !input.ok
-      ? input.errors[0]
-      : calibration && !calibration.ok
-        ? calibration.error
-        : undefined;
+    const reason =
+      calibration && !calibration.ok ? calibration.error : undefined;
 
     return (
       <div
@@ -32,7 +29,7 @@ export function MarketAssumptionChecks({
         <strong>
           Market assumption checks <span>Not available</span>
         </strong>
-        <p>Complete valid market inputs to evaluate these checks.</p>
+        <p>Resolve any market input errors to evaluate these checks.</p>
         {reason && <small>{reason}</small>}
       </div>
     );

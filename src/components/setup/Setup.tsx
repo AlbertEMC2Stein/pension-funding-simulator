@@ -22,6 +22,7 @@ import {
 import { useSimulationDraft } from "../SimulationDraftContext";
 import { MarketEditor } from "./MarketEditor";
 import { MarketAssumptionChecks } from "./MarketAssumptionChecks";
+import { MarketValidation } from "./MarketValidation";
 import { parseAmount } from "../../lib/options/simulation-options";
 import { CohortChart } from "./CohortChart";
 import type { CeFitStatus } from "../../lib/mortality/fit-status";
@@ -146,7 +147,7 @@ function MarketSetup() {
                 <input
                   value={market.nominalRiskFreePercent}
                   aria-invalid={!!riskFreeError}
-                  aria-describedby="risk-free-rate-hint risk-free-rate-error"
+                  aria-describedby="risk-free-rate-hint market-validation-messages"
                   onChange={(event) => {
                     if (isEditableDecimal(event.target.value))
                       editMarket({
@@ -162,13 +163,6 @@ function MarketSetup() {
                 {realRate === null
                   ? "Enter a valid rate and inflation assumption."
                   : `Real rate after inflation: ${Number((realRate * 100).toPrecision(4))}% / year (continuously compounded).`}
-              </small>
-              <small
-                id="risk-free-rate-error"
-                className="field-error"
-                aria-live="polite"
-              >
-                {riskFreeError}
               </small>
             </label>
             <label>
@@ -345,6 +339,7 @@ function MarketSetup() {
             )}
           </div>
         )}
+        <MarketValidation market={market} />
         <MarketAssumptionChecks market={market} />
       </div>
     </div>
