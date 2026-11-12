@@ -1,5 +1,7 @@
 "use client";
 
+import { TermLink } from "./common";
+
 import {
   MANUAL_BATCH_SIZES,
   type BatchSizeChoice,
@@ -89,8 +91,10 @@ export function SimulationDetailFields({
         <details className="simulation-seed-details">
           <summary>About the random seed</summary>
           <p className="simulation-field-hint">
-            Keep the seed, path count and batch size to repeat random draws.
-            Table rows use separate streams. Results can differ across backends.
+            Keep the <TermLink term="seed">seed</TermLink>, path count and batch
+            size to repeat random draws. Table rows use separate streams.
+            Results can differ across backends. Learn about{" "}
+            <TermLink term="simulation-detail">simulation settings</TermLink>.
           </p>
         </details>
       </div>

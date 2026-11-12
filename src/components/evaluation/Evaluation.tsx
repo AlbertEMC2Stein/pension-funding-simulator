@@ -152,7 +152,7 @@ export function GmRiskCard({
           </h3>
           <p className="timing-intro">
             Compare the CE-model reference with the estimated risk under the
-            fitted GM model.
+            fitted <TermLink term="gm-risk">GM model</TermLink>.
           </p>
         </div>
         <StatusBadge status={status} />
@@ -165,7 +165,13 @@ export function GmRiskCard({
       )}
       <div className="diagnostic-metrics">
         <div>
-          <span>{targetMode ? "Target risk α" : "CE-model risk"}</span>
+          <span>
+            {targetMode ? (
+              <TermLink term="target-risk">Target risk α</TermLink>
+            ) : (
+              "CE-model risk"
+            )}
+          </span>
           <strong>
             {risk ? `${(risk.ceBenchmark * 100).toFixed(3)}%` : "—"}
           </strong>
@@ -193,7 +199,8 @@ export function GmRiskCard({
       {risk && (
         <>
           <p className="chart-disclaimer">
-            Approximate 95% Monte Carlo interval:{" "}
+            Approximate 95%{" "}
+            <TermLink term="monte-carlo">Monte Carlo interval</TermLink>:{" "}
             {risk.gm.interval95
               ? `${(risk.gm.interval95.lower * 100).toFixed(3)}% – ${(risk.gm.interval95.upper * 100).toFixed(3)}%`
               : "not available for this sample"}
@@ -228,7 +235,10 @@ export function GmRiskCard({
                   ? `${projectedRisk.gmDifference.estimate > 0 ? "+" : ""}${(projectedRisk.gmDifference.estimate * 100).toFixed(3)} pp`
                   : "—"}
               </strong>
-              <small>Projected minus unconstrained GM risk</small>
+              <small>
+                Projected minus unconstrained GM risk (
+                <TermLink term="percentage-points">pp</TermLink>)
+              </small>
             </div>
             <div>
               <span>
@@ -341,7 +351,9 @@ export function CapitalCard({ comparison }: { comparison: CapitalComparison }) {
           <h3>What does accepting risk change?</h3>
           <p className="timing-intro">
             Compare your starting capital with the amount needed without
-            investment risk for your setup&apos;s annual withdrawal.
+            investment risk for your setup&apos;s{" "}
+            <TermLink term="withdrawal">annual withdrawal</TermLink>. Learn
+            about <TermLink term="capital-relief">capital relief</TermLink>.
           </p>
         </div>
         <StatusBadge status={available ? "calculated" : "not-available"} />
@@ -469,8 +481,9 @@ export function BorrowingCard({
           <span className="tiny-label">UNCONSTRAINED POLICY</span>
           <h3>Borrowing exposure</h3>
           <p className="timing-intro">
-            Explore the chance that your portfolio borrows and how long
-            borrowing may last.
+            Explore the chance that your portfolio{" "}
+            <TermLink term="borrowing">borrows</TermLink> and how long borrowing
+            may last.
           </p>
         </div>
         <StatusBadge status={status} />
@@ -581,11 +594,12 @@ export function BorrowingCard({
             </dl>
             <p>{feasibility.message}</p>
             <p>
-              Where the model assumptions apply, ζ &gt; 1 indicates that the
-              relative bandwidth exceeds the global no-borrowing threshold.
-              Possibility does not imply borrowing on a particular path. The
-              last possible time is a model boundary, not a predicted borrowing
-              time.{" "}
+              Where the model assumptions apply,{" "}
+              <TermLink term="global-feasibility">ζ</TermLink> &gt; 1 indicates
+              that the relative bandwidth exceeds the global no-borrowing
+              threshold. Possibility does not imply borrowing on a particular
+              path. The last possible time is a model boundary, not a predicted
+              borrowing time.{" "}
               {stale &&
                 occupation &&
                 "These analytical checks use your current inputs; the simulated results use the previous run."}

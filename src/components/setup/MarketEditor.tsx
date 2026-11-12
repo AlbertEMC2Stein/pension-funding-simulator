@@ -1,5 +1,7 @@
 "use client";
 
+import { TermLink } from "../common";
+
 import { useRef, useState } from "react";
 import {
   estimateHistoricalMarket,
@@ -206,10 +208,13 @@ export function MarketEditor({
         </div>
       </div>
       <p>
-        Enter expected annual nominal growth and volatility as percentages.
-        Growth is an annualized compounded rate. Import adjusted EUR closing
-        prices or edit assumptions directly; enter the risk-free rate and
-        inflation separately above.
+        Enter expected annual <TermLink term="growth">nominal growth</TermLink>{" "}
+        and <TermLink term="volatility">volatility</TermLink> as percentages.
+        Growth is an annualized compounded rate. Import{" "}
+        <TermLink term="adjusted-prices">adjusted EUR closing prices</TermLink>{" "}
+        or edit assumptions directly; enter the{" "}
+        <TermLink term="risk-free-rate">risk-free rate</TermLink> and{" "}
+        <TermLink term="nominal-real">inflation</TermLink> separately above.
       </p>
       {importError && (
         <div
@@ -296,9 +301,10 @@ export function MarketEditor({
       {matrixOpen && (
         <div id="correlation-editor" className="correlation-editor">
           <p>
-            Enter correlations from −1 to 1 below the diagonal. The diagonal is
-            fixed at 1, and values above it are mirrored automatically. Zero is
-            an initial assumption, not an estimate.
+            Enter <TermLink term="correlation">correlations</TermLink> from −1
+            to 1 below the diagonal. The diagonal is fixed at 1, and values
+            above it are mirrored automatically. Zero is an initial assumption,
+            not an estimate.
           </p>
           <CorrelationMatrix market={market} onChange={onChange} />
         </div>

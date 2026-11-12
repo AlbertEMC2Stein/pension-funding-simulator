@@ -1,3 +1,4 @@
+import { TermLink } from "../common";
 import type { HistoricalMarketEstimate } from "../../lib/market/historical-market";
 
 /** Imported-price coverage and model-based estimation uncertainty. */
@@ -100,12 +101,15 @@ export function ImportedMarketDiagnostics({
         </div>
       )}
       <p>
-        These intervals describe historical estimation uncertainty under a
-        constant-parameter Gaussian log-return model. Growth intervals apply to
-        annualized log growth converted to a compounded rate; correlation
-        intervals use an approximate Fisher transformation. A dash means there
-        are too few paired intervals or perfect correlation. Imported values are
-        rounded to two decimals for subsequent calculations.
+        These intervals describe{" "}
+        <TermLink term="historical-uncertainty">
+          historical estimation uncertainty
+        </TermLink>{" "}
+        under a constant-parameter Gaussian log-return model. Growth intervals
+        apply to annualized log growth converted to a compounded rate;
+        correlation intervals use an approximate Fisher transformation. A dash
+        means there are too few paired intervals or perfect correlation.
+        Imported values are rounded to two decimals for subsequent calculations.
       </p>
       <p>
         Durations use calendar days / 365.25; no missing prices are filled.

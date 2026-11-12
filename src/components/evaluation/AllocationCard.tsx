@@ -1,5 +1,7 @@
 "use client";
 
+import { TermLink } from "../common";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   allocationTimeLimit,
@@ -317,7 +319,11 @@ export function AllocationCard({
           status={"data" in chart ? "calculated" : "not-available"}
         />
       </div>
-      <p>Allocation by wealth between the impoverishment and safe levels.</p>
+      <p>
+        <TermLink term="policy">Allocation</TermLink> by wealth between the{" "}
+        <TermLink term="impoverishment">impoverishment</TermLink> and{" "}
+        <TermLink term="safe-boundary">safe levels</TermLink>.
+      </p>
       <label className="field-label" htmlFor="allocation-time">
         Time after retirement
       </label>

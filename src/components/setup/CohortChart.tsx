@@ -1,5 +1,7 @@
 "use client";
 
+import { TermLink } from "../common";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import { ChartExport } from "../ChartExport";
@@ -615,9 +617,10 @@ export function CohortChart({
               </table>
             </div>
             <p className="chart-disclaimer">
-              KL divergence compares annual death bins and the final survival
-              tail. Largest difference is measured on the annual grid. Fits are
-              numerical estimates; a convergence status is not a quality grade.
+              <TermLink term="mortality-diagnostics">KL divergence</TermLink>{" "}
+              compares annual death bins and the final survival tail. Largest
+              difference is measured on the annual grid. Fits are numerical
+              estimates; a convergence status is not a quality grade.
             </p>
           </section>
           <section className="mortality-fit-section">

@@ -131,7 +131,8 @@ function MarketSetup() {
             </div>
           </div>
           <p>
-            Market assumptions can affect the fitted mortality model. After
+            Market assumptions can affect the fitted{" "}
+            <TermLink term="mortality-fit">mortality model</TermLink>. After
             changing them, check the fit under Investor &amp; mortality. The
             underlying cohort data do not change.
           </p>
@@ -603,8 +604,10 @@ function InvestorSetup({
             </div>
           </div>
           <p>
-            Explore cohort survival from your expected retirement age and fit
-            mortality models.{" "}
+            Explore <TermLink term="cohort">cohort</TermLink>{" "}
+            <TermLink term="survival">survival</TermLink> from your expected
+            retirement age and fit
+            <TermLink term="mortality-models"> mortality models</TermLink>.{" "}
             <span role="status">
               {ceFitStatus === "needs-update"
                 ? "The compatible CE fit needs updating after an input change."

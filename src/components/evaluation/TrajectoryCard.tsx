@@ -1,5 +1,7 @@
 "use client";
 
+import { TermLink } from "../common";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { StatusBadge, type ResultStatus } from "../StatusBadge";
 import { ChartExport } from "../ChartExport";
@@ -258,8 +260,9 @@ export function TrajectoryCard({
         <StatusBadge status={status} />
       </div>
       <p>
-        These example paths assume you remain alive. Each ends at impoverishment
-        or the policy horizon; they are not predictions.
+        These <TermLink term="trajectories">example paths</TermLink> assume you
+        remain alive. Each ends at impoverishment or the policy horizon; they
+        are not predictions.
       </p>
       {samples ? (
         <>

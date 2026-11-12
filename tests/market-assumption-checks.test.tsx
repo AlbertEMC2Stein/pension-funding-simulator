@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { renderToStaticMarkup } from "react-dom/server";
+import { renderWithDictionary as renderToStaticMarkup } from "./dictionary-render";
 import { MarketValidation } from "../src/components/setup/MarketValidation";
 import { MarketAssumptionChecks } from "../src/components/setup/MarketAssumptionChecks";
 import { initialMarketCalibration } from "../src/lib/market/market-calibration";
@@ -10,7 +10,7 @@ test("market checks report validated inputs without claiming mortality condition
     <MarketAssumptionChecks market={initialMarketCalibration()} />,
   );
   assert.match(html, /data-status="feasible"/);
-  assert.match(html, /covariance matrix is positive definite/);
+  assert.match(html, /covariance matrix<\/button> is positive definite/);
   assert.match(
     html,
     /Mortality fit and policy-specific conditions are checked separately/,

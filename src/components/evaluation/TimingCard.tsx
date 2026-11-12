@@ -1,5 +1,7 @@
 "use client";
 
+import { TermLink } from "../common";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   calculateImpoverishmentForecast,
@@ -471,8 +473,11 @@ export function TimingCard({
           </span>
           <h3>When might impoverishment occur?</h3>
           <p className="timing-intro">
-            Explore risk across attained ages under the selected policy and
-            fitted mortality model.
+            Explore{" "}
+            <TermLink term="timing">forecast and conditional risk</TermLink>{" "}
+            across attained ages under the selected policy and fitted mortality
+            model. Learn about{" "}
+            <TermLink term="density">remaining risk and density</TermLink>.
           </p>
         </div>
         <StatusBadge status={status} />
@@ -598,10 +603,11 @@ export function TimingCard({
             .
           </p>
           <p className="chart-disclaimer">
-            GM mortality · {projected ? "projected" : "unconstrained"} policy ·
-            events through age {(retirementAge + horizon).toFixed(1)}. GM
-            mortality may extend beyond this horizon. The curve is an estimate;
-            time-step, bridge and Monte Carlo errors apply.{" "}
+            <TermLink term="gm-risk">GM mortality</TermLink> ·{" "}
+            {projected ? "projected" : "unconstrained"} policy · events through
+            age {(retirementAge + horizon).toFixed(1)}. GM mortality may extend
+            beyond this horizon. The curve is an estimate; time-step, bridge and
+            Monte Carlo errors apply.{" "}
             {density
               ? conditional
                 ? "Bars show average risk density across 30 intervals; their areas represent risk. Results can be noisy when few paths remain."
@@ -690,19 +696,22 @@ export function TimingCard({
             </dl>
             {!projected && (
               <p>
-                The CE bound concerns the timing distribution conditional on
-                impoverishment before death under CE mortality. It is not a
-                bound for this GM chart or for the age-conditional update. Its
-                numerical value uses approximate quadrature. The CDF distance
-                compares the same CE conditional laws using simulated paths;
-                Monte Carlo, time-step, bridge and quadrature errors can make it
-                exceed the theoretical bound.
+                The <TermLink term="durbin">CE bound</TermLink> concerns the
+                timing distribution conditional on impoverishment before death
+                under CE mortality. It is not a bound for this GM chart or for
+                the age-conditional update. Its numerical value uses approximate
+                quadrature. The CDF distance compares the same CE conditional
+                laws using simulated paths; Monte Carlo, time-step, bridge and
+                quadrature errors can make it exceed the theoretical bound.
               </p>
             )}
             {!projected && cdfComparison && "message" in cdfComparison && (
               <p role="status">{cdfComparison.message}</p>
             )}
-            <p>The simulation has Monte Carlo, time-step and bridge errors.</p>
+            <p>
+              The simulation has Monte Carlo, time-step and{" "}
+              <TermLink term="first-passage">bridge</TermLink> errors.
+            </p>
           </details>
         </>
       )}

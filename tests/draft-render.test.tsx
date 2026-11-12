@@ -59,7 +59,7 @@ test("setup and data views retain the requested design elements", () => {
   assert.match(setup, /compatible CE fit depends on market assumptions/);
   assert.match(
     setup,
-    /Market assumptions can affect the fitted mortality model/,
+    /Market assumptions can affect the fitted .*mortality model/,
   );
   assert.match(setup, /cohort data themselves do not change/i);
   assert.match(setup, /Import setup/);

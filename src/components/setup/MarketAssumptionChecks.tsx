@@ -1,3 +1,4 @@
+import { TermLink } from "../common";
 import { calibrateMarket } from "../../lib/market/calibrate-market";
 import type { MarketCalibrationDraft } from "../../lib/market/market-calibration";
 import { buildMarketOptions } from "../../lib/options/simulation-options";
@@ -67,8 +68,11 @@ export function MarketAssumptionChecks({
       )}
       {!issues && (
         <p>
-          The real risk-free rate is positive, the covariance matrix is positive
-          definite, ρ &gt; 0, and all Merton-vector components are non-negative.
+          The real risk-free rate is positive, the{" "}
+          <TermLink term="covariance">covariance matrix</TermLink> is positive
+          definite, ρ &gt; 0, and all{" "}
+          <TermLink term="market-direction">Merton-vector</TermLink> components
+          are non-negative.
         </p>
       )}
       <small>

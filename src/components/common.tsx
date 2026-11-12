@@ -1,6 +1,10 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import {
+  dictionaryEntries,
+  type DictionaryTermId,
+} from "../lib/help/dictionary";
 
 /** Identifiers for the four locally switched workspace panels. */
 export type View = "evaluation" | "setup" | "data" | "help" | "developer";
@@ -50,15 +54,17 @@ export function TermLink({
   term,
   children,
 }: {
-  term: string;
+  term: DictionaryTermId;
   children: React.ReactNode;
 }) {
   const { navigate } = useDraft();
+  const entry = dictionaryEntries.find((item) => item.id === term);
 
   return (
     <button
       type="button"
       className="term-link"
+      aria-label={`Learn about ${entry?.title ?? term}`}
       onClick={() => navigate("help", term)}
     >
       {children}

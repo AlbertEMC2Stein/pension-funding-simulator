@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { renderToStaticMarkup } from "react-dom/server";
+import { renderWithDictionary as renderToStaticMarkup } from "./dictionary-render";
 import type { EvaluationRun } from "../src/components/evaluation/useEvaluationRun";
 import { BorrowingCard } from "../src/components/evaluation/Evaluation";
 import type { FeasibilityResult } from "../src/components/evaluation/global-feasibility";

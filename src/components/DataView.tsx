@@ -25,7 +25,7 @@ import { SetupFileActions } from "./SetupFileActions";
 import { comparisonTableCsv } from "../lib/export/comparison-table";
 import { downloadText } from "../lib/export/csv";
 import { createResultsExport } from "../lib/export/results";
-import { PageHeading, PreviewBanner, SectionHeading } from "./common";
+import { PageHeading, PreviewBanner, SectionHeading, TermLink } from "./common";
 
 /** Available comparison-table layouts; each keeps separate editable example rows. */
 type TableType = "withdrawal" | "feasibility";
@@ -803,7 +803,8 @@ export function DataView() {
           <h3>Import or export setup</h3>
           <p>
             Save or restore your inputs, table variations and run settings. Fits
-            and results are not included.
+            and results are not included. Learn about{" "}
+            <TermLink term="setup-results">setups and results</TermLink>.
           </p>
           <div className="heading-actions">
             <SetupFileActions />

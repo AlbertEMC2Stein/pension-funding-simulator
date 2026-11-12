@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { renderToStaticMarkup } from "react-dom/server";
+import { renderWithDictionary as renderToStaticMarkup } from "./dictionary-render";
 import { ImportedMarketDiagnostics } from "../src/components/setup/ImportedMarketDiagnostics";
 import { estimateHistoricalMarket } from "../src/lib/market/historical-market";
 
