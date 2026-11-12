@@ -1,5 +1,6 @@
 import { prepareGompertzMakehamSurvival } from "../../../mortality/mortality-models";
 import type { RiskEstimate } from "../risk-estimate";
+import { safeBoundaryValue } from "../../analytical/safe-boundary";
 import { prepareBorrowingOccupation } from "../borrowing-occupation";
 import { assertRunSnapshot, type RunSnapshot } from "../run-configuration";
 import { createRandomStream } from "../random";
@@ -28,6 +29,22 @@ export interface RunSchedulerOptions {
   signal?: AbortSignal;
 }
 
+/** A retained sample of selected-policy stopped wealth paths from one run. */
+export interface TrajectorySamples {
+  /** Years after retirement, including zero and the simulation horizon. */
+  times: readonly number[];
+  /** Wealth in euros, flattened path-major: values[path * times.length + step]. */
+  values: Float32Array;
+  /** Captured policy safe boundary in euros, aligned with times. */
+  safeBoundary: readonly number[];
+  /** Upper edge of the unconstrained borrowing region, when applicable. */
+  borrowingBoundary?: readonly number[];
+  /** Approximate first impoverishment times, or -1 when no hit was detected. */
+  firstHitTimes: Float32Array;
+  count: number;
+  projected: boolean;
+}
+
 /** Approximate bridge observations; these are not mortality-weighted risk estimates. */
 export interface RunSchedulerResult {
   backend: TensorBackend;
@@ -48,6 +65,8 @@ export interface RunSchedulerResult {
     standardErrorYears: number | null;
     interval95Years: { lower: number; upper: number } | null;
   };
+  /** Optional small sample for the selected policy, never all trajectories. */
+  trajectories?: TrajectorySamples;
   /** Matching projected-policy observations for a paired run. */
   projected?: {
     firstHitTimes: Float32Array;
@@ -86,11 +105,6 @@ export async function runScheduler(
   assertRunSnapshot(snapshot);
   checkCancellation(options.signal);
 
-  if (snapshot.numerical.recordTrajectories)
-    throw new RangeError(
-      "Trajectory recording is not supported by the TensorFlow scheduler yet.",
-    );
-
   const backend = await initializeTensorBackend(options.backendOrder);
   checkCancellation(options.signal);
   options.onBackendReady?.(backend);
@@ -121,6 +135,55 @@ export async function runScheduler(
   const gmSurvival = prepareGompertzMakehamSurvival(
     snapshot.mortality.gm.parameters,
   );
+  const sampleCount = snapshot.numerical.recordTrajectories
+    ? Math.min(5000, totalPaths)
+    : 0;
+  const trajectoryStride = Math.max(1, Math.ceil((times.length - 1) / 500));
+  const trajectoryTimes = times.filter(
+    (_, index) => index % trajectoryStride === 0 || index === times.length - 1,
+  );
+  // These boundaries come from the captured run, not the editable live inputs.
+  const safeBoundary = sampleCount
+    ? trajectoryTimes.map((time) =>
+        safeBoundaryValue({
+          realRiskFreeRate: snapshot.market.realRiskFreeRate,
+          annualWithdrawal: snapshot.resolvedAnnualWithdrawal,
+          impoverishmentLevel: snapshot.options.investor.impoverishmentLevel,
+          mortalityEndpoint: snapshot.mortality.ce.parameters.tau,
+          time,
+        }),
+      )
+    : [];
+  const mertonSum = snapshot.market.mertonDirection.reduce(
+    (sum, value) => sum + value,
+    0,
+  );
+  const showBorrowingRegion =
+    !snapshot.options.policy.projected &&
+    snapshot.market.paperAssumptions.nonnegativeMerton &&
+    mertonSum > 0 &&
+    occupationSteps !== undefined;
+  const borrowingScale =
+    mertonSum / (mertonSum + snapshot.mortality.ce.parameters.p - 1);
+  const borrowingBoundary = showBorrowingRegion
+    ? safeBoundary.map((value) =>
+        Math.max(
+          snapshot.options.investor.impoverishmentLevel,
+          value * borrowingScale,
+        ),
+      )
+    : undefined;
+  const trajectories: TrajectorySamples | undefined = sampleCount
+    ? {
+        times: trajectoryTimes,
+        safeBoundary,
+        borrowingBoundary,
+        values: new Float32Array(sampleCount * trajectoryTimes.length),
+        firstHitTimes: new Float32Array(sampleCount),
+        count: sampleCount,
+        projected: snapshot.options.policy.projected,
+      }
+    : undefined;
   const firstHitCounts = Array<number>(times.length).fill(0);
   const firstHitTimes = new Float32Array(totalPaths);
   const stream = createRandomStream(snapshot.numerical.seed);
@@ -154,16 +217,41 @@ export async function runScheduler(
   while (completedPaths < totalPaths) {
     checkCancellation(options.signal);
     const pathCount = Math.min(batchSize, totalPaths - completedPaths);
+    const sampledInBatch = Math.min(
+      pathCount,
+      Math.max(0, sampleCount - completedPaths),
+    );
     const batch = await simulateTensorBatch(
       snapshot,
       pathCount,
       stream,
       projectionCurve,
       occupationSteps ?? undefined,
+      sampledInBatch,
+      trajectoryStride,
     );
     checkCancellation(options.signal);
 
     firstHitTimes.set(batch.firstHitTime, completedPaths);
+
+    if (trajectories && sampledInBatch) {
+      if (!batch.trajectories)
+        throw new Error("The trajectory sample is missing.");
+      const sampleHits = snapshot.options.policy.projected
+        ? batch.projected?.firstHitTime
+        : batch.firstHitTime;
+      if (!sampleHits)
+        throw new Error("The selected-policy hit times are missing.");
+
+      // The backend records time-major rows; retain path-major data for plotting.
+      for (let path = 0; path < sampledInBatch; path += 1) {
+        trajectories.firstHitTimes[completedPaths + path] = sampleHits[path];
+        for (let step = 0; step < trajectoryTimes.length; step += 1)
+          trajectories.values[
+            (completedPaths + path) * trajectoryTimes.length + step
+          ] = batch.trajectories[step * sampledInBatch + path];
+      }
+    }
 
     // Welford moments combine path payoffs without retaining occupation arrays.
     for (let index = 0; index < pathCount; index += 1) {
@@ -255,6 +343,7 @@ export async function runScheduler(
           }
         : null,
     },
+    trajectories,
     borrowingOccupation: {
       estimateYears: occupationMean,
       standardErrorYears: standardError,

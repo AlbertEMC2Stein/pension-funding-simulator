@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { AllocationCard } from "./AllocationCard";
 import { TimingCard } from "./TimingCard";
+import { TrajectoryCard } from "./TrajectoryCard";
 import { SimulationRunControl } from "./SimulationRunControl";
 import { StatusBadge, type ResultStatus } from "../StatusBadge";
 import { useEvaluationRun, type EvaluationRun } from "./useEvaluationRun";
@@ -616,8 +617,8 @@ export function BorrowingCard({
 }
 
 /**
- * Evaluation dashboard and its local display controls. Scenario summary,
- * The CE chart is analytical; remaining result cards and Run simulation are placeholders.
+ * Evaluation dashboard and its local display controls. Analytical views use
+ * current inputs; simulation views retain their captured run and mark it stale.
  */
 export function Evaluation() {
   const { navigate } = useDraft();
@@ -686,8 +687,7 @@ export function Evaluation() {
       <PreviewBanner>
         <strong>You&apos;re exploring a design draft.</strong> The CE withdrawal
         chart, allocation, capital comparison and feasibility diagnostic use
-        your current inputs. The GM risk card shows the latest simulation when
-        available; other results remain illustrative placeholders.
+        your current inputs. Simulation results use the latest completed run.
       </PreviewBanner>
       <div
         className={`workspace-grid ${settingsOpen ? "" : "settings-closed"}`}
@@ -740,7 +740,7 @@ export function Evaluation() {
               errors={errors}
               settingsOpen={settingsOpen}
               onToggleSettings={() => setSettingsOpen(!settingsOpen)}
-              onStart={start}
+              onStart={() => start(visuals.trajectories)}
               onCancel={cancel}
             />
           </div>
@@ -750,8 +750,8 @@ export function Evaluation() {
               <div className="visual-picker-heading">
                 <strong>Choose your visuals</strong>
                 <p>
-                  Show the views you want to explore. Your choices only affect
-                  the layout.
+                  Show the views you want to explore. Enable trajectories before
+                  a run to retain a sample for that chart.
                 </p>
               </div>
               <div className="visual-picker-groups">
@@ -780,8 +780,8 @@ export function Evaluation() {
                 Mortality fit is shown in Investor & mortality. The CE chart,
                 allocation, capital comparison and global feasibility are
                 calculated when available. GM risk is estimated when a
-                simulation completes. The timing view uses the same run; other
-                unfinished visuals remain illustrative placeholders.
+                simulation completes. The timing and trajectory views use the
+                same run.
               </p>
             </div>
           )}
@@ -857,18 +857,7 @@ export function Evaluation() {
                 title="Wealth trajectories"
                 description="Explore example paths of wealth over time."
               />
-              <article className="small-card">
-                <div className="card-heading">
-                  <div>
-                    <span className="tiny-label">OPTIONAL VISUAL</span>
-                    <h3>Illustrative trajectories</h3>
-                  </div>
-                  <StatusBadge status="not-calculated" />
-                </div>
-                <p>Sample paths can be displayed here when enabled.</p>
-                <div className="empty-visual">﹏　﹋　﹏</div>
-                <div className="small-note">Placeholder · not a simulation</div>
-              </article>
+              <TrajectoryCard run={run} stale={stale} />
             </section>
           )}
         </div>

@@ -194,3 +194,45 @@ test("TensorFlow handles the mortality endpoint for risky and safe starting weal
   assertEuros(safe.finalWealth[0], 200000);
   assert.equal(safe.firstHitStep[0], -1);
 });
+
+test("trajectory recording retains only selected grid points without changing the simulation", async () => {
+  await initializeTensorBackend(["cpu"]);
+  const before = tf.memory().numTensors;
+  const input = {
+    market,
+    mortality,
+    annualWithdrawal: withdrawal,
+    investor: { initialCapital: 150000, impoverishmentLevel: threshold },
+    pathCount: 2,
+    times: [0, 1, 2, 3, 4],
+    increments: [
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ],
+    bridgeDraws: () => ({
+      hitThreshold: tf.zeros([2]) as tf.Tensor1D,
+      timeNormal: tf.ones([2]) as tf.Tensor1D,
+      timeUniform: tf.zeros([2]) as tf.Tensor1D,
+    }),
+  };
+  const full = await simulateTensorWealthBatch({
+    ...input,
+    trajectoryCount: 2,
+  });
+  const reduced = await simulateTensorWealthBatch({
+    ...input,
+    trajectoryCount: 2,
+    trajectoryStride: 3,
+  });
+  assert.ok(full.trajectories && reduced.trajectories);
+  assert.deepEqual(reduced.finalWealth, full.finalWealth);
+  assert.deepEqual(reduced.firstHitTime, full.firstHitTime);
+  assert.deepEqual(Array.from(reduced.trajectories), [
+    ...full.trajectories.slice(0, 2),
+    ...full.trajectories.slice(6, 8),
+    ...full.trajectories.slice(8, 10),
+  ]);
+  assert.equal(tf.memory().numTensors, before);
+});

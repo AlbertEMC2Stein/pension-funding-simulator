@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import * as tf from "@tensorflow/tfjs";
+import { safeBoundaryValue } from "../src/lib/model/analytical/safe-boundary";
 import { prepareGompertzMakehamSurvival } from "../src/lib/mortality/mortality-models";
 import { calibrateMarket } from "../src/lib/market/calibrate-market";
 import {
@@ -188,14 +189,61 @@ test("scheduler stops between batches when cancelled", async () => {
   assert.deepEqual(progress, [2]);
 });
 
-test("scheduler rejects unsupported trajectory recording and unvalidated snapshots", async () => {
-  await assert.rejects(
-    runScheduler(exampleSnapshot(true), { backendOrder: ["cpu"] }),
-    /Trajectory recording is not supported/,
+test("scheduler retains selected stopped paths across batches without changing the run", async () => {
+  const before = tf.memory().numTensors;
+  const ordinary = await runScheduler(exampleSnapshot(), {
+    backendOrder: ["cpu"],
+  });
+  const recorded = await runScheduler(exampleSnapshot(true), {
+    backendOrder: ["cpu"],
+  });
+  assert.deepEqual(recorded.firstHitTimes, ordinary.firstHitTimes);
+  assert.ok(recorded.trajectories);
+  assert.equal(recorded.trajectories.count, 5);
+  assert.equal(recorded.trajectories.projected, false);
+  const snapshot = exampleSnapshot(true);
+  const expectedBoundary = safeBoundaryValue({
+    realRiskFreeRate: snapshot.market.realRiskFreeRate,
+    annualWithdrawal: snapshot.resolvedAnnualWithdrawal,
+    impoverishmentLevel: snapshot.options.investor.impoverishmentLevel,
+    mortalityEndpoint: snapshot.mortality.ce.parameters.tau,
+    time: 0,
+  });
+  assert.equal(recorded.trajectories.safeBoundary[0], expectedBoundary);
+  assert.equal(
+    recorded.trajectories.safeBoundary.at(-1),
+    snapshot.options.investor.impoverishmentLevel,
   );
+  assert.equal(recorded.trajectories.values.length, 5 * recorded.times.length);
+  assert.deepEqual(recorded.trajectories.firstHitTimes, recorded.firstHitTimes);
+  for (let path = 0; path < 5; path += 1) {
+    const offset = path * recorded.times.length;
+    assert.equal(recorded.trajectories.values[offset], 500000);
+    const hit = recorded.firstHitTimes[path];
+    for (let step = 1; step < recorded.times.length; step += 1)
+      if (hit >= 0 && recorded.times[step] >= hit)
+        assert.equal(recorded.trajectories.values[offset + step], 100000);
+  }
+  assert.equal(tf.memory().numTensors, before);
+});
+
+test("scheduler rejects unvalidated snapshots", async () => {
   await assert.rejects(
     runScheduler(structuredClone(exampleSnapshot()), { backendOrder: ["cpu"] }),
     /validated/,
+  );
+});
+
+test("paired trajectory samples use the selected projected policy", async () => {
+  const result = await runScheduler(exampleSnapshot(true, true), {
+    backendOrder: ["cpu"],
+  });
+  assert.ok(result.trajectories && result.projected);
+  assert.equal(result.trajectories.projected, true);
+  assert.equal(result.trajectories.borrowingBoundary, undefined);
+  assert.deepEqual(
+    result.trajectories.firstHitTimes,
+    result.projected.firstHitTimes,
   );
 });
 
@@ -228,4 +276,22 @@ test("initial borrowing is survival-weighted and aggregated across batches", asy
   assert.equal(result.borrowingProbability.standardError, 0);
   assert.equal(result.borrowingProbability.interval95, null);
   assert.ok(result.borrowingOccupation.estimateYears > 0);
+});
+
+test("trajectory shading follows the unconstrained borrowing boundary", async () => {
+  const snapshot = exampleSnapshot(true, false, true);
+  const result = await runScheduler(snapshot, { backendOrder: ["cpu"] });
+  const sample = result.trajectories;
+  assert.ok(sample?.borrowingBoundary);
+  const mertonSum = snapshot.market.mertonDirection.reduce(
+    (sum, value) => sum + value,
+    0,
+  );
+  const scale =
+    mertonSum / (mertonSum + snapshot.mortality.ce.parameters.p - 1);
+  assert.equal(sample.borrowingBoundary[0], sample.safeBoundary[0] * scale);
+  assert.equal(
+    sample.borrowingBoundary.at(-1),
+    snapshot.options.investor.impoverishmentLevel,
+  );
 });

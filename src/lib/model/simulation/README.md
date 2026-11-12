@@ -36,8 +36,8 @@ Suggested order:
 5. **`tensorflow/run-scheduler.ts`** initializes a backend and runs the whole
    snapshot in batches using one seeded stream. It retains approximate
    first-hit times, aggregates counts by hit interval, reports progress after
-   each batch, and can cancel between batches. It currently rejects trajectory
-   recording and does not calculate mortality-weighted risk.
+   each batch, and can cancel between batches. When requested, it also retains
+   a bounded sample of selected-policy trajectories for display.
 6. **`tensorflow/bridge-hit.ts`** is a policy-independent
    single-boundary bridge primitive. It accepts signed endpoint distances,
    step variance and caller-supplied draws, and returns hit masks and
@@ -176,3 +176,22 @@ Monte Carlo uncertainty. Occupation still uses endpoint interpolation, so a
 bridge-detected excursion may have zero interpolated occupation. Independent
 bridge draws come from the same run stream, so enabling the additional draws
 changes the sequence assigned to subsequent simulation steps.
+
+
+## Sample wealth trajectories
+
+Trajectory recording is opt-in when starting an evaluation run. The scheduler
+retains at most 5,000 independent paths for the selected policy, taking the
+first paths across consecutive batches without consuming additional random
+draws. It records at most about 501 evenly spaced simulation-grid points per
+path, including the start and end, plus each path's approximate first-hit
+time. The run also captures the safe boundary and, where applicable, the
+unconstrained borrowing boundary on the same display grid. The shaded borrowing
+region is omitted for projected policies and markets with negative Merton
+components. This is a display sample; brief fluctuations between saved points
+can be missed. The TensorFlow recorder batches grid rows on the backend and reads them
+once per sampled batch. No full trajectory matrix is kept for the rest of the
+simulation. Up to 150 paths are displayed at once; shuffle selects from the
+retained pool and does not change the simulation results. Wealth is stopped at
+impoverishment and paths do not sample death times: they show wealth assuming
+the investor remains alive until the financial stop or the policy horizon.

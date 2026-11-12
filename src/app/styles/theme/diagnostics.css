@@ -633,3 +633,25 @@ table.capital-table {
   justify-content: flex-start;
   margin: 18px 0;
 }
+
+.trajectory-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+
+.trajectory-count-control {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.trajectory-legend .trajectory-path-key {
+  background: var(--chart-asset-1);
+}
+
+.trajectory-legend .trajectory-borrow-key {
+  height: 10px;
+  background: var(--chart-borrowing-fill);
+  border: 1px solid var(--border);
+}

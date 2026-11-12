@@ -211,3 +211,12 @@ test("selecting projection does not present an earlier unconstrained run as pair
   assert.match(html, /NOT CALCULATED/);
   assert.match(html, /after a projected-policy run/);
 });
+
+test("trajectory recording is captured only when selected for the run", () => {
+  const { draft, fits } = setup();
+  const ordinary = prepareEvaluationRun(draft, fits);
+  const recorded = prepareEvaluationRun(draft, fits, true);
+  assert.ok(ordinary.ok && recorded.ok);
+  assert.equal(ordinary.input.numerical.recordTrajectories, false);
+  assert.equal(recorded.input.numerical.recordTrajectories, true);
+});

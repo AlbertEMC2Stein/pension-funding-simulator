@@ -1,4 +1,5 @@
 import * as tf from "@tensorflow/tfjs";
+import { TrajectoryRecorder } from "./trajectory-recorder";
 import type { PreparedBorrowingInterval } from "../borrowing-occupation";
 import { detectFirstBorrowing } from "./borrowing-bridge";
 import { advanceBorrowingOccupation } from "./borrowing-occupation-step";
@@ -51,6 +52,10 @@ export interface TensorWealthBatchInput {
     excessReturn: readonly number[];
     covariance: readonly (readonly number[])[];
   };
+  /** Number of selected-policy paths to retain from this batch; zero skips recording. */
+  trajectoryCount?: number;
+  /** Keep every Nth grid point plus the final point for display. */
+  trajectoryStride?: number;
   /** Prepared GM occupation inputs shared across batches, when borrowing is possible. */
   borrowingOccupation?: readonly PreparedBorrowingInterval[];
   /** Separate first-borrowing bridge draws; generated only when monitoring is enabled. */
@@ -71,6 +76,8 @@ export interface TensorWealthBatchResult {
   borrowingOccupation?: Float32Array;
   /** First borrowing times in years, or -1 when no borrowing was detected. */
   firstBorrowingTime?: Float32Array;
+  /** Selected-policy wealth at each grid point, flattened in time-major order. */
+  trajectories?: Float32Array;
   /** The matched projected-policy observations, present for paired runs. */
   projected?: {
     finalWealth: Float32Array;
@@ -143,6 +150,8 @@ export async function simulateTensorWealthBatch(
     projected,
     borrowingOccupation,
     borrowingBridgeDraws,
+    trajectoryCount = 0,
+    trajectoryStride = 1,
   } = input;
   const { initialCapital, impoverishmentLevel: threshold } = investor;
   const { realRiskFreeRate: r, mertonDirection } = market;
@@ -186,7 +195,12 @@ export async function simulateTensorWealthBatch(
     ? (tf.fill([count], -1, "float32") as tf.Tensor1D)
     : null;
 
+  const recorder =
+    trajectoryCount > 0 ? new TrajectoryRecorder(trajectoryCount) : null;
+
   try {
+    if (recorder) recorder.record(projectedWealth ?? wealth);
+
     for (let step = 0; step < times.length - 1; step += 1) {
       const dt = times[step + 1] - times[step];
       const prepared = steps[step];
@@ -376,6 +390,12 @@ export async function simulateTensorWealthBatch(
         projectedHit = next.projectedHit;
         projectedHitTime = next.projectedHitTime;
       }
+
+      if (
+        recorder &&
+        ((step + 1) % trajectoryStride === 0 || step === times.length - 2)
+      )
+        recorder.record(projectedWealth ?? wealth);
     }
 
     // Read back once after the batch; the returned arrays are caller-owned.
@@ -427,7 +447,10 @@ export async function simulateTensorWealthBatch(
       };
     }
 
+    const trajectories = recorder ? await recorder.read() : undefined;
+
     return {
+      trajectories,
       projected: projectedResult,
       firstBorrowingTime: borrowingTimeData
         ? Float32Array.from(borrowingTimeData)
@@ -440,6 +463,7 @@ export async function simulateTensorWealthBatch(
       firstHitTime: Float32Array.from(hitTimeData),
     };
   } finally {
+    recorder?.dispose();
     wealth.dispose();
     occupation.dispose();
     firstBorrowingTime.dispose();
@@ -471,6 +495,8 @@ export async function simulateTensorBatch(
   stream: RandomStream,
   projectionCurve?: ProjectionCurve,
   borrowingOccupation?: readonly PreparedBorrowingInterval[],
+  trajectoryCount = 0,
+  trajectoryStride = 1,
 ): Promise<TensorWealthBatchResult> {
   assertRunSnapshot(snapshot);
   if (snapshot.options.policy.projected !== Boolean(projectionCurve))
@@ -504,6 +530,8 @@ export async function simulateTensorBatch(
       },
       pathCount,
       times,
+      trajectoryCount,
+      trajectoryStride,
       borrowingOccupation,
       projected: projectionCurve
         ? {

@@ -33,6 +33,7 @@
   --feasibility-bad-border: #dfaaa3;
   --feasibility-bad-text: #963c34;
   --chart-grid: #e6e1e1;
+  --chart-borrowing-fill: rgba(82, 97, 118, 0.13);
   --chart-equity: #526c8b;
   --chart-bond: #de968a;
   --chart-risk-free: #d9dce3;
@@ -76,6 +77,7 @@
   --feasibility-bad-border: #a05d60;
   --feasibility-bad-text: #ffb9b1;
   --chart-grid: #424a59;
+  --chart-borrowing-fill: rgba(209, 210, 218, 0.1);
   --chart-equity: #96b1d0;
   --chart-bond: #e5988a;
   --chart-risk-free: #566275;
@@ -90,4 +92,3 @@
   --chart-asset-9: #b8d28b;
   --chart-asset-10: #e4a1ba;
 }
-

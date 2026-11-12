@@ -33,6 +33,8 @@ export interface EvaluationRun {
   borrowingProbability?: import("../../lib/model/simulation/risk-estimate").RiskEstimate;
   /** Unconstrained GM-weighted borrowing occupation within the captured horizon. */
   borrowingOccupation?: import("../../lib/model/simulation/tensorflow/run-scheduler").RunSchedulerResult["borrowingOccupation"];
+  /** Sample paths retained only if the trajectory visual was enabled at run start. */
+  trajectories?: import("../../lib/model/simulation/tensorflow/run-scheduler").TrajectorySamples;
   /** Run-captured mortality and first hits for the optional timing visual. */
   timing?: {
     gm: GompertzMakehamParameters;
@@ -75,8 +77,12 @@ export function useEvaluationRun() {
   );
 
   /** Capture current settings and start a worker, confirming any replacement. */
-  function start() {
-    const prepared = prepareEvaluationRun(draft, mortalityFits);
+  function start(recordTrajectories = false) {
+    const prepared = prepareEvaluationRun(
+      draft,
+      mortalityFits,
+      recordTrajectories,
+    );
     if (!prepared.ok) {
       setErrors(prepared.errors);
       return;
@@ -165,6 +171,7 @@ export function useEvaluationRun() {
               risk: message.risk,
               borrowingOccupation: message.result.borrowingOccupation,
               borrowingProbability: message.result.borrowingProbability,
+              trajectories: message.result.trajectories,
               timing: {
                 gm,
                 durbin,

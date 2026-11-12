@@ -20,6 +20,7 @@ export type EvaluationRunInput =
 export function prepareEvaluationRun(
   draft: SimulationDraft,
   fits: SharedMortalityFits,
+  recordTrajectories = false,
 ): EvaluationRunInput {
   const options = buildSimulationOptions(draft);
   if (!options.ok) return options;
@@ -63,7 +64,7 @@ export function prepareEvaluationRun(
           options.options.numerical.batchSize,
           options.options.numerical.paths,
         ),
-        recordTrajectories: false,
+        recordTrajectories,
       },
       versions: {
         schema: "prototype-1",
