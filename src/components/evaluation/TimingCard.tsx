@@ -8,7 +8,11 @@ import {
 import { prepareConditionalImpoverishmentForecast } from "../../lib/model/simulation/conditional-impoverishment-forecast";
 import { StatusBadge, type ResultStatus } from "../StatusBadge";
 import type { EvaluationRun } from "./useEvaluationRun";
-import { remainingRiskAt, remainingRiskCurve } from "./timing-curve";
+import {
+  includeSelectedRiskPoint,
+  remainingRiskAt,
+  simplifyRemainingRiskCurve,
+} from "./timing-curve";
 
 /** Display a static Plotly step curve and mark the selected attained age. */
 function TimingPlot({
@@ -27,6 +31,14 @@ function TimingPlot({
   const element = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState("light");
   const [plotError, setPlotError] = useState(false);
+  const simplified = useMemo(
+    () => simplifyRemainingRiskCurve(points),
+    [points],
+  );
+  const displayPoints = useMemo(
+    () => includeSelectedRiskPoint(simplified, points, selectedTime),
+    [simplified, points, selectedTime],
+  );
 
   useEffect(() => {
     const observer = new MutationObserver(() =>
@@ -59,14 +71,13 @@ function TimingPlot({
       const accent = colors.getPropertyValue("--accent").trim();
       const chosenAge = retirementAge + selectedTime;
       const selectedRisk = remainingRiskAt(points, selectedTime);
-      const remaining = remainingRiskCurve(points);
 
       await plotly.react(
         node,
         [
           {
-            x: remaining.map((point) => retirementAge + point.timeYears),
-            y: remaining.map((point) => point.cumulativeRisk),
+            x: displayPoints.map((point) => retirementAge + point.timeYears),
+            y: displayPoints.map((point) => point.cumulativeRisk),
             type: "scatter",
             mode: "lines",
             line: { color: accent, width: 2.5, shape: "hv" },
@@ -91,7 +102,10 @@ function TimingPlot({
           font: { color: text },
           xaxis: {
             title: { text: "Attained age", standoff: 10 },
-            range: [retirementAge, retirementAge + horizon],
+            range: [
+              conditional ? chosenAge : retirementAge,
+              retirementAge + horizon,
+            ],
             showline: true,
             linecolor: text,
             gridcolor: grid,
@@ -123,27 +137,31 @@ function TimingPlot({
                   },
                 ]
               : []),
-            {
-              type: "line",
-              xref: "x",
-              yref: "y",
-              x0: retirementAge,
-              x1: chosenAge,
-              y0: selectedRisk,
-              y1: selectedRisk,
-              layer: "between",
-              line: { color: accent, width: 1, dash: "dash" },
-            },
-            {
-              type: "line",
-              xref: "x",
-              yref: "paper",
-              x0: chosenAge,
-              x1: chosenAge,
-              y0: 0,
-              y1: 1,
-              line: { color: text, width: 1.5, dash: "dot" },
-            },
+            ...(!conditional
+              ? [
+                  {
+                    type: "line",
+                    xref: "x",
+                    yref: "y",
+                    x0: retirementAge,
+                    x1: chosenAge,
+                    y0: selectedRisk,
+                    y1: selectedRisk,
+                    layer: "between",
+                    line: { color: accent, width: 1, dash: "dash" },
+                  },
+                  {
+                    type: "line",
+                    xref: "x",
+                    yref: "paper",
+                    x0: chosenAge,
+                    x1: chosenAge,
+                    y0: 0,
+                    y1: 1,
+                    line: { color: text, width: 1.5, dash: "dot" },
+                  },
+                ]
+              : []),
           ],
           showlegend: false,
         },
@@ -176,7 +194,15 @@ function TimingPlot({
       disposed = true;
       cleanup?.();
     };
-  }, [points, retirementAge, selectedTime, horizon, conditional, theme]);
+  }, [
+    points,
+    displayPoints,
+    retirementAge,
+    selectedTime,
+    horizon,
+    conditional,
+    theme,
+  ]);
 
   return (
     <>
