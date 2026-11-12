@@ -72,8 +72,8 @@ function text(value: unknown, max = 100): value is string {
   return typeof value === "string" && value.length <= max;
 }
 
-/** Validate the complete file and its input values before restoring any state. */
-export function parseSetupFile(source: string): SetupFile {
+/** Parse and structurally validate either a setup file or a local editable draft. */
+function parseSetup(source: string, mode: "file" | "draft"): SetupFile {
   let value: unknown;
   try {
     value = JSON.parse(source);
@@ -83,7 +83,8 @@ export function parseSetupFile(source: string): SetupFile {
 
   if (
     !record(value) ||
-    value.format !== "pension-funding-setup" ||
+    value.format !==
+      (mode === "file" ? "pension-funding-setup" : "pension-funding-draft") ||
     value.version !== 1
   )
     throw new Error("This is not a supported setup file (expected version 1).");
@@ -94,13 +95,16 @@ export function parseSetupFile(source: string): SetupFile {
     !text(value.metadata.mortalityData, 100) ||
     !value.metadata.mortalityData.trim() ||
     !text(value.name, 20) ||
-    !value.name.trim() ||
+    (mode === "file" && !value.name.trim()) ||
     !record(value.draft) ||
     !record(value.tables)
   )
     throw new Error("The setup name, inputs or tables are missing or invalid.");
 
   const { market, investor, simulation } = value.draft;
+  /** Local drafts may contain long, incomplete text that remains editable. */
+  const editableText = (item: unknown) =>
+    text(item, mode === "draft" ? 100_000 : 100);
   if (!record(market) || !record(investor) || !record(simulation))
     throw new Error("The market, investor or simulation settings are missing.");
 
@@ -110,8 +114,8 @@ export function parseSetupFile(source: string): SetupFile {
     market.assets.length > 10 ||
     !Array.isArray(market.correlations) ||
     market.correlations.length !== market.assets.length ||
-    !text(market.nominalRiskFreePercent) ||
-    !text(market.inflationPercent) ||
+    !editableText(market.nominalRiskFreePercent) ||
+    !editableText(market.inflationPercent) ||
     !Number.isSafeInteger(market.nextAssetId)
   )
     throw new Error("The market settings are malformed.");
@@ -123,9 +127,9 @@ export function parseSetupFile(source: string): SetupFile {
       !Number.isSafeInteger(asset.id) ||
       (asset.id as number) < 1 ||
       ids.has(asset.id as number) ||
-      !text(asset.name) ||
-      !text(asset.nominalReturnPercent) ||
-      !text(asset.volatilityPercent)
+      !editableText(asset.name) ||
+      !editableText(asset.nominalReturnPercent) ||
+      !editableText(asset.volatilityPercent)
     )
       throw new Error("An asset entry is malformed or has a duplicate ID.");
     ids.add(asset.id as number);
@@ -137,16 +141,16 @@ export function parseSetupFile(source: string): SetupFile {
       (row) =>
         !Array.isArray(row) ||
         row.length !== assets.length ||
-        row.some((item: unknown) => !text(item)),
+        row.some((item: unknown) => !editableText(item)),
     )
   )
     throw new Error("The correlation matrix or next asset ID is invalid.");
 
   if (
-    !text(investor.birthYear) ||
-    !text(investor.retirementYear) ||
-    !text(investor.initialCapital) ||
-    !text(investor.impoverishmentLevel) ||
+    !editableText(investor.birthYear) ||
+    !editableText(investor.retirementYear) ||
+    !editableText(investor.initialCapital) ||
+    !editableText(investor.impoverishmentLevel) ||
     !["female", "male", "custom"].includes(investor.mortality as string) ||
     !["low", "medium", "high"].includes(investor.longevity as string) ||
     typeof investor.maleWeight !== "number" ||
@@ -173,7 +177,7 @@ export function parseSetupFile(source: string): SetupFile {
     (simulation.batchSize !== "auto" &&
       !MANUAL_BATCH_SIZES.some((size) => size === simulation.batchSize)) ||
     !text(simulation.seed, 64) ||
-    !simulation.seed.trim()
+    (mode === "file" && !simulation.seed.trim())
   )
     throw new Error("The simulation settings are malformed.");
 
@@ -190,9 +194,9 @@ export function parseSetupFile(source: string): SetupFile {
         (row.id as number) > 1_000_000_000 ||
         rowIds.has(row.id as number) ||
         !text(row.name, 20) ||
-        !row.name.trim() ||
-        !text(row.value) ||
-        !text(row.impoverishmentLevel) ||
+        (mode === "file" && !row.name.trim()) ||
+        !editableText(row.value) ||
+        !editableText(row.impoverishmentLevel) ||
         !["Target risk", "Withdrawal"].includes(row.type as string) ||
         !["Unconstrained", "Projected"].includes(row.policy as string)
       )
@@ -210,6 +214,7 @@ export function parseSetupFile(source: string): SetupFile {
   const sourceInvestor = sourceFile.draft.investor;
   const sourceSimulation = sourceFile.draft.simulation;
   if (
+    mode === "file" &&
     sourceMarket.correlations.some(
       (row, index) => !row[index].trim() || Number(row[index]) !== 1,
     )
@@ -218,38 +223,41 @@ export function parseSetupFile(source: string): SetupFile {
       "Invalid correlation matrix: every diagonal entry must equal 1.",
     );
 
-  const options = buildSimulationOptions(sourceFile.draft);
+  if (mode === "file") {
+    const options = buildSimulationOptions(sourceFile.draft);
+    if (!options.ok)
+      throw new Error(`Invalid setup inputs: ${options.errors.join(" ")}`);
 
-  if (!options.ok)
-    throw new Error(`Invalid setup inputs: ${options.errors.join(" ")}`);
+    if (
+      sourceSimulation.targetRiskPercent <= 0 ||
+      sourceSimulation.targetRiskPercent >= 100 ||
+      sourceSimulation.withdrawalEuros < 0
+    )
+      throw new Error("Invalid saved risk or withdrawal setting.");
 
-  if (
-    sourceSimulation.targetRiskPercent <= 0 ||
-    sourceSimulation.targetRiskPercent >= 100 ||
-    sourceSimulation.withdrawalEuros < 0
-  )
-    throw new Error("Invalid saved risk or withdrawal setting.");
+    for (const kind of ["withdrawal", "feasibility"] as const) {
+      for (const row of sourceFile.tables[kind]) {
+        const validRisk =
+          /^\d+(?:\.\d+)?$/.test(row.value.trim()) &&
+          Number(row.value.trim()) < 100;
+        const amount = parseAmount(row.value);
 
-  for (const kind of ["withdrawal", "feasibility"] as const) {
-    for (const row of sourceFile.tables[kind]) {
-      const validRisk =
-        /^\d+(?:\.\d+)?$/.test(row.value.trim()) &&
-        Number(row.value.trim()) < 100;
-      const amount = parseAmount(row.value);
-
-      if (row.type === "Target risk" ? !validRisk : amount === null)
-        throw new Error(`Invalid input for ${row.name} in the ${kind} table.`);
-
-      if (kind === "feasibility") {
-        const threshold = parseAmount(row.impoverishmentLevel);
-        if (
-          threshold === null ||
-          threshold < 1 ||
-          threshold >= options.options.investor.initialCapital
-        )
+        if (row.type === "Target risk" ? !validRisk : amount === null)
           throw new Error(
-            `Invalid impoverishment level for ${row.name} in the feasibility table.`,
+            `Invalid input for ${row.name} in the ${kind} table.`,
           );
+
+        if (kind === "feasibility") {
+          const threshold = parseAmount(row.impoverishmentLevel);
+          if (
+            threshold === null ||
+            threshold < 1 ||
+            threshold >= options.options.investor.initialCapital
+          )
+            throw new Error(
+              `Invalid impoverishment level for ${row.name} in the feasibility table.`,
+            );
+        }
       }
     }
   }
@@ -311,4 +319,14 @@ export function parseSetupFile(source: string): SetupFile {
       feasibility: copyRows(sourceFile.tables.feasibility),
     },
   };
+}
+
+/** Parse an imported file, including full numerical validation. */
+export function parseSetupFile(source: string): SetupFile {
+  return parseSetup(source, "file");
+}
+
+/** Restore a structurally safe local draft, including unfinished input values. */
+export function parseSavedSetupDraft(source: string): SetupFile {
+  return parseSetup(source, "draft");
 }

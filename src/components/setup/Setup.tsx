@@ -656,6 +656,10 @@ export function Setup() {
           <div>
             <span className="tiny-label">YOUR SETUP</span>
             <h3>Name your setup</h3>
+            <p>
+              Your inputs are saved locally in this browser. Fits and results
+              are not saved automatically.
+            </p>
           </div>
         </div>
         <div className="input-grid">

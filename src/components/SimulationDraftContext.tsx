@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -20,6 +21,7 @@ import {
   type SetupFile,
   type SetupTables,
 } from "../lib/options/setup-file";
+import { readSavedDraft, writeSavedDraft } from "../lib/options/saved-draft";
 
 /** Name used for an unnamed setup throughout the interface. */
 export const DEFAULT_SETUP_NAME = "A thoughtful start";
@@ -32,6 +34,7 @@ export interface SharedMortalityFits {
 
 /** One-time first-visit fit status, shared so Evaluation can show progress. */
 export type InitialMortalityFit =
+  | { phase: "checking-storage" }
   | { phase: "loading" }
   | { phase: "complete" }
   | { phase: "skipped" }
@@ -69,9 +72,11 @@ const Context = createContext<{
   setInitialMortalityFit: React.Dispatch<
     React.SetStateAction<InitialMortalityFit>
   >;
+  /** User-facing warning when automatic browser storage cannot be used. */
+  storageWarning: string | null;
 } | null>(null);
 
-/** Provide in-memory editable inputs and the most recently prepared options to descendant panels. Neither value is persisted across reloads. */
+/** Provide shared inputs and restore editable drafts locally before starting the example fit. */
 export function SimulationDraftProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft] = useState(initialSimulationDraft);
   const [setupName, setSetupName] = useState(DEFAULT_SETUP_NAME);
@@ -79,6 +84,10 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
     initialSetupTables(draft.investor.impoverishmentLevel),
   );
   const [workspaceRevision, setWorkspaceRevision] = useState(0);
+  const [storageReady, setStorageReady] = useState(false);
+  const [storageWarning, setStorageWarning] = useState<string | null>(null);
+  const storageInitialized = useRef(false);
+  const protectedBaseline = useRef<string | null>(null);
   const [evaluationResult, setEvaluationResult] =
     useState<EvaluationRun | null>(null);
   const runGuards = useRef(new Set<() => boolean>());
@@ -91,7 +100,58 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
     ce: null,
   });
   const [initialMortalityFit, setInitialMortalityFit] =
-    useState<InitialMortalityFit>({ phase: "loading" });
+    useState<InitialMortalityFit>({ phase: "checking-storage" });
+
+  // Never read browser storage during server rendering or overwrite it before recovery.
+  useEffect(() => {
+    if (storageInitialized.current) return;
+    storageInitialized.current = true;
+
+    try {
+      const saved = readSavedDraft(window.localStorage);
+      if (saved) {
+        setDraft(saved.draft);
+        setSetupName(saved.name);
+        setTables(saved.tables);
+        setInitialMortalityFit({ phase: "skipped" });
+        // Remount panel-local state, including the next comparison-row ID.
+        setWorkspaceRevision((revision) => revision + 1);
+      } else {
+        setInitialMortalityFit({ phase: "loading" });
+      }
+    } catch {
+      // Preserve an unreadable entry until the user actually changes the draft.
+      protectedBaseline.current = JSON.stringify({
+        name: setupName,
+        draft,
+        tables,
+      });
+      setInitialMortalityFit({ phase: "skipped" });
+      setStorageWarning(
+        "The saved setup could not be restored. New changes will be saved locally if browser storage is available.",
+      );
+    }
+
+    setStorageReady(true);
+  }, []);
+
+  // Save only editable inputs, promptly after each edit; never persist results.
+  useEffect(() => {
+    if (!storageReady) return;
+    const saved = { name: setupName, draft, tables };
+
+    if (protectedBaseline.current === JSON.stringify(saved)) return;
+
+    try {
+      writeSavedDraft(window.localStorage, saved);
+      protectedBaseline.current = null;
+      setStorageWarning(null);
+    } catch {
+      setStorageWarning(
+        "Changes could not be saved in this browser. Export your setup to keep a copy.",
+      );
+    }
+  }, [storageReady, draft, setupName, tables]);
 
   /** Register a live worker check and remove it when its owning panel unmounts. */
   const registerRunGuard = useCallback((isRunning: () => boolean) => {
@@ -112,6 +172,7 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
       return false;
 
     setDraft(file.draft);
+    protectedBaseline.current = null;
     setSetupName(file.name);
     setTables(file.tables);
     setPrepared(null);
@@ -142,6 +203,7 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
         setMortalityFits,
         initialMortalityFit,
         setInitialMortalityFit,
+        storageWarning,
       }}
     >
       {children}

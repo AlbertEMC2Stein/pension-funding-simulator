@@ -66,9 +66,20 @@ function WorkspacePanels({ view, term }: { view: View; term: string | null }) {
   );
 }
 
+/** Explain when browser storage could not recover or save the editable setup. */
+function DraftStorageNotice() {
+  const { storageWarning } = useSimulationDraft();
+  return storageWarning ? (
+    <p className="draft-storage-warning" role="alert">
+      {storageWarning}
+    </p>
+  ) : null;
+}
+
 /**
  * Application shell: switches workspace panels and supplies navigation and
- * temporary notices. This is local preview state, not persisted scenario data.
+ * temporary notices. Navigation and theme are local UI state; editable setup
+ * data are managed separately by the shared draft provider.
  */
 export function SimulatorDraft() {
   const [view, setView] = useState<View>("evaluation");
@@ -203,6 +214,7 @@ export function SimulatorDraft() {
                 </label>
               </div>
             </header>
+            <DraftStorageNotice />
             <WorkspacePanels view={view} term={term} />
             <footer className="page-footer">
               <span>

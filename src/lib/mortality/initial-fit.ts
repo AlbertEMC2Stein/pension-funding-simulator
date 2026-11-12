@@ -22,7 +22,13 @@ export function isInitialMortalitySetup(draft: SimulationDraft): boolean {
 /** Decide whether the one-time fit should start, wait for data, or be skipped. */
 export function initialMortalityFitAction(input: {
   draft: SimulationDraft;
-  phase: "loading" | "running" | "complete" | "skipped" | "error";
+  phase:
+    | "checking-storage"
+    | "loading"
+    | "running"
+    | "complete"
+    | "skipped"
+    | "error";
   cohortReady: boolean;
   marketReady: boolean;
   workerActive: boolean;

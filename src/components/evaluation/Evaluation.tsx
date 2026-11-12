@@ -690,6 +690,11 @@ export function Evaluation() {
         chart, allocation, capital comparison and feasibility diagnostic use
         your current inputs. Simulation results use the latest completed run.
       </PreviewBanner>
+      {initialMortalityFit.phase === "checking-storage" && (
+        <p className="initial-fit-status" role="status">
+          Checking for a saved setup…
+        </p>
+      )}
       {(initialMortalityFit.phase === "loading" ||
         initialMortalityFit.phase === "running") && (
         <p className="initial-fit-status" role="status">
