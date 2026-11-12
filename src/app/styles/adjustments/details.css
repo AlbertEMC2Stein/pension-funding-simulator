@@ -275,26 +275,23 @@ input[aria-invalid="true"] {
 }
 
 .table-details-toggle {
-  display: block;
+  display: list-item;
+  list-style-position: inside;
+  list-style-type: disclosure-closed;
   margin-top: 7px;
   padding: 0;
   border: 0;
   background: none;
   color: var(--accent);
   font: inherit;
+  font-size: 11px;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
 }
 
-.table-details-toggle::before {
-  content: "▸";
-  display: inline-block;
-  margin-right: 6px;
-  transition: transform 0.15s ease;
-}
-
-.table-details-toggle[aria-expanded="true"]::before {
-  transform: rotate(90deg);
+.table-details-toggle[aria-expanded="true"] {
+  list-style-type: disclosure-open;
 }
 
 .feasibility-row-details {
