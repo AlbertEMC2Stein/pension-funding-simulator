@@ -85,3 +85,17 @@ Research references for the step are `sections/5_first_passage.tex` and
 `code/utils/+wealthSimulation/advanceWealthStep.m` in the separate research
 project. Follow that project's `AGENTS.md` before using its files. The reference
 code was read to inform these comments, not executed or modified.
+
+
+## Projected wealth step
+
+`tensorflow/projected-wealth-step.ts` evaluates the prepared, piecewise-linear
+projection curve on the selected TensorFlow backend and advances wealth using
+Euler–Maruyama in the risky region. It retains the exact risk-free update for
+safe paths and freezes inactive paths. The step also returns the frozen wealth
+variance rate needed by a future projected first-passage bridge. Its caller
+creates and disposes the TensorFlow policy tensors once per batch.
+
+This standalone step has CPU tests but is not connected to the batch loop,
+scheduler, or UI simulation. It does not detect hits, and its timestep error and
+GPU behavior must be assessed before interpreting projected risk estimates.
