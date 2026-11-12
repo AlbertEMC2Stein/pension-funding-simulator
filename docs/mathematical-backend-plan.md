@@ -1,121 +1,263 @@
-# Mathematical backend: incremental implementation plan
+# Mathematical backend and website: implementation plan
 
-This plan is a working roadmap, not a specification of unverified mathematical results. Implement one milestone at a time, review its outputs and tests, and adjust the following steps when necessary. The Next.js website remains independent of the research project. Model logic belongs in framework-independent TypeScript modules; React presents inputs, progress and results.
+This is a working roadmap, not a specification of unverified mathematical
+results. Statuses describe what the website currently implements; they do not
+claim that the research results or every numerical approximation have been
+independently verified. Continue in small, reviewable steps and adjust the plan
+when findings warrant it.
 
-## Starting point
+The website is independent of `gompertz-pension-funding` at runtime. Before
+using the research manuscript or code for future work, read that project's
+`AGENTS.md` and follow its instructions. Treat research files as reference
+material and do not modify them without authorization.
 
-The website has editable market and investor inputs, validated simulation options, manual market calibration, and CSV price import with historical estimates and uncertainty diagnostics. Six preprocessed cohort tables support cohort survival and GM and market-compatible CE mortality fits, which can be inspected in the mortality panel. A development panel exposes intermediate information.
+## Current state
 
-The evaluation and comparison-table results are still illustrative: policies and financial-path simulations are not implemented. Preparing options when Run simulation is clicked does not start a financial simulation. Editable settings are not yet persisted across reloads, and setup/result import and export controls are placeholders. Mortality fitting has its own worker; the planned financial simulation worker and its cancellation flow are separate work.
+The app has editable market and investor inputs, cohort-based GM and
+market-compatible CE mortality fits, analytical CE policy calculations, and a
+TensorFlow.js financial simulation running in Web Workers. Evaluation and both
+comparison tables display calculated results. Local draft recovery, setup
+import/export, results export, table CSV export and chart exports are connected.
 
-The research project is a reference, not a runtime dependency. Before porting any formula or algorithm, read the current relevant paper passage and MATLAB implementation, check definitions and conditions, and record where the website implementation came from. Use existing reference outputs when suitable; running or changing research code requires whatever authorization its project instructions specify. Research work remains separate from the website.
+The current implementation remains a prototype. Its results depend on the
+model and input assumptions, finite simulation horizon, time discretization,
+first-passage approximations and numerical backend. Monte Carlo intervals cover
+sampling uncertainty only. Validation, documentation and usability work remain
+before treating the application as production-ready.
 
-## Working agreement for each milestone
+## Working agreement
 
-1. State inputs, outputs, units, mathematical conventions, assumptions and failure cases before implementation.
-2. Implement a small pure calculation or a small interface connection, with readable names and documentation.
-3. Verify against hand-checkable examples, invariants, and, when available, appropriately matched MATLAB reference data. Record tolerances and any intentional differences.
-4. Show real results only where supported; keep other views explicitly marked as not calculated. Review the numerical output and UI together before proceeding.
+1. State the inputs, outputs, units, assumptions and failure cases of each new
+   calculation before implementing it.
+2. Keep numerical calculations, worker execution and presentation distinct;
+   validate the front-end/worker snapshot boundary and avoid repeated checks in
+   the simulation's inner loop.
+3. Verify with hand-checkable examples, invariants and matched reference cases
+   where available. Record tolerances and intentional differences; do not treat
+   an approximate match as formal validation.
+4. Show results only where their assumptions hold, mark outdated results, and
+   review numerical behavior and presentation together.
 
 ## Milestones
 
-### 1. Numerical conventions and reference cases — initial work complete
+### 1. Conventions and reference cases — established; maintain as work evolves
 
-Document the meaning of nominal return, inflation, real drift and rate, covariance, market price of risk and the paper's convention for rho. Separate input validation from assumptions that restrict only specific results. Identify small, versioned reference cases and their provenance; do not invent expected outputs.
+Nominal returns and inflation are entered as annual percentages; the model uses
+continuously compounded real rates, decimal probabilities and real euro values.
+The covariance, Merton direction and `rho` conventions are documented in the
+[market-calibration specification](market-calibration-specification.md).
+Result-specific assumptions are reported separately from input validity.
 
-Draft for review: [manual market-calibration specification](market-calibration-specification.md).
+**Remaining:** Keep reference cases and their provenance current as the model
+changes. Review near-zero and boundary cases against the applicable result's
+assumptions rather than extending conclusions from a different diagnostic.
 
-**Check:** Compare the website's interpretation of input units and asset order with the research implementation. Agree on edge cases, including zero and negative Merton-direction components, before translating dependent formulas.
+### 2. Market calibration — implemented; further validation ongoing
 
-### 2. Market calibration from manual inputs — implemented
+Manual asset inputs, a mirrored correlation matrix, covariance construction,
+calibration and assumption diagnostics are connected. Invalid, singular and
+numerically near-singular matrices are rejected. Negative Merton components
+remain valid market inputs but restrict applicable policy diagnostics.
 
-Derive the real market quantities, covariance matrix and Merton direction from validated inputs. Use a stable linear solve rather than explicitly inverting the covariance matrix. Report numerical failures and assumption diagnostics without disabling unrelated results.
+**Remaining:** Continue checking numerical behavior in ill-conditioned and
+higher-dimensional markets. The maximum of ten assets is a calibration and
+computation limit, not a claim that every ten-asset case performs equally well.
 
-**Check:** Compare a two-asset case against the corresponding research calibration and check a higher-dimensional case and invalid or ill-conditioned matrices. Show the derived values in the developer panel first.
+### 3. Cohort data and mortality models — implemented
 
-### 3. Cohort loading and survival targets — implemented
+The six packaged cohort tables support female, male and custom survival-curve
+mixtures. GM and market-compatible CE models are fitted in a worker; changes to
+relevant inputs make the appropriate fit outdated. The fresh default example
+starts a one-time background fit. Imported or locally restored setups do not
+fit automatically. The exponential law remains a research benchmark, not a
+user-facing model.
 
-Load the appropriate packaged cohort tables and construct remaining-lifetime survival from retirement age. Support male, female and custom mixtures. A custom mixture combines the sex-specific survival curves, not annual death probabilities; the source's open-ended 100+ row is not a one-year mortality probability.
+**Remaining:** Continue comparisons with appropriately matched reference fits,
+especially optimizer failures and difficult cohorts. KL divergence and the
+largest survival difference are available as technical diagnostics; do not
+introduce qualitative fit grades without defensible thresholds. Preserve the
+rule that loading a saved setup does not silently calculate results.
 
-**Check:** Verify survival starts at one, stays within bounds and is non-increasing; compare selected cohorts and mixture endpoints with source data and suitable reference values. Make loading, missing data and unsupported ages visible in the mortality panel.
+### 4. Unconstrained CE analysis and Evaluation — implemented
 
-### 4. Mortality models and fit diagnostics — implemented
+Safe boundary and withdrawal, CE withdrawal/risk and required-capital relations,
+feedback allocation and global simplex feasibility are connected to Evaluation.
+The risk-taking comparison holds withdrawal fixed. Its applicability and the
+availability of the feasibility diagnostic depend on their respective model
+assumptions. Global simplex feasibility requires a componentwise non-negative
+Merton direction with at least one positive component; `zeta <= 1` then gives
+the relevant no-borrowing condition.
 
-Implement and verify the model survival functions and annual-grid fit objective first, then the Gompertz–Makeham and market-compatible compactified-exponential fits in separate small changes. Specify optimizer tolerances, initializations, convergence failures and the treatment of the final survival bin. The compatible fit must be invalidated when relevant market or mortality inputs change.
+**Remaining:** Keep unsupported parameter regions explicit, including capital
+comparisons where withdrawal is at or below interest on the impoverishment
+level. Verify edge and limiting cases as further formulas are added. The
+[analytical module notes](../src/lib/model/analytical/README.md) contain useful
+formula provenance but also need a separate review for outdated connection
+status.
 
-The website will implement GM and CE only. The constant-hazard exponential model is a benchmark in the paper and is not planned as a user-facing mortality model.
+### 5. Run snapshots, workers and reproducibility — implemented; format provisional
 
-**Check:** Compare survival curves, fit losses and fitted parameters against matched reference cases; distinguish optimizer failure from a poor fit. Connect the real curves and quantitative diagnostics to the mortality panel. Do not assign qualitative fit grades until defensible thresholds have been agreed.
+The worker validates a captured run snapshot, including market consistency,
+fit parameters, numerical settings, seed, algorithm identifiers and available
+provenance. Editing inputs does not change a running snapshot. Replacement runs
+and setup imports that interrupt active work require confirmation; cancellation
+is observed between batches. Progress and ETA are batch-based.
 
-### 5. Unconstrained policy and analytic quantities — next
+A shared seed is configurable. A run consumes one stream across batches;
+comparison rows derive separate streams. Matching the seed alone does not ensure
+identical results after changes to batch size, backend, algorithm or data.
+Model/data identifiers are descriptive rather than data checksums, and original
+historical price data and their source are not retained in the current snapshot.
 
-Port the safe boundary, compatible policy and withdrawal/risk relationship in independently tested pieces. Respect which of target risk and withdrawal is the input; do not present a quantity as available when the necessary inputs or assumptions are missing. Implement result-specific assumption checks, including the conditions behind global simplex feasibility.
+**Remaining:** Review snapshot versioning and provenance for a stable future
+format. Add random-stream known-answer and statistical checks where appropriate;
+do not promise path-by-path equality across batch sizes or numerical backends.
+Review the development panel and its event log, including how prepared options
+from Evaluation and Data & tables are represented.
 
-The safe boundary, safe withdrawal, compatible CE withdrawal/risk/required-capital relationship, unconstrained feedback and global simplex-feasibility diagnostic are implemented as standalone calculations. Their provenance, domains and tests are documented in [`src/lib/model/analytical`](../src/lib/model/analytical/README.md). They are not yet connected to the evaluation panel; a complete simulation snapshot remains future work. Other diagnostics must be added only when their result-specific assumptions and numerical requirements are established.
+### 6. Batched financial simulation — implemented; numerical checks ongoing
 
-**Check:** Compare boundary values, limiting cases and selected results with reference cases. Connect one verified result at a time, with the correct applicability message and status.
+TensorFlow.js simulates batches in workers, preferring WebGPU with WebGL and CPU
+fallbacks. Automatic batch sizing targets approximately four batches and is
+capped at 32,768 paths; manual choices are available. The scheduler retains
+first-hit information and only a bounded sample of trajectories when requested.
+The scalar implementation remains in `legacy/` as a reference.
 
-### 6. Execution state and reproducibility foundation
+The unconstrained CE step uses exact safe-gap dynamics within its applicable
+region. First-passage times use local bridge approximations. The projected policy
+uses Euler stepping and a frozen-variance bridge. TensorFlow's GPU computations
+are generally Float32, and backend or time-step differences can affect results.
+See the [simulation notes](../src/lib/model/simulation/README.md) for details;
+some introductory status text there also needs a documentation review.
 
-Define a versioned run snapshot with seed, numerical settings, market and mortality inputs, model/algorithm versions and relevant data provenance. Add dependency-aware result states and preserve the snapshot used by each run. Agree on random-number generation and reproducible stream handling before simulation.
+**Remaining:** Run systematic time-step, batch-size, backend and path-count
+sensitivity checks, including projected cases and representative devices.
+Compare matched outputs with MATLAB and analytical benchmarks, documenting
+uncertainty and tolerances. Profile worker/GPU memory and throughput before
+considering alternative kernels. Antithetic sampling is a possible later
+variance-reduction experiment, not an existing feature.
 
-**Check:** Identical snapshots should lead to identical generated random streams under the documented implementation; changing a relevant input marks only dependent results outdated. Persisting/exporting full results can come later.
+### 7. GM risk and paired projection — implemented; verification ongoing
 
-### 7. Worker and interruption flow
+The GM risk panel shows the unconstrained CE reference, the GM Monte Carlo
+estimate and sampling uncertainty. When projection is selected, paired
+projected results and projected-minus-unconstrained differences are also shown.
+Projection uses the covariance-weighted simplex metric and a prepared
+piecewise-linear allocation curve. It is a feasible comparison policy, not a
+claim of constrained optimality.
 
-Add a Web Worker interface with a small deterministic test task, structured progress messages and cancellation. Editing inputs leaves the current task running on its captured snapshot; starting a replacement asks for confirmation before interrupting. Keep the UI responsive and report errors explicitly.
+**Remaining:** Compare matched projected and unconstrained cases against
+suitable references, and examine discretization and bridge sensitivity
+separately from Monte Carlo error. Confirm behavior and performance across GPU
+backends, near-degenerate markets and more than two assets. GM mortality can
+extend past the CE policy horizon; exported and displayed estimates cover only
+the simulated horizon.
 
-**Check:** Exercise completion, cancellation, failed jobs, editing during a run and a late message from an obsolete job. Confirm the correct snapshot and status remain attached to each result. Add ETA only if enough measured progress exists for a meaningful estimate.
+### 8. Borrowing, timing and trajectories — implemented; verification ongoing
 
-### 8. Reproducible financial-path simulation
+Evaluation includes borrowing probability and GM-weighted occupation time,
+analytical borrowing boundaries, an impoverishment timing view with forecast
+and conditional-update modes, and optional sampled wealth trajectories. The
+timing view offers cumulative remaining risk and density. Its optional Durbin
+approximation and diagnostics apply only where the unconstrained assumptions
+hold. Borrowing diagnostics are unavailable for projected policies and for
+negative Merton components; `zeta <= 1` supplies an analytical zero where the
+assumptions hold.
 
-Implement the unconstrained wealth process in small stages: seeded increments, one-step behavior, boundary handling and then multiple paths. Review time discretization, first-passage detection and stopping rules against the current research implementation rather than treating a grid crossing as exact. Make recording full trajectories optional.
+The first-borrowing bridge is an approximation and does **not** condition on
+no prior impoverishment or use a first-passage bridge. Occupation uses the
+implemented interpolation and GM-survival weighting. Trajectories show sampled
+wealth conditional on remaining alive and stop at impoverishment or the policy
+horizon; they are not death-time simulations.
 
-**Check:** Use deterministic increment tests and appropriate stochastic tests, compare against reference cases and analytic benchmarks, and study time-step and path-count sensitivity separately. Benchmark representative desktop and mobile workloads before choosing a numerical library or WebAssembly.
+**Remaining:** Continue matched MATLAB and time-step comparisons for borrowing,
+including first borrowing and occupation. A previously observed approximate
+comparison (about 0.89 versus 0.91 years) is a useful sanity check, not a full
+validation. Review Durbin bounds and empirical comparison behavior under Monte
+Carlo error and different regimes. Do not combine sampling intervals with
+bridge, time-step or parameter uncertainty.
 
-### 9. First Monte Carlo result
+### 9. Comparison tables — implemented; verification ongoing
 
-Implement the GM-reference impoverishment-risk estimator with its horizon, survival weighting and Monte Carlo uncertainty. Be explicit about sampling units if antithetic paths are used. Keep sampling uncertainty separate from time-step, crossing and horizon errors.
+Withdrawal/risk/policy rows compute CE values and GM risk. The feasibility
+sensitivity table varies risk or withdrawal and the impoverishment level,
+showing `zeta`, borrowing probability and expected borrowing time, with further
+diagnostics in each row's details. Rows share captured market, mortality and
+numerical settings. The queue runs at most two workers, reports row and overall
+progress, and reuses completed rows only when their relevant inputs still match.
+Names can be edited without invalidating results; deletion of calculated rows
+requires confirmation.
 
-**Check:** Compare matched scenarios against research outputs within appropriate statistical uncertainty; test intervals, non-hits and edge cases. Connect the estimated GM risk card, with the target-risk comparison only where meaningful.
+**Remaining:** Compare representative table rows directly with equivalent
+Evaluation runs, allowing for their distinct random streams and Monte Carlo
+uncertainty. Exercise cancellation, invalid rows, edits during a run, stale
+results, reuse and two-worker contention in browser-level checks. Keep
+policy-specific unavailable states consistent with Evaluation.
 
-### 10. Projection and paired comparisons
+### 10. Historical market CSV calibration — implemented; stress tests pending
 
-Specify and implement projection onto the appropriate multi-asset simplex, including boundary and numerical-tolerance behavior. Apply it as a feasible comparison policy, without presenting it as the constrained optimum. Simulate the projected and unprojected policies using matched market randomness where appropriate.
+The app imports euro adjusted-close time series, estimates individual assets
+using available observations and pairwise correlations from matching interval
+endpoints, and reports coverage and uncertainty diagnostics. Elapsed time uses
+calendar days divided by 365.25, including weekends and holidays. Pairwise
+estimation can produce an invalid matrix, which is rejected rather than silently
+repaired. The estimates and interval assumptions are described in
+[historical market import](historical-market-import.md).
 
-**Check:** Verify feasibility, idempotence and representative cases in two and more dimensions; independently verify projection optimality conditions. Validate the paired GM-risk difference and its uncertainty before connecting the projected mini-cards and policy comparison.
+**Remaining:** Stress scenarios based on confidence bounds remain placeholders.
+Before implementing them, specify how parameters are recalibrated and which
+results remain applicable when assumptions such as non-negative Merton
+components fail. Historical intervals describe estimation uncertainty, not
+future returns or a joint confidence region. Live ticker/API integration has
+not been selected or implemented.
 
-### 11. Additional diagnostics and charts
+### 11. Local recovery and exports — implemented; integration checks ongoing
 
-Add borrowing exposure and feasible-strategy diagnostics, then the impoverishment-time density/cumulative display and conditional update, each as separate increments. Specify what is conditioned on and whether existing outputs suffice before promising age changes without resimulation. Add optional trajectories only after the core results are reliable.
+Editable setup inputs, name and both tables are saved in versioned browser local
+storage, including incomplete edits. A restored draft does not restore fits or
+results, or trigger the first-visit fit. Setup JSON import validates inputs
+before replacing the workspace and clears prior fits and results. Separate
+exports provide results JSON, comparison-table CSV and PNG/SVG/CSV chart output.
+See [setup files](setup-file.md) and [results and chart exports](results-export.md)
+for formats and current limitations.
 
-**Check:** Compare small cases and boundary events to reference results; distinguish statistical uncertainty from discretization and modeling error. Keep impoverishment and borrowing visuals adjacent as designed.
+**Remaining:** Continue browser-level checks of recovery, invalid/unavailable
+storage, active-run import confirmation, table exports and chart images. The
+user has confirmed the reload workflow works; image rendering and downloads
+should still be reviewed on supported browsers and themes. Historical source
+CSV data, diagnostics and raw simulated observations are not persisted in the
+setup or results exports. Exported results are not currently re-importable.
 
-### 12. Comparison tables
+## Next work
 
-Define each table's independent inputs, applicable outputs and calculation dependencies. All rows share the market and investor baseline; row edits affect their own outputs, while shared changes invalidate dependent rows. Compute rows asynchronously with individual statuses and the same interruption rules.
+1. **Quick Start and dictionary:** Add an approachable workflow guide, initially
+   considering its placement in Help & dictionary. Audit the interface for
+   technical terms such as `pp`, GM, CE, projection, safe boundary and random
+   seed; add explanations and links in small reviewable groups. Explain that
+   numerical intervals describe Monte Carlo sampling only. Include an
+   explanation of reproducibility and how the seed, batch size and numerical
+   backend affect repeatability.
+2. **Refresh supporting documentation:** Review the analytical and simulation
+   READMEs for stale statements about UI connections and worker availability.
+   Keep the codebase guide and export documentation aligned with actual behavior.
+3. **Numerical and product verification:** Complete the time-step, projected
+   policy and borrowing comparisons above; then review responsive layouts,
+   keyboard access, both themes and the static GitHub Pages deployment. Record
+   platform coverage and known limitations.
+4. **Developer panel:** Review which diagnostics and event-log information are
+   useful. If “Last prepared options” stays, make its coverage of Evaluation
+   and Data & tables clear and consistent.
+5. **Localization:** Implement the English/German language switch using
+   maintainable translations, and check both languages in the responsive UI.
+6. **Further numerical features:** Specify historical stress scenarios before
+   implementing them. Evaluate antithetic sampling as a separate experiment,
+   including its effect on uncertainty estimates and paired comparisons.
+7. **Repository and deployment naming:** Plan the requested eventual rename to
+   `pension-funding-simulator` and the resulting GitHub Pages URL. Before any
+   rename, review repository references, the Pages base path, asset and worker
+   URLs, deployment configuration and the effect on existing links. The timing
+   and execution of that external change remain a later task.
 
-**Check:** Exercise mixed completed, pending, invalid and outdated rows; verify policy-specific unavailable cells and compare individual rows with the corresponding single-scenario results.
-
-### 13. Market CSV calibration — initial implementation complete
-
-EUR adjusted-close CSV parsing, calendar-time historical estimation, positive-definiteness checks and import diagnostics are implemented. Growth and volatility intervals use the Gaussian log-return model; correlation intervals use an approximate Fisher transformation. See [historical market import](historical-market-import.md) and the source for the precise currently implemented conventions. Stress scenarios remain placeholders and will require recalibration with assumptions rechecked.
-
-Measure each return interval in calendar time, including weekends and holidays, with elapsed calendar days divided by 365.25 as the year convention. Estimate each asset from its available observations and each pair's correlation from matching observed interval endpoints. Construct the covariance matrix from separately estimated volatilities and pairwise correlations. Reject indefinite, singular and numerically near-singular matrices; never silently repair them. Report gaps and pairwise coverage. The example CSV was generated on a weekday-based clock, so its generating parameters are not an exact calendar-time calibration target.
-
-Historical annualized compounded log growth is the quantity currently placed in the market editor; it is distinct from expected one-year GBM price growth or the SDE's arithmetic drift. Do not present historical estimation intervals as forecasts. Intervals for arithmetic drift and their treatment of volatility uncertainty would require separate specification and validation.
-
-**Check:** Test with the packaged synthetic CSV and small hand-checkable data, including malformed and missing values. Compare estimates with independently computed references and identify that sample estimates need not equal the generating parameters.
-
-### 14. Persistence, export and finishing work — pending
-
-Save editable settings locally with schema versioning and recovery from invalid or old data. Provide distinct setup, comparison-table and result exports, with the metadata necessary to reproduce and interpret runs. Add translations and accessible explanations incrementally.
-
-**Check:** Reload and restore settings; round-trip exported scenarios and results, verify version handling and ensure the seed and provenance identify the run. Test static GitHub Pages deployment, accessibility, responsive layouts and both themes.
-
-## Cross-cutting decisions
-
-- Keep simulation confidence intervals specific to Monte Carlo sampling. Display historical parameter uncertainty and time-step or boundary approximation separately.
-- Use the development panel for numerical inspection and bounded diagnostic logs; never rely on it as the only place users see relevant errors or result status.
-- Do not silently repair invalid covariance matrices, claim a projected policy is optimal, or label a fit good or bad without an agreed criterion.
-- Prioritize readable, documented numerical code. Consider matrix packages or WebAssembly only after profiling the real workload and verifying results against the same tests.
+The [future-improvements list](future-improvements.md) remains a convenient
+collection of ideas; this roadmap records where each currently fits. These
+items are not a fixed schedule and do not imply a deployment now.
