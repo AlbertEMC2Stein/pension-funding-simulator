@@ -34,14 +34,28 @@ interface ExampleRow {
   id: number;
   type: "Target risk" | "Withdrawal";
   value: string;
+  /** Row-specific threshold used only by the feasibility layout. */
+  impoverishmentLevel: string;
   policy: "Unconstrained" | "Projected";
 }
 
 /** Each table keeps its own editable examples when the user switches views. */
-function initialRows(): ExampleRow[] {
+function initialRows(impoverishmentLevel: string): ExampleRow[] {
   return [
-    { id: 1, type: "Target risk", value: "5.0", policy: "Unconstrained" },
-    { id: 2, type: "Target risk", value: "10.0", policy: "Projected" },
+    {
+      id: 1,
+      type: "Target risk",
+      value: "5.0",
+      policy: "Unconstrained",
+      impoverishmentLevel,
+    },
+    {
+      id: 2,
+      type: "Target risk",
+      value: "10.0",
+      policy: "Projected",
+      impoverishmentLevel,
+    },
   ];
 }
 
@@ -57,7 +71,7 @@ const tableDescriptions: Record<TableType, string> = {
   withdrawal:
     "Compare withdrawals and risk across unconstrained and projected policies.",
   feasibility:
-    "Explore how the unprojected policy's feasibility diagnostics change with the inputs.",
+    "Vary risk or withdrawal and the impoverishment level for the unconstrained policy.",
 };
 
 /** Compare editable rows against the shared setup; exports and other tables are previews. */
@@ -79,8 +93,8 @@ export function DataView() {
   const [tableType, setTableType] = useState<TableType>("withdrawal");
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [tables, setTables] = useState<Record<TableType, ExampleRow[]>>({
-    withdrawal: initialRows(),
-    feasibility: initialRows(),
+    withdrawal: initialRows(draft.investor.impoverishmentLevel),
+    feasibility: initialRows(draft.investor.impoverishmentLevel),
   });
   const rows = tables[tableType];
   const allComputed =
@@ -209,6 +223,7 @@ export function DataView() {
                     type: "Target risk",
                     value: "5.0",
                     policy: "Unconstrained",
+                    impoverishmentLevel: draft.investor.impoverishmentLevel,
                   },
                 ],
               }));
@@ -241,8 +256,11 @@ export function DataView() {
         )}
         {tableType === "feasibility" && (
           <p className="table-description table-description-note">
-            Diagnostics concern the unprojected policy and depend on the model
-            assumptions.
+            ζ ≤ 1 indicates global feasibility when all Merton-vector components
+            are non-negative and at least one is positive. Negative components
+            require short selling in the risky region. Borrowing probability and
+            time use GM mortality; row-specific impoverishment levels start from
+            the shared setup.
           </p>
         )}
         <div className="table-scroll">
@@ -261,9 +279,13 @@ export function DataView() {
                 )}
                 {tableType === "feasibility" && (
                   <>
+                    <th>IMPOVERISHMENT LEVEL</th>
+                    <th>{resultHeading}</th>
                     <th>RELATIVE BANDWIDTH ζ</th>
-                    <th>GLOBAL FEASIBILITY</th>
-                    <th>ASSUMPTIONS</th>
+                    <th>BORROWING AT RETIREMENT</th>
+                    <th>LAST POSSIBLE BORROWING</th>
+                    <th>EVER BORROWING (GM)</th>
+                    <th>EXPECTED BORROWING TIME (GM)</th>
                   </>
                 )}
                 <th>{tableType === "withdrawal" ? "GM STATUS" : "STATUS"}</th>
@@ -349,6 +371,23 @@ export function DataView() {
                         </span>
                       </div>
                     </td>
+                    {tableType === "feasibility" && (
+                      <td>
+                        <div className="input-suffix table-input-suffix">
+                          <input
+                            aria-label={`Impoverishment level for variation ${row.id}, euros`}
+                            value={row.impoverishmentLevel}
+                            disabled={running}
+                            onChange={(event) =>
+                              changeRow(row.id, {
+                                impoverishmentLevel: event.target.value,
+                              })
+                            }
+                          />
+                          <span aria-hidden="true">€</span>
+                        </div>
+                      </td>
+                    )}
                     {tableType === "withdrawal" && (
                       <td>
                         <select
@@ -408,6 +447,9 @@ export function DataView() {
                       </>
                     ) : (
                       <>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
                         <td>—</td>
                         <td>—</td>
                         <td>—</td>
