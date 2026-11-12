@@ -55,6 +55,7 @@ worker.onmessage = ({ data }) => {
       let batchStarted = 0;
       const result = await runScheduler(snapshot, {
         backendOrder,
+        riskOnly: data.riskOnly,
         signal: controller.signal,
         onBackendReady: (backend) => {
           batchStarted = performance.now();

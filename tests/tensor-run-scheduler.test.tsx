@@ -137,6 +137,7 @@ test("scheduler runs all paths, reports partial-batch progress and aggregates br
       if (index >= 0) expected[index] += 1;
   }
 
+  assert.ok(result.borrowingOccupation && result.borrowingProbability);
   assert.ok(
     Math.abs(
       result.borrowingOccupation.estimateYears -
@@ -272,6 +273,7 @@ test("initial borrowing is survival-weighted and aggregated across batches", asy
     backendOrder: ["cpu"],
   });
 
+  assert.ok(result.borrowingProbability && result.borrowingOccupation);
   assert.equal(result.borrowingProbability.estimate, 1);
   assert.equal(result.borrowingProbability.standardError, 0);
   assert.equal(result.borrowingProbability.interval95, null);
@@ -294,4 +296,15 @@ test("trajectory shading follows the unconstrained borrowing boundary", async ()
     sample.borrowingBoundary.at(-1),
     snapshot.options.investor.impoverishmentLevel,
   );
+});
+
+test("risk-only runs omit borrowing diagnostics", async () => {
+  const result = await runScheduler(exampleSnapshot(), {
+    backendOrder: ["cpu"],
+    riskOnly: true,
+  });
+  assert.equal(result.borrowingProbability, undefined);
+  assert.equal(result.borrowingOccupation, undefined);
+  assert.equal(result.completedPaths, 5);
+  assert.equal(result.firstHitTimes.length, 5);
 });

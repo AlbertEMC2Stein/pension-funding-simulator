@@ -25,6 +25,8 @@ export interface RunSchedulerOptions {
   onBackendReady?: (backend: TensorBackend) => void;
   /** Called after each completed batch; callback errors stop the run. */
   onProgress?: (progress: RunProgress) => void;
+  /** Skip borrowing calculations when the caller needs mortality risk only. */
+  riskOnly?: boolean;
   /** Cancellation is observed between batches, not during a batch. */
   signal?: AbortSignal;
 }
@@ -58,9 +60,9 @@ export interface RunSchedulerResult {
   /** Approximate first-hit times in years; -1 denotes no hit by the horizon. */
   firstHitTimes: Float32Array;
   /** GM-survival-weighted probability of first borrowing before stopping. */
-  borrowingProbability: RiskEstimate;
+  borrowingProbability?: RiskEstimate;
   /** GM-survival-weighted time borrowing before impoverishment or the horizon. */
-  borrowingOccupation: {
+  borrowingOccupation?: {
     estimateYears: number;
     standardErrorYears: number | null;
     interval95Years: { lower: number; upper: number } | null;
@@ -116,14 +118,16 @@ export async function runScheduler(
     snapshot.numerical.horizonYears,
     snapshot.options.numerical.timeStep,
   );
-  const preparedOccupation = prepareBorrowingOccupation({
-    market: snapshot.market,
-    mortality: snapshot.mortality.ce.parameters,
-    gm: snapshot.mortality.gm.parameters,
-    annualWithdrawal: snapshot.resolvedAnnualWithdrawal,
-    impoverishmentLevel: snapshot.options.investor.impoverishmentLevel,
-    times,
-  });
+  const preparedOccupation = options.riskOnly
+    ? null
+    : prepareBorrowingOccupation({
+        market: snapshot.market,
+        mortality: snapshot.mortality.ce.parameters,
+        gm: snapshot.mortality.gm.parameters,
+        annualWithdrawal: snapshot.resolvedAnnualWithdrawal,
+        impoverishmentLevel: snapshot.options.investor.impoverishmentLevel,
+        times,
+      });
   // If the initial borrowing boundary is at or below impoverishment, its
   // decreasing trajectory cannot enter the solvent region at later times.
   const occupationSteps =
@@ -333,30 +337,34 @@ export async function runScheduler(
     borrowingSE === null ? 0 : 1.959963984540054 * borrowingSE;
 
   return {
-    borrowingProbability: {
-      estimate: borrowingMean,
-      standardError: borrowingSE,
-      interval95: borrowingSE
-        ? {
-            lower: Math.max(0, borrowingMean - borrowingHalfWidth),
-            upper: Math.min(1, borrowingMean + borrowingHalfWidth),
-          }
-        : null,
-    },
+    borrowingProbability: options.riskOnly
+      ? undefined
+      : {
+          estimate: borrowingMean,
+          standardError: borrowingSE,
+          interval95: borrowingSE
+            ? {
+                lower: Math.max(0, borrowingMean - borrowingHalfWidth),
+                upper: Math.min(1, borrowingMean + borrowingHalfWidth),
+              }
+            : null,
+        },
     trajectories,
-    borrowingOccupation: {
-      estimateYears: occupationMean,
-      standardErrorYears: standardError,
-      interval95Years: standardError
-        ? {
-            lower: Math.max(0, occupationMean - halfWidth),
-            upper: Math.min(
-              snapshot.numerical.horizonYears,
-              occupationMean + halfWidth,
-            ),
-          }
-        : null,
-    },
+    borrowingOccupation: options.riskOnly
+      ? undefined
+      : {
+          estimateYears: occupationMean,
+          standardErrorYears: standardError,
+          interval95Years: standardError
+            ? {
+                lower: Math.max(0, occupationMean - halfWidth),
+                upper: Math.min(
+                  snapshot.numerical.horizonYears,
+                  occupationMean + halfWidth,
+                ),
+              }
+            : null,
+        },
     backend,
     completedPaths,
     completedBatches,

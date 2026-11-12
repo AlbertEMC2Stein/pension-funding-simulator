@@ -13,6 +13,8 @@ export type SimulationWorkerRequest =
       runId: number;
       input: RunConfigurationInput;
       backendOrder?: readonly TensorBackend[];
+      /** Skip borrowing diagnostics for table rows that only need GM risk. */
+      riskOnly?: boolean;
     }
   | { type: "cancel"; runId: number };
 

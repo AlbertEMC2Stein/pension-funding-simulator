@@ -2,6 +2,7 @@
 export type ResultStatus =
   | "not-calculated"
   | "not-available"
+  | "queued"
   | "running"
   | "needs-updating"
   | "error"
@@ -27,6 +28,12 @@ export const RESULT_STATUSES: ReadonlyArray<{
     symbol: "−",
     description:
       "The result cannot be calculated or does not apply to these settings.",
+  },
+  {
+    status: "queued",
+    label: "QUEUED",
+    symbol: "◷",
+    description: "Waiting for a simulation worker.",
   },
   {
     status: "running",

@@ -200,3 +200,45 @@ input[aria-invalid="true"] {
   width: 0;
   min-width: 0;
 }
+
+.table-result-detail {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.table-run-summary {
+  display: grid;
+  gap: 6px;
+  flex: 1;
+}
+
+.table-run-summary progress {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.table-cell-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: table-spinner 0.8s linear infinite;
+}
+
+@keyframes table-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .table-cell-spinner {
+    animation: none;
+  }
+}

@@ -1,4 +1,5 @@
 /* Shared result badges. Theme tokens keep all colors editable in palette.css. */
+.status-badge[data-status="queued"],
 .status-badge[data-status="not-calculated"],
 .status-badge[data-status="not-available"] {
   --status-background: var(--surface-soft);

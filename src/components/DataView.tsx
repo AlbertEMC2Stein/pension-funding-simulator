@@ -3,6 +3,15 @@
 import { useMemo, useState } from "react";
 import { useSimulationDraft } from "./SimulationDraftContext";
 import { SimulationDetailFields } from "./SimulationDetailFields";
+import { useComparisonSimulation } from "./comparison/useComparisonSimulation";
+import {
+  comparisonSetupSignature,
+  comparisonRowSignature,
+} from "./comparison/comparison-run";
+import {
+  comparisonQueueRemaining,
+  comparisonRowRemaining,
+} from "./comparison/comparison-queue";
 import {
   calculateWithdrawalRow,
   prepareWithdrawalTable,
@@ -23,7 +32,7 @@ interface ExampleRow {
   id: number;
   type: "Target risk" | "Withdrawal";
   value: string;
-  policy: string;
+  policy: "Unconstrained" | "Projected";
 }
 
 /** Each table keeps its own editable examples when the user switches views. */
@@ -32,6 +41,14 @@ function initialRows(): ExampleRow[] {
     { id: 1, type: "Target risk", value: "5.0", policy: "Unconstrained" },
     { id: 2, type: "Target risk", value: "10.0", policy: "Projected" },
   ];
+}
+
+/** Format a batch-based ETA without implying sub-second precision. */
+function formatComparisonEta(milliseconds: number): string {
+  const seconds = Math.max(1, Math.ceil(milliseconds / 1000));
+  return seconds < 60
+    ? `About ${seconds} s left`
+    : `About ${Math.floor(seconds / 60)} min ${seconds % 60} s left`;
 }
 
 const tableDescriptions: Record<TableType, string> = {
@@ -48,6 +65,14 @@ export function DataView() {
     () => prepareWithdrawalTable(draft, mortalityFits),
     [draft.market, draft.investor, mortalityFits.ce],
   );
+  const simulation = useComparisonSimulation(draft, mortalityFits);
+  const run = simulation.run;
+  const running = run?.running ?? false;
+  const sharedStale = run
+    ? run.signature !== comparisonSetupSignature(draft, mortalityFits)
+    : false;
+  const overallEta =
+    run?.running && !run.cancelling ? comparisonQueueRemaining(run.rows) : null;
   const [tableType, setTableType] = useState<TableType>("withdrawal");
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [tables, setTables] = useState<Record<TableType, ExampleRow[]>>({
@@ -83,8 +108,9 @@ export function DataView() {
         description="Compare variations of your setup and save your work."
       />
       <PreviewBanner>
-        <strong>In progress.</strong> CE values update analytically. GM risk,
-        feasibility sensitivity and export controls are previews.
+        <strong>In progress.</strong> CE values update analytically; GM risk is
+        estimated by simulation. Feasibility sensitivity and exports are
+        previews.
       </PreviewBanner>
       <SectionHeading
         eyebrow="YOUR COMPARISON"
@@ -153,6 +179,7 @@ export function DataView() {
             TABLE TYPE
             <select
               value={tableType}
+              disabled={running}
               onChange={(event) =>
                 setTableType(event.target.value as TableType)
               }
@@ -164,6 +191,7 @@ export function DataView() {
           <button
             type="button"
             className="button button-primary"
+            disabled={running}
             onClick={() => {
               setTables((current) => ({
                 ...current,
@@ -188,15 +216,20 @@ export function DataView() {
           {tableType !== "withdrawal" &&
             " This table is a layout preview; values are not calculated."}
         </p>
-        {tableType === "withdrawal" && !withdrawalContext.available && (
-          <p className="table-description table-description-note" role="status">
-            {withdrawalContext.message}
-          </p>
-        )}
+        {tableType === "withdrawal" &&
+          !running &&
+          !withdrawalContext.available && (
+            <p
+              className="table-description table-description-note"
+              role="status"
+            >
+              {withdrawalContext.message}
+            </p>
+          )}
         {tableType === "withdrawal" && (
           <p className="table-description table-description-note">
             The CE value uses the unconstrained policy, including for projected
-            rows. GM risk is a placeholder and is not yet calculated.
+            rows. GM risk is for the selected policy, through the CE horizon.
           </p>
         )}
         {tableType === "feasibility" && (
@@ -232,14 +265,43 @@ export function DataView() {
             </thead>
             <tbody>
               {rows.map((row) => {
+                const captured =
+                  tableType === "withdrawal"
+                    ? run?.rows.find((item) => item.id === row.id)
+                    : undefined;
+                const rowStale =
+                  captured &&
+                  (sharedStale ||
+                    captured.rowSignature !== comparisonRowSignature(row));
                 const result =
-                  tableType === "withdrawal" && withdrawalContext.available
-                    ? calculateWithdrawalRow(
-                        withdrawalContext,
-                        row.type,
-                        row.value,
-                      )
-                    : null;
+                  running && captured
+                    ? captured.ce
+                      ? { ok: true as const, ...captured.ce }
+                      : {
+                          ok: false as const,
+                          message: captured.message ?? "Invalid row.",
+                        }
+                    : tableType === "withdrawal" && withdrawalContext.available
+                      ? calculateWithdrawalRow(
+                          withdrawalContext,
+                          row.type,
+                          row.value,
+                        )
+                      : null;
+                const status = captured
+                  ? !running && rowStale
+                    ? ("needs-updating" as const)
+                    : captured.status
+                  : tableType !== "withdrawal"
+                    ? ("not-calculated" as const)
+                    : !withdrawalContext.available
+                      ? ("not-available" as const)
+                      : result?.ok
+                        ? ("not-calculated" as const)
+                        : ("error" as const);
+                const rowEta = captured
+                  ? comparisonRowRemaining(captured)
+                  : null;
 
                 return (
                   <tr key={row.id}>
@@ -250,6 +312,7 @@ export function DataView() {
                       <select
                         aria-label={`Input type for variation ${row.id}`}
                         value={row.type}
+                        disabled={running}
                         onChange={(event) =>
                           changeRow(row.id, {
                             type: event.target.value as ExampleRow["type"],
@@ -269,6 +332,7 @@ export function DataView() {
                         <input
                           aria-label={`Input value for variation ${row.id}, ${row.type === "Target risk" ? "percent" : "euros per year"}`}
                           value={row.value}
+                          disabled={running}
                           onChange={(event) =>
                             changeRow(row.id, { value: event.target.value })
                           }
@@ -283,9 +347,11 @@ export function DataView() {
                         <select
                           aria-label={`Policy for variation ${row.id}`}
                           value={row.policy}
+                          disabled={running}
                           onChange={(event) =>
                             changeRow(row.id, {
-                              policy: event.target.value,
+                              policy: event.target
+                                .value as ExampleRow["policy"],
                             })
                           }
                         >
@@ -303,7 +369,35 @@ export function DataView() {
                               : `${(result.ceRisk * 100).toFixed(2)}% CE risk`
                             : "—"}
                         </td>
-                        <td>—</td>
+                        <td>
+                          {captured?.gm ? (
+                            <>
+                              <span>
+                                {(captured.gm.estimate * 100).toFixed(3)}%
+                              </span>
+                              {rowStale && !running && (
+                                <small className="table-result-detail">
+                                  Previous setup or row inputs
+                                </small>
+                              )}
+                              <small className="table-result-detail">
+                                {captured.analytical
+                                  ? "Analytical zero"
+                                  : captured.gm.interval95
+                                    ? `95% MC: ${(captured.gm.interval95.lower * 100).toFixed(3)}% – ${(captured.gm.interval95.upper * 100).toFixed(3)}%`
+                                    : "MC interval unavailable"}
+                              </small>
+                            </>
+                          ) : captured?.status === "running" ? (
+                            <span
+                              className="table-cell-spinner"
+                              role="status"
+                              aria-label="Calculating GM risk"
+                            />
+                          ) : (
+                            "—"
+                          )}
+                        </td>
                       </>
                     ) : (
                       <>
@@ -313,36 +407,52 @@ export function DataView() {
                       </>
                     )}
                     <td>
-                      <StatusBadge
-                        status={
-                          tableType !== "withdrawal"
-                            ? "not-calculated"
-                            : !withdrawalContext.available
-                              ? "not-available"
-                              : result?.ok
-                                ? "not-calculated"
-                                : "error"
-                        }
-                      />
-                      {result && !result.ok && (
-                        <small className="table-row-error" role="status">
-                          {result.message}
+                      <StatusBadge status={status} />
+                      {captured?.status === "running" && (
+                        <small className="table-result-detail">
+                          {run?.cancelling
+                            ? "Stopping after current batch…"
+                            : rowEta === null
+                              ? "ETA after first batch"
+                              : rowEta > 0
+                                ? formatComparisonEta(rowEta)
+                                : "Finishing…"}
                         </small>
                       )}
+                      {captured?.message && (
+                        <small className="table-row-error" role="status">
+                          {captured.message}
+                        </small>
+                      )}
+                      {result &&
+                        !result.ok &&
+                        result.message !== captured?.message && (
+                          <small className="table-row-error" role="status">
+                            {result.message}
+                          </small>
+                        )}
                     </td>
                     <td>
                       <button
                         className="row-remove"
                         type="button"
                         aria-label={`Remove variation ${row.id}`}
-                        onClick={() =>
+                        disabled={running}
+                        onClick={() => {
+                          if (
+                            (captured?.gm || result?.ok) &&
+                            !window.confirm(
+                              "Delete this variation and its calculated values?",
+                            )
+                          )
+                            return;
                           setTables((current) => ({
                             ...current,
                             [tableType]: current[tableType].filter(
                               (item) => item.id !== row.id,
                             ),
-                          }))
-                        }
+                          }));
+                        }}
                       >
                         ×
                       </button>
@@ -354,18 +464,75 @@ export function DataView() {
           </table>
         </div>
         <div className="table-footer">
-          <span>
-            ⓘ &nbsp;{" "}
-            {tableType === "withdrawal"
-              ? "CE values update automatically; GM simulations are not connected yet."
-              : "Analytical and simulation outputs will appear here."}
-          </span>
-          <DemoAction
-            className="button button-primary"
-            message="Table simulations are not connected in this design draft."
-          >
-            ▶ &nbsp; Compute rows
-          </DemoAction>
+          {tableType === "withdrawal" ? (
+            <>
+              <div
+                className="table-run-summary"
+                role="status"
+                aria-live="polite"
+              >
+                {running ? (
+                  <>
+                    <span>
+                      {run?.cancelling
+                        ? "Stopping after the current batches…"
+                        : overallEta === null
+                          ? "Estimating overall time…"
+                          : formatComparisonEta(overallEta)}
+                    </span>
+                    <progress
+                      aria-label="Table simulation progress"
+                      max={run!.rows.length}
+                      value={
+                        run!.rows.filter(
+                          (row) =>
+                            row.status !== "queued" && row.status !== "running",
+                        ).length
+                      }
+                    />
+                    {sharedStale && (
+                      <small>
+                        Settings changed; this run continues with its captured
+                        setup.
+                      </small>
+                    )}
+                  </>
+                ) : (
+                  <span>
+                    CE values are analytical; GM risk is estimated through the
+                    CE horizon.
+                  </span>
+                )}
+                {simulation.error && (
+                  <span className="table-row-error">{simulation.error}</span>
+                )}
+              </div>
+              <button
+                type="button"
+                className="button button-primary"
+                onClick={() =>
+                  running
+                    ? simulation.cancel()
+                    : simulation.start(tables.withdrawal)
+                }
+                disabled={running ? run?.cancelling : rows.length === 0}
+              >
+                {running ? "Cancel rows" : "▶  Compute rows"}
+              </button>
+            </>
+          ) : (
+            <>
+              <span>
+                ⓘ &nbsp; Analytical and simulation outputs will appear here.
+              </span>
+              <DemoAction
+                className="button button-primary"
+                message="Feasibility calculations are not connected yet."
+              >
+                ▶ &nbsp; Compute rows
+              </DemoAction>
+            </>
+          )}
         </div>
       </div>
       <SectionHeading

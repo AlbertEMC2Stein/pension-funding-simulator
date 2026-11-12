@@ -195,3 +195,19 @@ simulation. Up to 150 paths are displayed at once; shuffle selects from the
 retained pool and does not change the simulation results. Wealth is stopped at
 impoverishment and paths do not sample death times: they show wealth assuming
 the investor remains alive until the financial stop or the policy horizon.
+
+## Comparison-table GM risk
+
+The comparison table captures shared market, investor, mortality and numerical
+settings before starting its queue. Each nontrivial row has its own withdrawal,
+selected policy and deterministic seed. At most two workers run at a time;
+cancellation is cooperative between batches. A risk-only request skips the
+borrowing diagnostics and trajectory recording. The projected-policy runner
+still evolves its matched unconstrained path internally, but the table displays
+only the selected policy's GM estimate and its Monte Carlo interval. Estimates
+are limited to the CE policy horizon.
+
+For a withdrawal no greater than the safe withdrawal, financial impoverishment
+is impossible over that horizon and the table displays an analytical zero.
+Changes to shared settings do not alter active jobs; completed results are
+marked stale if their captured settings or row inputs no longer match.

@@ -1,4 +1,9 @@
 import assert from "node:assert/strict";
+import {
+  ComparisonQueue,
+  type ComparisonQueueState,
+  type ComparisonWorker,
+} from "../src/components/comparison/comparison-queue";
 import { test } from "node:test";
 import { Worker } from "node:worker_threads";
 import { fileURLToPath } from "node:url";
@@ -90,6 +95,7 @@ function createTestWorker(): Worker {
 async function runWorker(
   input: RunConfigurationInput,
   cancelAfterProgress = false,
+  riskOnly = false,
 ): Promise<SimulationWorkerResponse[]> {
   const worker = createTestWorker();
   const messages: SimulationWorkerResponse[] = [];
@@ -120,6 +126,7 @@ async function runWorker(
         runId: 1,
         input,
         backendOrder: ["cpu"],
+        riskOnly,
       });
     });
   } finally {
@@ -176,4 +183,88 @@ test("worker rejects invalid input at its boundary", async () => {
   input.numerical.horizonYears = -1;
   const messages = await runWorker(input);
   assert.equal(messages.at(-1)?.type, "error");
+});
+
+test("risk-only worker estimates GM risk without borrowing diagnostics", async () => {
+  const messages = await runWorker(exampleInput(), false, true);
+  const complete = messages.at(-1);
+  assert.ok(complete?.type === "complete", JSON.stringify(complete));
+  assert.ok(complete.risk.gm.estimate >= 0 && complete.risk.gm.estimate <= 1);
+  assert.equal(complete.result.borrowingProbability, undefined);
+  assert.equal(complete.result.borrowingOccupation, undefined);
+});
+
+test("two-worker comparison queue executes captured rows with the real worker", async () => {
+  const rows = [1, 2, 3].map((id) => {
+    const input = exampleInput(5);
+    const projected = id === 2;
+    input.options.policy.projected = projected;
+    return {
+      id,
+      policy: projected ? ("Projected" as const) : ("Unconstrained" as const),
+      rowSignature: String(id),
+      status: "queued" as const,
+      input,
+    };
+  });
+  let active = 0;
+  let maxActive = 0;
+  const queue = new ComparisonQueue(
+    rows,
+    () => {
+      const node = createTestWorker();
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      const adapter: ComparisonWorker = {
+        onmessage: null,
+        onerror: null,
+        postMessage: (message) =>
+          node.postMessage(
+            message.type === "start"
+              ? { ...message, backendOrder: ["cpu"] }
+              : message,
+          ),
+        terminate: () => {
+          active -= 1;
+          void node.terminate();
+        },
+      };
+      node.on("message", (data: SimulationWorkerResponse) =>
+        adapter.onmessage?.({ data } as MessageEvent<SimulationWorkerResponse>),
+      );
+      node.on("error", () => adapter.onerror?.({} as ErrorEvent));
+      return adapter;
+    },
+    (state) => {
+      if (!state.running) finish(state);
+    },
+  );
+  let finish!: (state: ComparisonQueueState) => void;
+
+  try {
+    const state = await new Promise<ComparisonQueueState>((resolve, reject) => {
+      const timeout = setTimeout(
+        () => reject(new Error("Comparison queue timed out")),
+        15000,
+      );
+      finish = (value) => {
+        clearTimeout(timeout);
+        resolve(value);
+      };
+      queue.start();
+    });
+    assert.equal(maxActive, 2);
+    assert.deepEqual(
+      state.rows.map((row) => row.status),
+      ["calculated", "calculated", "calculated"],
+    );
+    assert.ok(
+      state.rows.every(
+        (row) => row.gm && row.gm.estimate >= 0 && row.gm.estimate <= 1,
+      ),
+    );
+    assert.equal(active, 0);
+  } finally {
+    queue.dispose();
+  }
 });
