@@ -10,6 +10,7 @@ import {
   createRunSnapshot,
   type RunConfigurationInput,
 } from "../src/lib/model/simulation/run-configuration";
+import { prepareBorrowingOccupation } from "../src/lib/model/simulation/borrowing-occupation";
 import { createRandomStream } from "../src/lib/model/simulation/random";
 import { simulateTensorBatch } from "../src/lib/model/simulation/tensorflow/wealth-batch";
 import {
@@ -100,13 +101,35 @@ test("scheduler runs all paths, reports partial-batch progress and aggregates br
   // Replay the same stream and batch sizes to independently check aggregation.
   const stream = createRandomStream(snapshot.numerical.seed);
   const expected = Array<number>(result.times.length).fill(0);
+  const occupationSteps = prepareBorrowingOccupation({
+    market: snapshot.market,
+    mortality: snapshot.mortality.ce.parameters,
+    gm: snapshot.mortality.gm.parameters,
+    annualWithdrawal: snapshot.resolvedAnnualWithdrawal,
+    impoverishmentLevel: snapshot.options.investor.impoverishmentLevel,
+    times: result.times,
+  });
+  const occupations: number[] = [];
 
   for (const count of [2, 2, 1]) {
-    const batch = await simulateTensorBatch(snapshot, count, stream);
+    const batch = await simulateTensorBatch(
+      snapshot,
+      count,
+      stream,
+      undefined,
+      occupationSteps ?? undefined,
+    );
+    occupations.push(...(batch.borrowingOccupation ?? Array(count).fill(0)));
     for (const index of batch.firstHitStep)
       if (index >= 0) expected[index] += 1;
   }
 
+  assert.ok(
+    Math.abs(
+      result.borrowingOccupation.estimateYears -
+        occupations.reduce((a, b) => a + b, 0) / occupations.length,
+    ) < 1e-10,
+  );
   assert.deepEqual(result.firstHitCounts, expected);
   assert.equal(
     result.observedHits,

@@ -134,14 +134,16 @@ export function PageHeading({
 export function Metric({
   label,
   note,
+  value = "—",
 }: {
   label: string;
   note: React.ReactNode;
+  value?: React.ReactNode;
 }) {
   return (
     <div>
       <span>{label}</span>
-      <strong>—</strong>
+      <strong>{value}</strong>
       <small>{note}</small>
     </div>
   );

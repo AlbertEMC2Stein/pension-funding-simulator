@@ -1,3 +1,4 @@
+import { prepareBorrowingOccupation } from "../borrowing-occupation";
 import { assertRunSnapshot, type RunSnapshot } from "../run-configuration";
 import { createRandomStream } from "../random";
 import { generateTimeGrid } from "../time-grid";
@@ -37,6 +38,12 @@ export interface RunSchedulerResult {
   observedHits: number;
   /** Approximate first-hit times in years; -1 denotes no hit by the horizon. */
   firstHitTimes: Float32Array;
+  /** GM-survival-weighted time borrowing before impoverishment or the horizon. */
+  borrowingOccupation: {
+    estimateYears: number;
+    standardErrorYears: number | null;
+    interval95Years: { lower: number; upper: number } | null;
+  };
   /** Matching projected-policy observations for a paired run. */
   projected?: {
     firstHitTimes: Float32Array;
@@ -91,6 +98,14 @@ export async function runScheduler(
     snapshot.numerical.horizonYears,
     snapshot.options.numerical.timeStep,
   );
+  const occupationSteps = prepareBorrowingOccupation({
+    market: snapshot.market,
+    mortality: snapshot.mortality.ce.parameters,
+    gm: snapshot.mortality.gm.parameters,
+    annualWithdrawal: snapshot.resolvedAnnualWithdrawal,
+    impoverishmentLevel: snapshot.options.investor.impoverishmentLevel,
+    times,
+  });
   const firstHitCounts = Array<number>(times.length).fill(0);
   const firstHitTimes = new Float32Array(totalPaths);
   const stream = createRandomStream(snapshot.numerical.seed);
@@ -115,6 +130,9 @@ export async function runScheduler(
   let completedPaths = 0;
   let completedBatches = 0;
   let observedHits = 0;
+  let occupationCount = 0;
+  let occupationMean = 0;
+  let occupationSquaredDeviations = 0;
 
   while (completedPaths < totalPaths) {
     checkCancellation(options.signal);
@@ -124,10 +142,24 @@ export async function runScheduler(
       pathCount,
       stream,
       projectionCurve,
+      occupationSteps ?? undefined,
     );
     checkCancellation(options.signal);
 
     firstHitTimes.set(batch.firstHitTime, completedPaths);
+
+    // Welford moments combine path payoffs without retaining occupation arrays.
+    for (let index = 0; index < pathCount; index += 1) {
+      const value = batch.borrowingOccupation?.[index] ?? 0;
+      if (!Number.isFinite(value))
+        throw new RangeError(
+          "Borrowing occupation produced a non-finite result.",
+        );
+      occupationCount += 1;
+      const difference = value - occupationMean;
+      occupationMean += difference / occupationCount;
+      occupationSquaredDeviations += difference * (value - occupationMean);
+    }
 
     if (projected && !batch.projected)
       throw new Error("The projected batch result is missing.");
@@ -166,7 +198,30 @@ export async function runScheduler(
 
   // Honor cancellation requested by the final progress callback as well.
   checkCancellation(options.signal);
+  const standardError =
+    occupationCount > 1
+      ? Math.sqrt(
+          Math.max(0, occupationSquaredDeviations / (occupationCount - 1)) /
+            occupationCount,
+        )
+      : null;
+  const halfWidth =
+    standardError === null ? 0 : 1.959963984540054 * standardError;
+
   return {
+    borrowingOccupation: {
+      estimateYears: occupationMean,
+      standardErrorYears: standardError,
+      interval95Years: standardError
+        ? {
+            lower: Math.max(0, occupationMean - halfWidth),
+            upper: Math.min(
+              snapshot.numerical.horizonYears,
+              occupationMean + halfWidth,
+            ),
+          }
+        : null,
+    },
     backend,
     completedPaths,
     completedBatches,

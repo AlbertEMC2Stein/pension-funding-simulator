@@ -29,6 +29,8 @@ export interface EvaluationRun {
   /** Elapsed processing time after backend initialization. */
   batchElapsedMs?: number;
   risk?: MortalityRiskResults;
+  /** Unconstrained GM-weighted borrowing occupation within the captured horizon. */
+  borrowingOccupation?: import("../../lib/model/simulation/tensorflow/run-scheduler").RunSchedulerResult["borrowingOccupation"];
   /** Run-captured mortality and first hits for the optional timing visual. */
   timing?: {
     gm: GompertzMakehamParameters;
@@ -159,6 +161,7 @@ export function useEvaluationRun() {
               ...current,
               phase: "complete",
               risk: message.risk,
+              borrowingOccupation: message.result.borrowingOccupation,
               timing: {
                 gm,
                 durbin,

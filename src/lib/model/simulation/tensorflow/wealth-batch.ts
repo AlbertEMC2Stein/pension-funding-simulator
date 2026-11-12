@@ -1,4 +1,6 @@
 import * as tf from "@tensorflow/tfjs";
+import type { PreparedBorrowingInterval } from "../borrowing-occupation";
+import { advanceBorrowingOccupation } from "./borrowing-occupation-step";
 import type { CompatiblePolicyInputs } from "../../analytical/compatible-policy";
 import { assertRunSnapshot, type RunSnapshot } from "../run-configuration";
 import { generateTimeGrid } from "../time-grid";
@@ -48,6 +50,8 @@ export interface TensorWealthBatchInput {
     excessReturn: readonly number[];
     covariance: readonly (readonly number[])[];
   };
+  /** Prepared GM occupation inputs shared across batches, when borrowing is possible. */
+  borrowingOccupation?: readonly PreparedBorrowingInterval[];
   /** Create independent auxiliary bridge draws inside each step's tensor scope. */
   bridgeDraws: (step: number) => BridgeDraws;
 }
@@ -60,6 +64,8 @@ export interface TensorWealthBatchResult {
   firstHitStep: Int32Array;
   /** Approximate years after retirement, or -1 when no hit occurred. */
   firstHitTime: Float32Array;
+  /** GM-weighted borrowing time for each unconstrained path, in years. */
+  borrowingOccupation?: Float32Array;
   /** The matched projected-policy observations, present for paired runs. */
   projected?: {
     finalWealth: Float32Array;
@@ -130,6 +136,7 @@ export async function simulateTensorWealthBatch(
     increments,
     bridgeDraws,
     projected,
+    borrowingOccupation,
   } = input;
   const { initialCapital, impoverishmentLevel: threshold } = investor;
   const { realRiskFreeRate: r, mertonDirection } = market;
@@ -153,6 +160,7 @@ export async function simulateTensorWealthBatch(
   let wealth: tf.Tensor1D = tf.fill([count], initialCapital, "float32");
   let firstHit: tf.Tensor1D = tf.fill([count], -1, "int32");
   let firstHitTime: tf.Tensor1D = tf.fill([count], -1, "float32");
+  let occupation = tf.zeros([count]) as tf.Tensor1D;
   const direction = tf.tensor2d([...mertonDirection], [assets, 1]);
   const projectedPolicy = projected
     ? createTensorProjectedPolicy(
@@ -216,6 +224,17 @@ export async function simulateTensorWealthBatch(
           logGapVarianceRate,
           draws,
         });
+        const nextOccupation = borrowingOccupation
+          ? advanceBorrowingOccupation({
+              wealth,
+              proposedWealth,
+              active,
+              crossing,
+              impoverishmentLevel: threshold,
+              accumulated: occupation,
+              step: borrowingOccupation[step],
+            })
+          : occupation.clone();
         const unconstrained = recordFirstHits(
           proposedWealth,
           firstHit,
@@ -270,19 +289,22 @@ export async function simulateTensorWealthBatch(
 
           return {
             ...unconstrained,
+            occupation: nextOccupation,
             projectedWealth: updatedProjected.wealth,
             projectedHit: updatedProjected.firstHit,
             projectedHitTime: updatedProjected.firstHitTime,
           };
         }
 
-        return { ...unconstrained };
+        return { ...unconstrained, occupation: nextOccupation };
       });
 
       // Retain only the new states; all intermediate tensors were released by tidy.
       wealth.dispose();
       firstHit.dispose();
       firstHitTime.dispose();
+      occupation?.dispose();
+      occupation = next.occupation;
       wealth = next.wealth;
       firstHit = next.firstHit;
       firstHitTime = next.firstHitTime;
@@ -315,6 +337,10 @@ export async function simulateTensorWealthBatch(
     )
       throw new RangeError("Tensor simulation produced a non-finite result.");
 
+    const occupationData = borrowingOccupation
+      ? await occupation.data()
+      : undefined;
+
     let projectedResult: TensorWealthBatchResult["projected"];
 
     if (projectedWealth && projectedHit && projectedHitTime) {
@@ -344,12 +370,16 @@ export async function simulateTensorWealthBatch(
 
     return {
       projected: projectedResult,
+      borrowingOccupation: occupationData
+        ? Float32Array.from(occupationData)
+        : undefined,
       finalWealth: Float32Array.from(wealthData),
       firstHitStep: Int32Array.from(hitData),
       firstHitTime: Float32Array.from(hitTimeData),
     };
   } finally {
     wealth.dispose();
+    occupation?.dispose();
     firstHit.dispose();
     firstHitTime.dispose();
     direction.dispose();
@@ -377,6 +407,7 @@ export async function simulateTensorBatch(
   pathCount: number,
   stream: RandomStream,
   projectionCurve?: ProjectionCurve,
+  borrowingOccupation?: readonly PreparedBorrowingInterval[],
 ): Promise<TensorWealthBatchResult> {
   assertRunSnapshot(snapshot);
   if (snapshot.options.policy.projected !== Boolean(projectionCurve))
@@ -410,6 +441,7 @@ export async function simulateTensorBatch(
       },
       pathCount,
       times,
+      borrowingOccupation,
       projected: projectionCurve
         ? {
             curve: projectionCurve,

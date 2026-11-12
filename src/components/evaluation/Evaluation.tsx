@@ -421,10 +421,33 @@ export function CapitalCard({ comparison }: { comparison: CapitalComparison }) {
 function BorrowingCard({
   feasibility,
   projected,
+  run,
+  stale,
 }: {
   feasibility: FeasibilityResult;
   projected: boolean;
+  run: EvaluationRun | null;
+  stale: boolean;
 }) {
+  const occupation = run?.borrowingOccupation;
+  const running =
+    run?.phase === "starting" ||
+    run?.phase === "running" ||
+    run?.phase === "cancelling";
+  const status: ResultStatus = projected
+    ? "not-available"
+    : running
+      ? "running"
+      : stale && occupation
+        ? "needs-updating"
+        : run?.phase === "error"
+          ? "error"
+          : run?.phase === "cancelled"
+            ? "cancelled"
+            : occupation
+              ? "calculated"
+              : "not-calculated";
+
   return (
     <article className="chart-card borrowing-card">
       <div className="card-top">
@@ -436,7 +459,12 @@ function BorrowingCard({
             borrowing may last.
           </p>
         </div>
-        <StatusBadge status={projected ? "not-available" : "not-calculated"} />
+        <StatusBadge
+          status={status}
+          label={
+            status === "calculated" ? "BORROWING TIME CALCULATED" : undefined
+          }
+        />
       </div>
       {projected ? (
         <p role="status">
@@ -453,7 +481,12 @@ function BorrowingCard({
             />
             <Metric
               label="Expected time borrowing"
-              note="Total time alive while borrowing"
+              value={
+                occupation
+                  ? `${occupation.estimateYears.toFixed(2)} years`
+                  : "—"
+              }
+              note="Average time alive while borrowing before impoverishment or the run horizon"
             />
           </div>
           <details className="borrowing-details">
@@ -472,6 +505,18 @@ function BorrowingCard({
                   "Relative bandwidth multiplier ζ",
                   "zeta" in feasibility
                     ? `${feasibility.zeta.toPrecision(6)} (${feasibility.zeta <= 1 ? "≤" : ">"} 1)`
+                    : "—",
+                ],
+                [
+                  "Borrowing time MC standard error",
+                  occupation?.standardErrorYears != null
+                    ? `${occupation.standardErrorYears.toFixed(3)} years`
+                    : "—",
+                ],
+                [
+                  "Borrowing time 95% MC interval",
+                  occupation?.interval95Years
+                    ? `${occupation.interval95Years.lower.toFixed(3)} – ${occupation.interval95Years.upper.toFixed(3)} years`
                     : "—",
                 ],
                 ["Borrowing at retirement", "Not evaluated"],
@@ -496,8 +541,10 @@ function BorrowingCard({
             </p>
           </details>
           <p className="chart-disclaimer">
-            Borrowing exposure is not calculated yet. The global feasibility
-            diagnostic is analytical when available.
+            {occupation
+              ? "Borrowing time uses interpolated crossings and GM survival; short excursions can be missed. Monte Carlo uncertainty does not include time-step or bridge error."
+              : "Borrowing time has not been calculated. The global feasibility diagnostic is analytical when available."}{" "}
+            The probability of ever borrowing is not calculated yet.
           </p>
         </>
       )}
@@ -724,6 +771,8 @@ export function Evaluation() {
                   <BorrowingCard
                     feasibility={feasibility}
                     projected={projected}
+                    run={run}
+                    stale={stale}
                   />
                 )}
               </div>

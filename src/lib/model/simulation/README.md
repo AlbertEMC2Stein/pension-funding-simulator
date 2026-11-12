@@ -151,3 +151,19 @@ An optional Durbin overlay is calculated separately from the Monte Carlo curve.
 The displayed CE total-variation diagnostic applies to the distribution given
 impoverishment before death under CE mortality, not to this GM timing chart or
 its age-conditioned view.
+
+## Borrowing occupation
+
+The scheduler prepares Simpson integrals of GM survival over the simulation
+grid once per run. These are increments of the cumulative survival integral;
+within each grid interval its value is interpolated linearly. Each
+unconstrained batch tracks the survival-weighted time below its moving
+borrowing boundary, interpolating a change of side using the observed wealth
+endpoints. Impoverishment truncates the observed interval. The scheduler
+aggregates pathwise occupation moments and reports a Monte Carlo standard
+error and approximate interval without retaining all occupation paths.
+
+This method misses excursions that begin and end between grid points. Its
+crossing times, impoverishment bridge, time step, survival interpolation and
+finite run horizon introduce errors not covered by the Monte Carlo interval.
+The separately planned first-borrowing bridge is not implemented here.
