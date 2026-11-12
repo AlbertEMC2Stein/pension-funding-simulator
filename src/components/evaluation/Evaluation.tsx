@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { AllocationCard } from "./AllocationCard";
 import { TimingCard } from "./TimingCard";
+import { SimulationRunControl } from "./SimulationRunControl";
 import { StatusBadge, type ResultStatus } from "../StatusBadge";
 import { useEvaluationRun, type EvaluationRun } from "./useEvaluationRun";
 import { FeasibilityControls } from "./FeasibilityControls";
@@ -124,11 +125,6 @@ export function GmRiskCard({
     projectedRisk && risk
       ? (projectedRisk.gm.estimate - risk.ceBenchmark) * 100
       : null;
-  const remainingMs =
-    run?.progress && run.batchElapsedMs !== undefined
-      ? (run.batchElapsedMs / run.progress.completedPaths) *
-        (run.progress.totalPaths - run.progress.completedPaths)
-      : null;
 
   return (
     <article className="chart-card diagnostic-card">
@@ -155,25 +151,11 @@ export function GmRiskCard({
         </div>
         <StatusBadge status={status} />
       </div>
-      {running && (
-        <div className="risk-run-progress" role="status">
-          <span className="risk-spinner" aria-hidden="true" />
-          {run?.phase === "cancelling"
-            ? "Stopping after the current batch…"
-            : run?.progress
-              ? `${run.progress.completedPaths.toLocaleString("en-US")} / ${run.progress.totalPaths.toLocaleString("en-US")} paths${remainingMs !== null && remainingMs > 0 ? ` · approximately ${Math.max(1, Math.ceil(remainingMs / 1000))} seconds remaining` : ""}`
-              : "Preparing simulation…"}
-        </div>
-      )}
       {stale && (
         <p role="status">
           Settings changed since this run started. Its results belong to the
           earlier settings.
         </p>
-      )}
-      {run?.message && <p role="alert">{run.message}</p>}
-      {run?.phase === "cancelled" && (
-        <p role="status">The simulation was cancelled.</p>
       )}
       <div className="diagnostic-metrics">
         <div>
@@ -596,7 +578,7 @@ function BorrowingCard({
 export function Evaluation() {
   const { navigate } = useDraft();
   const { draft, setDraft } = useSimulationDraft();
-  const { run, errors, stale, running, start, cancel } = useEvaluationRun();
+  const { run, errors, stale, start, cancel } = useEvaluationRun();
   const ceResult = useRiskWithdrawalResult();
   const feasibility = evaluateGlobalFeasibility(ceResult);
   const assetNames = useMemo(
@@ -636,61 +618,13 @@ export function Evaluation() {
         eyebrow="YOUR RETIREMENT, EXPLORED"
         title="See the bigger picture"
         description="Explore how your choices shape the path ahead."
-      >
-        <div className="heading-actions">
-          <button
-            type="button"
-            className="button button-light"
-            aria-expanded={settingsOpen}
-            onClick={() => setSettingsOpen(!settingsOpen)}
-          >
-            ☷ &nbsp; Simulation settings
-          </button>
-          <button
-            type="button"
-            className="button button-primary"
-            onClick={start}
-          >
-            ▶ &nbsp; {running ? "Run again" : "Run simulation"}
-          </button>
-          {running && (
-            <button
-              type="button"
-              className="button button-light"
-              disabled={run?.phase === "cancelling"}
-              onClick={cancel}
-            >
-              Cancel run
-            </button>
-          )}
-        </div>
-      </PageHeading>
+      />
       <PreviewBanner>
         <strong>You&apos;re exploring a design draft.</strong> The CE withdrawal
         chart, allocation, capital comparison and feasibility diagnostic use
         your current inputs. The GM risk card shows the latest simulation when
         available; other results remain illustrative placeholders.
       </PreviewBanner>
-      {errors.length > 0 && (
-        <div className="form-card" role="alert">
-          <strong>Check your inputs</strong>
-          <ul>
-            {errors.map((error) => (
-              <li key={error}>{error}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {running && !visuals.gm && (
-        <div className="form-card risk-run-progress" role="status">
-          <span className="risk-spinner" aria-hidden="true" />
-          {run?.phase === "cancelling"
-            ? "Stopping after the current batch…"
-            : run?.progress
-              ? `Simulating ${run.progress.completedPaths.toLocaleString("en-US")} / ${run.progress.totalPaths.toLocaleString("en-US")} paths.`
-              : "Preparing simulation…"}
-        </div>
-      )}
       <div
         className={`workspace-grid ${settingsOpen ? "" : "settings-closed"}`}
       >
@@ -718,6 +652,10 @@ export function Evaluation() {
               <strong>€{draft.investor.initialCapital || "—"}</strong>
             </div>
             <div className="scenario-item">
+              <span>Impoverishment level</span>
+              <strong>€{draft.investor.impoverishmentLevel || "—"}</strong>
+            </div>
+            <div className="scenario-item">
               <span>{custom ? "Annual withdrawal" : "Target risk"}</span>
               <strong>
                 {custom
@@ -732,6 +670,14 @@ export function Evaluation() {
             >
               Edit setup
             </button>
+            <SimulationRunControl
+              run={run}
+              errors={errors}
+              settingsOpen={settingsOpen}
+              onToggleSettings={() => setSettingsOpen(!settingsOpen)}
+              onStart={start}
+              onCancel={cancel}
+            />
           </div>
           <SectionHeading
             eyebrow="01 / THE DECISION"
@@ -850,7 +796,7 @@ export function Evaluation() {
           )}
         </div>
         {settingsOpen && (
-          <aside className="settings-panel">
+          <aside id="evaluation-settings" className="settings-panel">
             <div className="settings-heading">
               <div>
                 <span className="tiny-label">MAKE IT YOURS</span>

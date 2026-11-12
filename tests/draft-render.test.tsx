@@ -23,6 +23,14 @@ test("evaluation renders illustrative results and the main controls", () => {
   assert.match(html, /Borrowing exposure/);
   assert.match(html, /NOT CALCULATED/);
   assert.match(html, /YOUR SETUP/);
+  assert.match(html, /Retirement age/);
+  assert.match(html, /Starting capital/);
+  assert.match(
+    html.slice(html.indexOf("YOUR SETUP"), html.indexOf("Run simulation")),
+    /Impoverishment level/,
+  );
+  assert.match(html, /Target risk/);
+  assert.ok(html.indexOf("YOUR SETUP") < html.indexOf("Run simulation"));
   assert.match(html, /Edit setup/);
   assert.doesNotMatch(html, />Policy comparison</);
 });
