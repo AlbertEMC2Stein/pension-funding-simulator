@@ -23,14 +23,6 @@ export function prepareEvaluationRun(
 ): EvaluationRunInput {
   const options = buildSimulationOptions(draft);
   if (!options.ok) return options;
-  if (options.options.policy.projected)
-    return {
-      ok: false,
-      errors: [
-        "Projected-policy simulation is not implemented yet. Turn off projection to run the unconstrained policy.",
-      ],
-    };
-
   const calibrated = calibrateMarket(options.options.market);
   if (!calibrated.ok) return { ok: false, errors: [calibrated.error] };
   if (!calibrated.market.paperAssumptions.positiveRho)
@@ -77,7 +69,9 @@ export function prepareEvaluationRun(
         schema: "prototype-1",
         model: "compatible-ce-1",
         randomGenerator: "cyrb128-sfc32-box-muller-1",
-        simulationAlgorithm: "tensorflow-bridge-2",
+        simulationAlgorithm: options.options.policy.projected
+          ? "tensorflow-paired-euler-1"
+          : "tensorflow-bridge-2",
       },
       provenance: {
         mortalityData: `Current cohort fit: ${keys.gm}`,

@@ -73,10 +73,16 @@ test("evaluation prepares a validated full-horizon snapshot from current setting
   assert.equal(snapshot.numerical.batchSize, 2500);
 });
 
-test("evaluation refuses projected, stale and missing mortality inputs", () => {
+test("evaluation accepts projection and refuses stale and missing mortality inputs", () => {
   const { draft, fits } = setup();
   draft.simulation.projected = true;
-  assert.equal(prepareEvaluationRun(draft, fits).ok, false);
+  const paired = prepareEvaluationRun(draft, fits);
+  assert.ok(paired.ok);
+  assert.equal(createRunSnapshot(paired.input).options.policy.projected, true);
+  assert.equal(
+    paired.input.versions.simulationAlgorithm,
+    "tensorflow-paired-euler-1",
+  );
   draft.simulation.projected = false;
   assert.equal(prepareEvaluationRun(draft, { ...fits, ce: null }).ok, false);
   draft.investor.retirementYear = "2033";
@@ -120,4 +126,91 @@ test("GM card displays the captured estimate and marks changed settings", () => 
   assert.match(html, /5.200%/);
   assert.match(html, /5.000% – 5.400%/);
   assert.match(html, /outcomes|extend beyond the CE endpoint/);
+});
+
+test("GM card displays paired projected values and labels stale runs", () => {
+  const { draft, fits } = setup();
+  draft.simulation.projected = true;
+  const prepared = prepareEvaluationRun(draft, fits);
+  assert.ok(prepared.ok);
+  const baseEstimate = {
+    estimate: 0.052,
+    standardError: 0.001,
+    interval95: { lower: 0.05, upper: 0.054 },
+  };
+  const projectedEstimate = {
+    estimate: 0.055,
+    standardError: 0.001,
+    interval95: { lower: 0.053, upper: 0.057 },
+  };
+  const pairedDifference = {
+    estimate: 0.003,
+    standardError: 0.0005,
+    interval95: { lower: 0.002, upper: 0.004 },
+  };
+  const run: EvaluationRun = {
+    signature: "captured",
+    phase: "complete",
+    options: prepared.input.options,
+    numerical: prepared.input.numerical,
+    risk: {
+      ce: baseEstimate,
+      gm: baseEstimate,
+      ceBenchmark: 0.05,
+      horizonYears: 10,
+      ceEndpoint: 10,
+      projected: {
+        ce: projectedEstimate,
+        gm: projectedEstimate,
+        ceDifference: pairedDifference,
+        gmDifference: pairedDifference,
+      },
+    },
+  };
+  const html = renderToStaticMarkup(
+    <DraftContext.Provider value={{ navigate: () => {}, notice: () => {} }}>
+      <GmRiskCard projected run={run} stale custom={false} />
+    </DraftContext.Provider>,
+  );
+
+  assert.match(html, /NEEDS UPDATING/);
+  assert.match(html, /5\.500%/);
+  assert.match(html, /\+0\.300 pp/);
+  assert.match(html, /\+0\.500 pp/);
+  assert.match(html, /0\.200 pp – 0\.400 pp/);
+  assert.match(html, /time-step and bridge errors are not included/);
+  assert.ok(
+    html.indexOf("PROJECTED POLICY · PAIRED COMPARISON") <
+      html.indexOf("Settings used for this run"),
+  );
+  assert.doesNotMatch(html, /When projection is selected/);
+});
+
+test("selecting projection does not present an earlier unconstrained run as paired", () => {
+  const { draft, fits } = setup();
+  const prepared = prepareEvaluationRun(draft, fits);
+  assert.ok(prepared.ok);
+  const estimate = { estimate: 0.05, standardError: null, interval95: null };
+  const run: EvaluationRun = {
+    signature: "earlier",
+    phase: "complete",
+    options: prepared.input.options,
+    numerical: prepared.input.numerical,
+    risk: {
+      ce: estimate,
+      gm: estimate,
+      ceBenchmark: 0.05,
+      horizonYears: 10,
+      ceEndpoint: 10,
+    },
+  };
+  const html = renderToStaticMarkup(
+    <DraftContext.Provider value={{ navigate: () => {}, notice: () => {} }}>
+      <GmRiskCard projected run={run} stale custom={false} />
+    </DraftContext.Provider>,
+  );
+
+  assert.match(html, /NEEDS UPDATING/);
+  assert.match(html, /NOT CALCULATED/);
+  assert.match(html, /after a projected-policy run/);
 });

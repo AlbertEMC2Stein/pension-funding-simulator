@@ -71,8 +71,8 @@ same investor input rather than maintained as a separate editable value.
 All paths in a batch share one investor's initial capital. The tensor backend
 creates the path-state vector internally from that amount and the batch size.
 The snapshot and batch result format are not stable. Bridge-detected times
-remain approximate for a curved boundary. Evaluation-panel integration of
-projected-policy estimates is later work. CPU TensorFlow has
+remain approximate for a curved boundary. The evaluation panel displays paired
+projected-policy estimates when projection is selected. CPU TensorFlow has
 deterministic bridge checks and an analytical CE risk sanity check; the new
 bridge integration has not been verified on WebGPU.
 
@@ -102,8 +102,7 @@ update with the same market increments and auxiliary bridge draws. A separate
 wealth-coordinate bridge freezes the projected diffusion over each step. Both
 policies have independent stopped states and paired hit-time arrays; the worker
 computes projected risks and standard errors of paired differences. The developer
-panel displays these provisional results; the evaluation panel remains guarded.
-CPU tests include a known CE reference where projection does not bind. Projected
+and evaluation panels display these provisional results. CPU tests include a known CE reference where projection does not bind. Projected
 risk depends on Euler and bridge approximations, and its time-step sensitivity,
 GPU behavior and performance require further checks before production use.
 

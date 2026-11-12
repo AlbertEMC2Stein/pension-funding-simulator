@@ -108,6 +108,21 @@ export function GmRiskCard({
             ? "calculated"
             : "not-calculated";
   const difference = risk ? (risk.gm.estimate - risk.ceBenchmark) * 100 : null;
+  const projectedRisk = run?.options.policy.projected
+    ? risk?.projected
+    : undefined;
+  const projectedStatus: ResultStatus = run?.options.policy.projected
+    ? projectedRisk ||
+      running ||
+      run.phase === "error" ||
+      run.phase === "cancelled"
+      ? status
+      : "not-calculated"
+    : "not-calculated";
+  const projectedDifference =
+    projectedRisk && risk
+      ? (projectedRisk.gm.estimate - risk.ceBenchmark) * 100
+      : null;
   const remainingMs =
     run?.progress && run.batchElapsedMs !== undefined
       ? (run.batchElapsedMs / run.progress.completedPaths) *
@@ -197,71 +212,6 @@ export function GmRiskCard({
             years; GM mortality may extend beyond the CE endpoint. Bridge,
             time-step and horizon errors are not included in the interval.
           </p>
-          {run && (
-            <details className="borrowing-details diagnostic-details">
-              <summary>Settings used for this run</summary>
-              <dl>
-                <div>
-                  <dt>Policy</dt>
-                  <dd>Unconstrained CE</dd>
-                </div>
-                <div>
-                  <dt>Annual withdrawal</dt>
-                  <dd>
-                    {run.annualWithdrawal === undefined
-                      ? "—"
-                      : `€${Math.round(run.annualWithdrawal).toLocaleString("en-US")} / year`}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Starting capital / impoverishment level</dt>
-                  <dd>
-                    €
-                    {run.options.investor.initialCapital.toLocaleString(
-                      "en-US",
-                    )}{" "}
-                    / €
-                    {run.options.investor.impoverishmentLevel.toLocaleString(
-                      "en-US",
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Mortality cohort</dt>
-                  <dd>
-                    {run.options.investor.birthYear} · retirement{" "}
-                    {run.options.investor.retirementYear} ·{" "}
-                    {run.options.investor.mortality.table} ·{" "}
-                    {run.options.investor.mortality.longevity}
-                    {run.options.investor.mortality.table === "custom" &&
-                      ` · male weight ${run.options.investor.mortality.maleWeight}`}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Market assets</dt>
-                  <dd>
-                    {run.options.market.assets
-                      .map((asset) => asset.name)
-                      .join(", ")}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Paths / time step</dt>
-                  <dd>
-                    {run.options.numerical.paths.toLocaleString("en-US")} /{" "}
-                    {run.options.numerical.timeStep}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Batch size / seed</dt>
-                  <dd>
-                    {run.numerical.batchSize.toLocaleString("en-US")} /{" "}
-                    {run.numerical.seed}
-                  </dd>
-                </div>
-              </dl>
-            </details>
-          )}
         </>
       )}
       {projected && (
@@ -270,31 +220,136 @@ export function GmRiskCard({
             <span className="tiny-label">
               PROJECTED POLICY · PAIRED COMPARISON
             </span>
-            <StatusBadge status="not-calculated" />
+            <StatusBadge status={projectedStatus} />
           </div>
           <div className="diagnostic-metrics">
-            <Metric
-              label="Estimated projected GM risk"
-              note="Monte Carlo estimate"
-            />
-            <Metric
-              label="Projection contribution"
-              note="Projected minus unconstrained GM risk · percentage points"
-            />
-            <Metric
-              label="Total difference from target"
-              note="Projected GM risk minus α · percentage points"
-            />
+            <div>
+              <span>Estimated projected GM risk</span>
+              <strong>
+                {projectedRisk
+                  ? `${(projectedRisk.gm.estimate * 100).toFixed(3)}%`
+                  : "—"}
+              </strong>
+              <small>Projected policy · Monte Carlo estimate</small>
+            </div>
+            <div>
+              <span>Projection contribution</span>
+              <strong>
+                {projectedRisk
+                  ? `${projectedRisk.gmDifference.estimate > 0 ? "+" : ""}${(projectedRisk.gmDifference.estimate * 100).toFixed(3)} pp`
+                  : "—"}
+              </strong>
+              <small>Projected minus unconstrained GM risk</small>
+            </div>
+            <div>
+              <span>
+                {targetMode
+                  ? "Total difference from target"
+                  : "Total difference from CE risk"}
+              </span>
+              <strong>
+                {projectedDifference === null
+                  ? "—"
+                  : `${projectedDifference > 0 ? "+" : ""}${projectedDifference.toFixed(3)} pp`}
+              </strong>
+              <small>Projected GM risk minus unconstrained CE reference</small>
+            </div>
           </div>
-          <p className="chart-disclaimer">
-            Paired estimates and their uncertainty will be shown after a run.
-          </p>
+          {projectedRisk ? (
+            <p className="chart-disclaimer">
+              Approximate 95% Monte Carlo intervals: projected GM risk{" "}
+              {projectedRisk.gm.interval95
+                ? `${(projectedRisk.gm.interval95.lower * 100).toFixed(3)}% – ${(projectedRisk.gm.interval95.upper * 100).toFixed(3)}%`
+                : "not available for this sample"}
+              ; paired difference{" "}
+              {projectedRisk.gmDifference.interval95
+                ? `${(projectedRisk.gmDifference.interval95.lower * 100).toFixed(3)} pp – ${(projectedRisk.gmDifference.interval95.upper * 100).toFixed(3)} pp`
+                : "not available for this sample"}
+              . The projected policy uses Euler steps and a frozen-variance
+              bridge; time-step and bridge errors are not included in the
+              intervals.
+            </p>
+          ) : (
+            <p className="chart-disclaimer">
+              Paired estimates and their uncertainty will be shown after a
+              projected-policy run.
+            </p>
+          )}
         </div>
       )}
-      <p className="chart-disclaimer">
-        When projection is selected, a paired policy comparison will also appear
-        here. Estimates depend on the model and are not known future risks.
-      </p>
+      {risk && run && (
+        <details className="borrowing-details diagnostic-details">
+          <summary>Settings used for this run</summary>
+          <dl>
+            <div>
+              <dt>Policy</dt>
+              <dd>
+                {run.options.policy.projected
+                  ? "Unconstrained and projected CE (paired)"
+                  : "Unconstrained CE"}
+              </dd>
+            </div>
+            <div>
+              <dt>Annual withdrawal</dt>
+              <dd>
+                {run.annualWithdrawal === undefined
+                  ? "—"
+                  : `€${Math.round(run.annualWithdrawal).toLocaleString("en-US")} / year`}
+              </dd>
+            </div>
+            <div>
+              <dt>Starting capital / impoverishment level</dt>
+              <dd>
+                €{run.options.investor.initialCapital.toLocaleString("en-US")} /
+                €
+                {run.options.investor.impoverishmentLevel.toLocaleString(
+                  "en-US",
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>Mortality cohort</dt>
+              <dd>
+                {run.options.investor.birthYear} · retirement{" "}
+                {run.options.investor.retirementYear} ·{" "}
+                {run.options.investor.mortality.table} ·{" "}
+                {run.options.investor.mortality.longevity}
+                {run.options.investor.mortality.table === "custom" &&
+                  ` · male weight ${run.options.investor.mortality.maleWeight}`}
+              </dd>
+            </div>
+            <div>
+              <dt>Market assets</dt>
+              <dd>
+                {run.options.market.assets
+                  .map((asset) => asset.name)
+                  .join(", ")}
+              </dd>
+            </div>
+            <div>
+              <dt>Paths / time step</dt>
+              <dd>
+                {run.options.numerical.paths.toLocaleString("en-US")} /{" "}
+                {run.options.numerical.timeStep}
+              </dd>
+            </div>
+            <div>
+              <dt>Batch size / seed</dt>
+              <dd>
+                {run.numerical.batchSize.toLocaleString("en-US")} /{" "}
+                {run.numerical.seed}
+              </dd>
+            </div>
+          </dl>
+        </details>
+      )}
+      {!projected && (
+        <p className="chart-disclaimer">
+          When projection is selected, a paired policy comparison will also
+          appear here. Estimates depend on the model and are not known future
+          risks.
+        </p>
+      )}
       <dialog
         ref={dialog}
         className="help-dialog"
@@ -871,23 +926,24 @@ export function Evaluation() {
               <p className="visual-picker-note">
                 Mortality fit is shown in Investor & mortality. The CE chart,
                 allocation, capital comparison and global feasibility are
-                calculated when available. Other results remain illustrative
-                placeholders.
+                calculated when available. GM risk is estimated when a
+                simulation completes. Other unfinished visuals remain
+                illustrative placeholders.
               </p>
             </div>
           )}
           {visuals.withdrawal && <RiskWithdrawalChart result={ceResult} />}
+          {visuals.capital && (
+            <CapitalCard
+              comparison={calculateCapitalComparison(ceResult, projected)}
+            />
+          )}
           {visuals.gm && (
             <GmRiskCard
               projected={projected}
               run={run}
               stale={stale}
               custom={custom}
-            />
-          )}
-          {visuals.capital && (
-            <CapitalCard
-              comparison={calculateCapitalComparison(ceResult, projected)}
             />
           )}
           <div className="lower-grid">
