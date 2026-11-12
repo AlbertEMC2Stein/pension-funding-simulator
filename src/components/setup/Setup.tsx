@@ -23,6 +23,7 @@ import { useSimulationDraft } from "../SimulationDraftContext";
 import { MarketEditor } from "./MarketEditor";
 import { MarketAssumptionChecks } from "./MarketAssumptionChecks";
 import { MarketValidation } from "./MarketValidation";
+import { MortalityDataInfo } from "./MortalityDataInfo";
 import { parseAmount } from "../../lib/options/simulation-options";
 import { CohortChart } from "./CohortChart";
 import type { CeFitStatus } from "../../lib/mortality/fit-status";
@@ -396,13 +397,11 @@ function InvestorSetup({
         <span className="tiny-label">MORTALITY DATA</span>
         <h3>Built around your cohort.</h3>
         <p>
-          The intended design uses birth year, retirement age, and a selected
-          longevity scenario to calibrate mortality.
+          Your birth year, retirement age, and selected longevity scenario
+          determine the cohort survival data used for calibration.
         </p>
         <div className="insight-divider" />
-        <DemoAction message="Mortality data information is not connected in this draft.">
-          About the data
-        </DemoAction>
+        <MortalityDataInfo />
       </aside>
       <div>
         <SectionHeading
@@ -564,13 +563,13 @@ function InvestorSetup({
           </div>
           <p>
             Explore cohort survival from your expected retirement age and fit
-            mortality models.
-          </p>
-          <p className="mortality-market-note" role="status">
-            {ceFitStatus === "needs-update"
-              ? "The compatible CE fit needs updating after an input change."
-              : "The compatible CE fit depends on market assumptions. Check the fit again after changing them."}{" "}
-            The cohort data themselves do not change.
+            mortality models.{" "}
+            <span role="status">
+              {ceFitStatus === "needs-update"
+                ? "The compatible CE fit needs updating after an input change."
+                : "The compatible CE fit depends on market assumptions. Check the fit again after changing them."}{" "}
+              The cohort data themselves do not change.
+            </span>
           </p>
           <CohortChart
             birthYear={investor.birthYear}

@@ -627,9 +627,9 @@ table.capital-table {
   gap: 16px;
 }
 
-/* Keep the visual picker available even when the first section is hidden. */
+/* Keep the visual picker above the sections, even when they are hidden. */
 .visual-picker-trigger {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   margin: 18px 0;
 }

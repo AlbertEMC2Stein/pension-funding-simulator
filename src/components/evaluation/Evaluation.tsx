@@ -50,7 +50,7 @@ const visualGroups: {
   entries: { id: Visual; label: string }[];
 }[] = [
   {
-    title: "Withdrawal & capital",
+    title: "Withdrawal & risk",
     entries: [
       { id: "withdrawal", label: "Withdrawal & risk" },
       { id: "gm", label: "Estimated GM risk" },
@@ -59,10 +59,7 @@ const visualGroups: {
   },
   {
     title: "Portfolio & policies",
-    entries: [
-      { id: "allocation", label: "Portfolio allocation" },
-      { id: "trajectories", label: "Illustrative trajectories" },
-    ],
+    entries: [{ id: "allocation", label: "Portfolio allocation" }],
   },
   {
     title: "Impoverishment & borrowing",
@@ -70,6 +67,10 @@ const visualGroups: {
       { id: "timing", label: "Impoverishment timing" },
       { id: "borrowing", label: "Borrowing exposure" },
     ],
+  },
+  {
+    title: "Wealth trajectories",
+    entries: [{ id: "trajectories", label: "Illustrative trajectories" }],
   },
 ];
 
@@ -718,17 +719,7 @@ export function Evaluation() {
               onCancel={cancel}
             />
           </div>
-          {showWithdrawalSection ? (
-            <SectionHeading
-              eyebrow="01 / THE DECISION"
-              title="Withdrawal & risk"
-              description="Find a balance that feels right for your retirement."
-            >
-              {visualPickerButton}
-            </SectionHeading>
-          ) : (
-            <div className="visual-picker-trigger">{visualPickerButton}</div>
-          )}
+          <div className="visual-picker-trigger">{visualPickerButton}</div>
           {pickerOpen && (
             <div className="visual-options visual-picker">
               <div className="visual-picker-heading">
@@ -768,6 +759,13 @@ export function Evaluation() {
                 unfinished visuals remain illustrative placeholders.
               </p>
             </div>
+          )}
+          {showWithdrawalSection && (
+            <SectionHeading
+              eyebrow="01 / THE DECISION"
+              title="Withdrawal & risk"
+              description="Find a balance that feels right for your retirement."
+            />
           )}
           {visuals.withdrawal && <RiskWithdrawalChart result={ceResult} />}
           {visuals.capital && (
