@@ -30,37 +30,44 @@ test("inflation validation identifies empty and out-of-range values", () => {
   assert.equal(inflationRateError("2.00"), null);
 });
 
-test("reset and undo preserve the complete prior market draft", () => {
+test("reset saves a snapshot across edits and imports until undo or a later reset", () => {
   const initial = initialMarketCalibration();
   const manual = setCorrelation(addAsset(initial), 1, 0, "0.42");
   manual.assets[0].nominalReturnPercent = "8.10";
   const reset = updateMarketWithUndo(manual, null, { type: "reset" });
   assert.deepEqual(reset.market, initialMarketCalibration());
-  assert.equal(reset.undo, manual);
-  const restored = updateMarketWithUndo(reset.market, reset.undo, {
-    type: "undo",
+  assert.deepEqual(reset.undo, manual);
+  assert.notEqual(reset.undo, manual);
+
+  const changedMarket = addAsset(reset.market);
+  const edited = updateMarketWithUndo(reset.market, reset.undo, {
+    type: "edit",
+    market: changedMarket,
   });
-  assert.equal(restored.market, manual);
-  assert.equal(restored.market.assets.length, 3);
-  assert.equal(restored.market.correlations[1][0], "0.42");
-  assert.equal(restored.undo, null);
-  const imported = updateMarketWithUndo(manual, null, {
+  assert.deepEqual(edited.undo, manual);
+  const imported = updateMarketWithUndo(edited.market, edited.undo, {
     type: "replace",
     market: initialMarketCalibration(),
   });
-  assert.equal(
-    updateMarketWithUndo(imported.market, imported.undo, { type: "undo" })
-      .market,
-    manual,
-  );
-  const edited = updateMarketWithUndo(reset.market, reset.undo, {
-    type: "edit",
-    market: addAsset(reset.market),
+  assert.deepEqual(imported.undo, manual);
+  const restored = updateMarketWithUndo(imported.market, imported.undo, {
+    type: "undo",
   });
-  assert.equal(edited.undo, null);
+  assert.deepEqual(restored.market, manual);
+  assert.equal(restored.undo, null);
+
+  const secondReset = updateMarketWithUndo(edited.market, edited.undo, {
+    type: "reset",
+  });
+  assert.deepEqual(secondReset.undo, changedMarket);
+  assert.deepEqual(
+    updateMarketWithUndo(secondReset.market, secondReset.undo, { type: "undo" })
+      .market,
+    changedMarket,
+  );
   assert.equal(
-    updateMarketWithUndo(edited.market, edited.undo, { type: "undo" }).market,
-    edited.market,
+    updateMarketWithUndo(initial, null, { type: "undo" }).market,
+    initial,
   );
 });
 

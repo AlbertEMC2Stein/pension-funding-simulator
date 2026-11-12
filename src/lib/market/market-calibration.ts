@@ -68,16 +68,23 @@ export type MarketEditAction =
   | { type: "reset" }
   | { type: "undo" };
 
-/** Reset and import have one undo; later edits discard it to protect newer work. */
+/**
+ * Reset saves a copy of the previous market for one undo. Later edits and
+ * imports preserve that snapshot; the next reset replaces it. Undo restores
+ * the saved snapshot and clears it.
+ */
 export function updateMarketWithUndo(
   market: MarketCalibrationDraft,
   undo: MarketCalibrationDraft | null,
   action: MarketEditAction,
 ): { market: MarketCalibrationDraft; undo: MarketCalibrationDraft | null } {
-  if (action.type === "edit") return { market: action.market, undo: null };
-  if (action.type === "replace") return { market: action.market, undo: market };
+  if (action.type === "edit" || action.type === "replace")
+    return { market: action.market, undo };
   if (action.type === "reset")
-    return { market: initialMarketCalibration(), undo: market };
+    return {
+      market: initialMarketCalibration(),
+      undo: structuredClone(market),
+    };
 
   return undo ? { market: undo, undo: null } : { market, undo: null };
 }

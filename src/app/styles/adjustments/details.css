@@ -76,7 +76,22 @@ input[aria-invalid="true"] {
 .field-error:empty {
   display: none;
 }
+.market-heading .section-title {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
 .market-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-left: auto;
+  max-width: 100%;
+}
+
+/* Keep the asset actions together until the available width requires wrapping. */
+.asset-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;

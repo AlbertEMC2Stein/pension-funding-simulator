@@ -173,7 +173,7 @@ export function MarketEditor({
           </span>
           <h3>Asset universe</h3>
         </div>
-        <div className="market-actions">
+        <div className="asset-actions">
           <input
             ref={fileInput}
             type="file"
@@ -212,7 +212,11 @@ export function MarketEditor({
         inflation separately above.
       </p>
       {importError && (
-        <div className="market-validation market-validation-error" role="alert">
+        <div
+          className="feasibility-status market-validation"
+          data-status="invalid"
+          role="alert"
+        >
           Import failed: {importError} Your current inputs have been kept.
         </div>
       )}

@@ -89,42 +89,44 @@ function MarketSetup() {
         <MarketDataInfo />
       </aside>
       <div>
-        <SectionHeading
-          eyebrow="THE INVESTMENT UNIVERSE"
-          title="Market assumptions"
-          description="Define up to 10 assets and how they move together."
-        />
+        <div className="market-heading">
+          <SectionHeading
+            eyebrow="THE INVESTMENT UNIVERSE"
+            title="Market assumptions"
+            description="Define up to 10 assets and how they move together."
+          >
+            <div className="market-actions">
+              <button
+                type="button"
+                className="button button-light"
+                onClick={() => applyMarketAction({ type: "reset" })}
+                disabled={isExample}
+              >
+                ↺ &nbsp; Reset to example
+              </button>
+              <button
+                type="button"
+                className="button button-light"
+                onClick={() => applyMarketAction({ type: "undo" })}
+                disabled={!undo}
+              >
+                Undo reset
+              </button>
+            </div>
+          </SectionHeading>
+        </div>
         <div className="form-card market-input-card">
           <div className="card-heading">
             <div>
               <span className="tiny-label">YOUR MARKET</span>
               <h3>Market inputs</h3>
             </div>
-            <div className="market-actions">
-              <button
-                type="button"
-                className="button button-light"
-                onClick={() =>
-                  applyMarketAction({ type: undo ? "undo" : "reset" })
-                }
-                disabled={!undo && isExample}
-              >
-                ↺ &nbsp; {undo ? "Undo market change" : "Reset to example"}
-              </button>
-            </div>
           </div>
           <p>
-            Enter your own assumptions or restore the two-asset example. Market
-            assumptions can affect the fitted mortality model. After changing
-            them, check the fit under Investor &amp; mortality. The underlying
-            cohort data do not change.
+            Market assumptions can affect the fitted mortality model. After
+            changing them, check the fit under Investor &amp; mortality. The
+            underlying cohort data do not change.
           </p>
-          {undo && (
-            <p role="status">
-              Previous market saved. You can undo the change until you edit
-              another input.
-            </p>
-          )}
           <div className="input-grid market-input-grid">
             <label>
               Base currency
