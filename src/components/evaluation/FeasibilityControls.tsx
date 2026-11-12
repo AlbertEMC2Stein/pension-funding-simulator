@@ -13,8 +13,8 @@ interface FeasibilityControlsProps {
 
 /**
  * Explain global feasibility for the selected policy. The projected policy is
- * simplex-feasible by definition; its calculation is not implemented yet. The
- * threshold action applies only to the unconstrained CE policy.
+ * simplex-feasible by definition. The threshold action applies only to the
+ * unconstrained CE policy.
  */
 export function FeasibilityControls({
   projected,
@@ -43,7 +43,7 @@ export function FeasibilityControls({
         <p>{message}</p>
         <small>
           {projected
-            ? "This describes the intended projected policy; projection is not implemented yet."
+            ? "The projected allocation stays within the simplex for all wealth levels."
             : "For the unconstrained CE policy. The Merton vector must be componentwise non-negative, with at least one positive entry."}
         </small>
       </div>

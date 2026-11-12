@@ -603,9 +603,7 @@ function BorrowingCard({
     <article className="chart-card borrowing-card">
       <div className="card-top">
         <div>
-          <span className="tiny-label">
-            {projected ? "PROJECTED POLICY" : "UNPROJECTED POLICY"}
-          </span>
+          <span className="tiny-label">UNCONSTRAINED POLICY</span>
           <h3>Borrowing exposure</h3>
           <p className="timing-intro">
             Explore the chance that your portfolio borrows and how long
@@ -923,7 +921,7 @@ export function Evaluation() {
                 description={
                   projected
                     ? "Explore possible outcomes for the selected policy."
-                    : "Explore possible outcomes and the borrowing exposure of the unprojected policy."
+                    : "Explore possible outcomes and the borrowing exposure of the unconstrained policy."
                 }
               />
               <div className="risk-section-grid">

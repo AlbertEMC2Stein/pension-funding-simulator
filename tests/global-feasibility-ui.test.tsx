@@ -76,7 +76,7 @@ test("projected policy is shown feasible and its threshold action is disabled", 
 
   assert.match(html, /data-status="feasible"/);
   assert.match(html, /globally feasible by construction/);
-  assert.match(html, /projection is not implemented yet/);
+  assert.match(html, /projected allocation stays within the simplex/);
   assert.match(html, /disabled=""/);
   assert.match(html, /only applies to the unconstrained policy/);
 });
