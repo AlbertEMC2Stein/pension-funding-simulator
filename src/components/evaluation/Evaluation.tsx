@@ -433,6 +433,7 @@ export function BorrowingCard({
   const hasNegativeMerton = feasibility.status === "negative-merton";
   const analyticalZero = feasibility.status === "feasible";
   const occupation = analyticalZero ? undefined : run?.borrowingOccupation;
+  const probability = analyticalZero ? undefined : run?.borrowingProbability;
   const running =
     run?.phase === "starting" ||
     run?.phase === "running" ||
@@ -484,8 +485,14 @@ export function BorrowingCard({
           <div className="borrowing-metrics">
             <Metric
               label="Probability of ever borrowing"
-              value={analyticalZero ? "0%" : "—"}
-              note="While alive and before impoverishment"
+              value={
+                analyticalZero
+                  ? "0%"
+                  : probability
+                    ? `${(100 * probability.estimate).toFixed(2)}%`
+                    : "—"
+              }
+              note="While alive and before impoverishment or the run horizon"
             />
             <Metric
               label="Expected time borrowing"
@@ -518,6 +525,18 @@ export function BorrowingCard({
                     : "—",
                 ],
                 [
+                  "Ever-borrowing MC standard error",
+                  probability?.standardError != null
+                    ? `${(100 * probability.standardError).toFixed(3)}%`
+                    : "—",
+                ],
+                [
+                  "Ever-borrowing 95% MC interval",
+                  probability?.interval95
+                    ? `${(100 * probability.interval95.lower).toFixed(3)}% – ${(100 * probability.interval95.upper).toFixed(3)}%`
+                    : "—",
+                ],
+                [
                   "Borrowing time MC standard error",
                   occupation?.standardErrorYears != null
                     ? `${occupation.standardErrorYears.toFixed(3)} years`
@@ -547,7 +566,7 @@ export function BorrowingCard({
             <p>
               {analyticalZero
                 ? "Both zeros follow analytically from global feasibility, so Monte Carlo uncertainty does not apply."
-                : "Monte Carlo uncertainty applies to the simulated borrowing time only; some diagnostics require additional assumptions."}
+                : "Monte Carlo intervals describe sampling uncertainty only; they do not cover numerical approximation or horizon effects."}
             </p>
           </details>
           <p className="chart-disclaimer">
@@ -558,7 +577,9 @@ export function BorrowingCard({
                 {occupation
                   ? "Borrowing time uses interpolated crossings and GM survival; short excursions can be missed. Monte Carlo uncertainty does not include time-step or bridge error."
                   : "Borrowing time has not been calculated. The global feasibility diagnostic is analytical when available."}{" "}
-                The probability of ever borrowing is not calculated yet.
+                {probability
+                  ? "First borrowing uses a single-boundary bridge that does not condition on impoverishment or use a first-passage bridge."
+                  : "The probability of ever borrowing is not calculated yet."}
               </>
             )}
           </p>

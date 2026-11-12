@@ -1,5 +1,6 @@
 import * as tf from "@tensorflow/tfjs";
 import type { PreparedBorrowingInterval } from "../borrowing-occupation";
+import { detectFirstBorrowing } from "./borrowing-bridge";
 import { advanceBorrowingOccupation } from "./borrowing-occupation-step";
 import type { CompatiblePolicyInputs } from "../../analytical/compatible-policy";
 import { assertRunSnapshot, type RunSnapshot } from "../run-configuration";
@@ -52,6 +53,8 @@ export interface TensorWealthBatchInput {
   };
   /** Prepared GM occupation inputs shared across batches, when borrowing is possible. */
   borrowingOccupation?: readonly PreparedBorrowingInterval[];
+  /** Separate first-borrowing bridge draws; generated only when monitoring is enabled. */
+  borrowingBridgeDraws?: (step: number) => BridgeDraws;
   /** Create independent auxiliary bridge draws inside each step's tensor scope. */
   bridgeDraws: (step: number) => BridgeDraws;
 }
@@ -66,6 +69,8 @@ export interface TensorWealthBatchResult {
   firstHitTime: Float32Array;
   /** GM-weighted borrowing time for each unconstrained path, in years. */
   borrowingOccupation?: Float32Array;
+  /** First borrowing times in years, or -1 when no borrowing was detected. */
+  firstBorrowingTime?: Float32Array;
   /** The matched projected-policy observations, present for paired runs. */
   projected?: {
     finalWealth: Float32Array;
@@ -137,6 +142,7 @@ export async function simulateTensorWealthBatch(
     bridgeDraws,
     projected,
     borrowingOccupation,
+    borrowingBridgeDraws,
   } = input;
   const { initialCapital, impoverishmentLevel: threshold } = investor;
   const { realRiskFreeRate: r, mertonDirection } = market;
@@ -161,6 +167,7 @@ export async function simulateTensorWealthBatch(
   let firstHit: tf.Tensor1D = tf.fill([count], -1, "int32");
   let firstHitTime: tf.Tensor1D = tf.fill([count], -1, "float32");
   let occupation = tf.zeros([count]) as tf.Tensor1D;
+  let firstBorrowingTime = tf.fill([count], -1) as tf.Tensor1D;
   const direction = tf.tensor2d([...mertonDirection], [assets, 1]);
   const projectedPolicy = projected
     ? createTensorProjectedPolicy(
@@ -235,6 +242,46 @@ export async function simulateTensorWealthBatch(
               step: borrowingOccupation[step],
             })
           : occupation.clone();
+        // The first-borrowing bridge has its own random draws and is evaluated
+        // only up to the observed impoverishment time. It does not condition on
+        // the impoverishment bridge event or sample a first-passage bridge.
+        const nextBorrowingTime =
+          borrowingOccupation && borrowingBridgeDraws
+            ? (() => {
+                const observedFraction = tf.where(
+                  crossing.hit,
+                  crossing.fraction,
+                  tf.onesLike(wealth),
+                );
+                const borrowing = detectFirstBorrowing({
+                  currentWealth: wealth,
+                  proposedWealth,
+                  pending: active.logicalAnd(
+                    firstBorrowingTime.less(0),
+                  ) as tf.Tensor1D,
+                  impoverishmentHit: crossing,
+                  impoverishmentLevel: threshold,
+                  currentSafeBoundary: prepared.currentBoundary,
+                  nextSafeBoundary: prepared.nextBoundary,
+                  boundaryScale:
+                    borrowingOccupation[step].boundaryStart /
+                    prepared.currentBoundary,
+                  realRiskFreeRate: r,
+                  timeStepYears: dt,
+                  logGapVarianceRate,
+                  draws: borrowingBridgeDraws(step),
+                });
+
+                return tf.where(
+                  borrowing.hit,
+                  borrowing.fraction
+                    .mul(observedFraction)
+                    .mul(dt)
+                    .add(times[step]),
+                  firstBorrowingTime,
+                ) as tf.Tensor1D;
+              })()
+            : firstBorrowingTime.clone();
         const unconstrained = recordFirstHits(
           proposedWealth,
           firstHit,
@@ -290,21 +337,28 @@ export async function simulateTensorWealthBatch(
           return {
             ...unconstrained,
             occupation: nextOccupation,
+            firstBorrowingTime: nextBorrowingTime,
             projectedWealth: updatedProjected.wealth,
             projectedHit: updatedProjected.firstHit,
             projectedHitTime: updatedProjected.firstHitTime,
           };
         }
 
-        return { ...unconstrained, occupation: nextOccupation };
+        return {
+          ...unconstrained,
+          occupation: nextOccupation,
+          firstBorrowingTime: nextBorrowingTime,
+        };
       });
 
       // Retain only the new states; all intermediate tensors were released by tidy.
       wealth.dispose();
       firstHit.dispose();
       firstHitTime.dispose();
-      occupation?.dispose();
+      occupation.dispose();
+      firstBorrowingTime.dispose();
       occupation = next.occupation;
+      firstBorrowingTime = next.firstBorrowingTime;
       wealth = next.wealth;
       firstHit = next.firstHit;
       firstHitTime = next.firstHitTime;
@@ -341,6 +395,11 @@ export async function simulateTensorWealthBatch(
       ? await occupation.data()
       : undefined;
 
+    const borrowingTimeData =
+      borrowingOccupation && borrowingBridgeDraws
+        ? await firstBorrowingTime.data()
+        : undefined;
+
     let projectedResult: TensorWealthBatchResult["projected"];
 
     if (projectedWealth && projectedHit && projectedHitTime) {
@@ -370,6 +429,9 @@ export async function simulateTensorWealthBatch(
 
     return {
       projected: projectedResult,
+      firstBorrowingTime: borrowingTimeData
+        ? Float32Array.from(borrowingTimeData)
+        : undefined,
       borrowingOccupation: occupationData
         ? Float32Array.from(occupationData)
         : undefined,
@@ -379,7 +441,8 @@ export async function simulateTensorWealthBatch(
     };
   } finally {
     wealth.dispose();
-    occupation?.dispose();
+    occupation.dispose();
+    firstBorrowingTime.dispose();
     firstHit.dispose();
     firstHitTime.dispose();
     direction.dispose();
@@ -463,6 +526,7 @@ export async function simulateTensorBatch(
           .mul(Math.sqrt(dt)) as tf.Tensor2D;
       },
       bridgeDraws: () => createTensorBridgeDraws(pathCount, stream),
+      borrowingBridgeDraws: () => createTensorBridgeDraws(pathCount, stream),
     });
   } finally {
     factor.dispose();

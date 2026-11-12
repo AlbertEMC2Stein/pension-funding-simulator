@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import * as tf from "@tensorflow/tfjs";
+import { prepareGompertzMakehamSurvival } from "../src/lib/mortality/mortality-models";
 import { calibrateMarket } from "../src/lib/market/calibrate-market";
 import {
   buildSimulationOptions,
@@ -19,10 +20,19 @@ import {
 } from "../src/lib/model/simulation/tensorflow/run-scheduler";
 
 /** Create a small valid CE run with a final partial batch. */
-function exampleSnapshot(recordTrajectories = false, projected = false) {
+function exampleSnapshot(
+  recordTrajectories = false,
+  projected = false,
+  initiallyBorrowing = false,
+) {
   const draft = initialSimulationDraft();
   draft.simulation.paths = 5;
   draft.simulation.projected = projected;
+  if (initiallyBorrowing) {
+    draft.investor.initialCapital = "110,000";
+    draft.simulation.withdrawalMode = "customAmount";
+    draft.simulation.withdrawalEuros = 500000;
+  }
   const built = buildSimulationOptions(draft);
   assert.ok(built.ok);
   const calibrated = calibrateMarket(built.options.market);
@@ -110,6 +120,7 @@ test("scheduler runs all paths, reports partial-batch progress and aggregates br
     times: result.times,
   });
   const occupations: number[] = [];
+  const borrowingTimes: number[] = [];
 
   for (const count of [2, 2, 1]) {
     const batch = await simulateTensorBatch(
@@ -120,6 +131,7 @@ test("scheduler runs all paths, reports partial-batch progress and aggregates br
       occupationSteps ?? undefined,
     );
     occupations.push(...(batch.borrowingOccupation ?? Array(count).fill(0)));
+    borrowingTimes.push(...(batch.firstBorrowingTime ?? Array(count).fill(-1)));
     for (const index of batch.firstHitStep)
       if (index >= 0) expected[index] += 1;
   }
@@ -129,6 +141,17 @@ test("scheduler runs all paths, reports partial-batch progress and aggregates br
       result.borrowingOccupation.estimateYears -
         occupations.reduce((a, b) => a + b, 0) / occupations.length,
     ) < 1e-10,
+  );
+  const survival = prepareGompertzMakehamSurvival(
+    snapshot.mortality.gm.parameters,
+  );
+  const probability =
+    borrowingTimes.reduce(
+      (sum, time) => sum + (time < 0 ? 0 : survival(time)),
+      0,
+    ) / borrowingTimes.length;
+  assert.ok(
+    Math.abs(result.borrowingProbability.estimate - probability) < 1e-10,
   );
   assert.deepEqual(result.firstHitCounts, expected);
   assert.equal(
@@ -194,4 +217,15 @@ test("paired batches retain matching observations without altering the unconstra
     paired.projected.firstHitCounts.reduce((sum, count) => sum + count, 0),
   );
   assert.equal(tf.memory().numTensors, before);
+});
+
+test("initial borrowing is survival-weighted and aggregated across batches", async () => {
+  const result = await runScheduler(exampleSnapshot(false, false, true), {
+    backendOrder: ["cpu"],
+  });
+
+  assert.equal(result.borrowingProbability.estimate, 1);
+  assert.equal(result.borrowingProbability.standardError, 0);
+  assert.equal(result.borrowingProbability.interval95, null);
+  assert.ok(result.borrowingOccupation.estimateYears > 0);
 });

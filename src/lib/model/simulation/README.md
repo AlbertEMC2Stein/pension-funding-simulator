@@ -166,4 +166,13 @@ error and approximate interval without retaining all occupation paths.
 This method misses excursions that begin and end between grid points. Its
 crossing times, impoverishment bridge, time step, survival interpolation and
 finite run horizon introduce errors not covered by the Monte Carlo interval.
-The separately planned first-borrowing bridge is not implemented here.
+First borrowing uses a separate single-boundary bridge, in logarithmic safe-gap
+coordinates when available and frozen wealth variance otherwise. The observed
+interval is truncated at the sampled impoverishment time, but the borrowing
+bridge does **not** condition on avoiding impoverishment or use a first-passage
+bridge. The first detected borrowing time contributes GM survival at that time;
+no entry contributes zero. The scheduler averages these payoffs and reports
+Monte Carlo uncertainty. Occupation still uses endpoint interpolation, so a
+bridge-detected excursion may have zero interpolated occupation. Independent
+bridge draws come from the same run stream, so enabling the additional draws
+changes the sequence assigned to subsequent simulation steps.

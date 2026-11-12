@@ -29,6 +29,8 @@ export interface EvaluationRun {
   /** Elapsed processing time after backend initialization. */
   batchElapsedMs?: number;
   risk?: MortalityRiskResults;
+  /** GM-weighted first-borrowing probability within the captured horizon. */
+  borrowingProbability?: import("../../lib/model/simulation/risk-estimate").RiskEstimate;
   /** Unconstrained GM-weighted borrowing occupation within the captured horizon. */
   borrowingOccupation?: import("../../lib/model/simulation/tensorflow/run-scheduler").RunSchedulerResult["borrowingOccupation"];
   /** Run-captured mortality and first hits for the optional timing visual. */
@@ -162,6 +164,7 @@ export function useEvaluationRun() {
               phase: "complete",
               risk: message.risk,
               borrowingOccupation: message.result.borrowingOccupation,
+              borrowingProbability: message.result.borrowingProbability,
               timing: {
                 gm,
                 durbin,

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
+import type { EvaluationRun } from "../src/components/evaluation/useEvaluationRun";
 import { BorrowingCard } from "../src/components/evaluation/Evaluation";
 import type { FeasibilityResult } from "../src/components/evaluation/global-feasibility";
 
@@ -56,5 +57,41 @@ test("negative Merton components make borrowing diagnostics unavailable", () => 
   assert.doesNotMatch(
     html,
     /Probability of ever borrowing|Expected time borrowing/,
+  );
+});
+
+test("completed simulated borrowing displays its estimate and MC interval", () => {
+  const run = {
+    phase: "complete",
+    borrowingProbability: {
+      estimate: 0.125,
+      standardError: 0.01,
+      interval95: { lower: 0.105, upper: 0.145 },
+    },
+    borrowingOccupation: {
+      estimateYears: 1.25,
+      standardErrorYears: 0.1,
+      interval95Years: { lower: 1.05, upper: 1.45 },
+    },
+  } as unknown as EvaluationRun;
+  const html = renderToStaticMarkup(
+    <BorrowingCard
+      feasibility={{
+        status: "borrowing",
+        zeta: 2,
+        message: "Borrowing possible",
+      }}
+      projected={false}
+      run={run}
+      stale={false}
+    />,
+  );
+
+  assert.match(html, /<strong>12\.50%<\/strong>/);
+  assert.match(html, /10\.500% – 14\.500%/);
+  assert.match(html, /does not condition on impoverishment/);
+  assert.doesNotMatch(
+    html,
+    /probability of ever borrowing is not calculated yet/i,
   );
 });

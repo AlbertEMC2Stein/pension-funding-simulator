@@ -1,3 +1,5 @@
+import { prepareGompertzMakehamSurvival } from "../../../mortality/mortality-models";
+import type { RiskEstimate } from "../risk-estimate";
 import { prepareBorrowingOccupation } from "../borrowing-occupation";
 import { assertRunSnapshot, type RunSnapshot } from "../run-configuration";
 import { createRandomStream } from "../random";
@@ -38,6 +40,8 @@ export interface RunSchedulerResult {
   observedHits: number;
   /** Approximate first-hit times in years; -1 denotes no hit by the horizon. */
   firstHitTimes: Float32Array;
+  /** GM-survival-weighted probability of first borrowing before stopping. */
+  borrowingProbability: RiskEstimate;
   /** GM-survival-weighted time borrowing before impoverishment or the horizon. */
   borrowingOccupation: {
     estimateYears: number;
@@ -68,8 +72,8 @@ function yieldToEventLoop(): Promise<void> {
  * One caller-owned stream is seeded once and consumed across batches; the last
  * batch contains only the remaining paths. Progress is reported after completed
  * batches. Cancellation and errors reject the run rather than return partial
- * results. This prototype retains approximate first-hit times, but not full
- * trajectories, and does not calculate mortality-weighted probabilities.
+ * results. It retains impoverishment first-hit times, but not full trajectories.
+ * Borrowing statistics are GM-survival-weighted and aggregated across batches.
  *
  * Repeating the same snapshot with the same backend and batch sequence uses
  * the same random draws. Changing batch size can change their path assignment;
@@ -98,7 +102,7 @@ export async function runScheduler(
     snapshot.numerical.horizonYears,
     snapshot.options.numerical.timeStep,
   );
-  const occupationSteps = prepareBorrowingOccupation({
+  const preparedOccupation = prepareBorrowingOccupation({
     market: snapshot.market,
     mortality: snapshot.mortality.ce.parameters,
     gm: snapshot.mortality.gm.parameters,
@@ -106,6 +110,17 @@ export async function runScheduler(
     impoverishmentLevel: snapshot.options.investor.impoverishmentLevel,
     times,
   });
+  // If the initial borrowing boundary is at or below impoverishment, its
+  // decreasing trajectory cannot enter the solvent region at later times.
+  const occupationSteps =
+    preparedOccupation &&
+    preparedOccupation[0].boundaryStart >
+      snapshot.options.investor.impoverishmentLevel
+      ? preparedOccupation
+      : undefined;
+  const gmSurvival = prepareGompertzMakehamSurvival(
+    snapshot.mortality.gm.parameters,
+  );
   const firstHitCounts = Array<number>(times.length).fill(0);
   const firstHitTimes = new Float32Array(totalPaths);
   const stream = createRandomStream(snapshot.numerical.seed);
@@ -133,6 +148,8 @@ export async function runScheduler(
   let occupationCount = 0;
   let occupationMean = 0;
   let occupationSquaredDeviations = 0;
+  let borrowingMean = 0;
+  let borrowingSquaredDeviations = 0;
 
   while (completedPaths < totalPaths) {
     checkCancellation(options.signal);
@@ -159,6 +176,15 @@ export async function runScheduler(
       const difference = value - occupationMean;
       occupationMean += difference / occupationCount;
       occupationSquaredDeviations += difference * (value - occupationMean);
+
+      const firstBorrowing = batch.firstBorrowingTime?.[index] ?? -1;
+      if (!Number.isFinite(firstBorrowing))
+        throw new RangeError("First borrowing produced a non-finite time.");
+      const payoff = firstBorrowing < 0 ? 0 : gmSurvival(firstBorrowing);
+      const borrowingDifference = payoff - borrowingMean;
+      borrowingMean += borrowingDifference / occupationCount;
+      borrowingSquaredDeviations +=
+        borrowingDifference * (payoff - borrowingMean);
     }
 
     if (projected && !batch.projected)
@@ -208,7 +234,27 @@ export async function runScheduler(
   const halfWidth =
     standardError === null ? 0 : 1.959963984540054 * standardError;
 
+  const borrowingSE =
+    occupationCount > 1
+      ? Math.sqrt(
+          Math.max(0, borrowingSquaredDeviations / (occupationCount - 1)) /
+            occupationCount,
+        )
+      : null;
+  const borrowingHalfWidth =
+    borrowingSE === null ? 0 : 1.959963984540054 * borrowingSE;
+
   return {
+    borrowingProbability: {
+      estimate: borrowingMean,
+      standardError: borrowingSE,
+      interval95: borrowingSE
+        ? {
+            lower: Math.max(0, borrowingMean - borrowingHalfWidth),
+            upper: Math.min(1, borrowingMean + borrowingHalfWidth),
+          }
+        : null,
+    },
     borrowingOccupation: {
       estimateYears: occupationMean,
       standardErrorYears: standardError,
