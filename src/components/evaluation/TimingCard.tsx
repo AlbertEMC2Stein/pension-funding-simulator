@@ -14,6 +14,7 @@ import {
 import { StatusBadge, type ResultStatus } from "../StatusBadge";
 import type { EvaluationRun } from "./useEvaluationRun";
 import {
+  forecastYAxisRange,
   includeSelectedRiskPoint,
   makeTimingDensityBins,
   remainingRiskAt,
@@ -98,6 +99,18 @@ function TimingPlot({
       const selectedRisk = density
         ? timingDensityAt(bins, selectedTime)
         : remainingRiskAt(points, selectedTime);
+      const forecastRange = conditional
+        ? undefined
+        : forecastYAxisRange(
+            density
+              ? bins.map((bin) => bin.density)
+              : [remainingRiskAt(points, points[0].timeYears)],
+            overlay
+              ? (density ? overlay.density : overlay.tail).map(
+                  (point) => point.value,
+                )
+              : [],
+          );
 
       await plotly.react(
         node,
@@ -184,6 +197,7 @@ function TimingPlot({
             tickformat: ".1%",
             ticklabelstandoff: 8,
             rangemode: "tozero",
+            range: forecastRange,
             gridcolor: grid,
             automargin: true,
           },

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  forecastYAxisRange,
   includeSelectedRiskPoint,
   remainingRiskAt,
   remainingRiskCurve,
@@ -97,4 +98,10 @@ test("constant curves are reduced to endpoints and preserve an existing selected
   const withSelected = includeSelectedRiskPoint(simplified, cumulative, 0);
   assert.equal(withSelected.length, 2);
   assert.equal(withSelected[0].timeYears, 0);
+});
+
+test("forecast y range pads the full series and any visible approximation", () => {
+  assert.deepEqual(forecastYAxisRange([0.05, 0.02]), [0, 0.05 * 1.1]);
+  assert.deepEqual(forecastYAxisRange([0.05], [0.08, 0.03]), [0, 0.08 * 1.1]);
+  assert.deepEqual(forecastYAxisRange([0, 0]), [0, 0.001]);
 });

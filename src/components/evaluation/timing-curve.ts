@@ -166,3 +166,21 @@ export function timingDensityAt(
     0
   );
 }
+
+/**
+ * Give a forecast plot a stable zero-based y-range with ten percent headroom.
+ * Values include the full simulation series and any visible approximation;
+ * neither the selected-age marker nor the slider position affects the range.
+ * A small default range keeps an all-zero chart readable.
+ */
+export function forecastYAxisRange(
+  simulationValues: readonly number[],
+  approximationValues: readonly number[] = [],
+): [number, number] {
+  let maximum = 0;
+
+  for (const value of simulationValues) maximum = Math.max(maximum, value);
+  for (const value of approximationValues) maximum = Math.max(maximum, value);
+
+  return [0, maximum > 0 ? maximum * 1.1 : 0.001];
+}
