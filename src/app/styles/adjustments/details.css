@@ -280,6 +280,17 @@ input[aria-invalid="true"] {
   white-space: nowrap;
 }
 
+.table-details-toggle::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform 0.15s ease;
+}
+
+.table-details-toggle[aria-expanded="true"]::before {
+  transform: rotate(90deg);
+}
+
 .feasibility-row-details {
   background: var(--surface-subtle, transparent);
 }
