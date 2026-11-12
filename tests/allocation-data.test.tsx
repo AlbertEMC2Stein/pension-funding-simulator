@@ -7,6 +7,7 @@ import {
   makeAllocationData,
 } from "../src/components/evaluation/allocation-data";
 import { makeChartData } from "../src/components/evaluation/RiskWithdrawalChart";
+import { prepareProjectionCurve } from "../src/lib/model/analytical/projection-curve";
 import type { CompatiblePolicyInputs } from "../src/lib/model/analytical/compatible-policy";
 
 const rate = Math.LN2 / 10;
@@ -56,7 +57,16 @@ test("projected allocation respects the simplex and uses covariance weighting", 
     [1, 0.5],
     [0.5, 1],
   ];
-  const data = makeAllocationData(leveraged, withdrawal, 0, covariance);
+  const projection = prepareProjectionCurve({
+    covariance,
+    mertonDirection: leveraged.market.mertonDirection,
+    realRiskFreeRate: rate,
+    annualWithdrawal: withdrawal,
+    impoverishmentLevel: model.impoverishmentLevel,
+    mortalityEndpoint: model.mortality.tau,
+    delta: model.mortality.p,
+  });
+  const data = makeAllocationData(leveraged, withdrawal, 0, projection);
 
   for (let i = 0; i < data.wealth.length; i += 1) {
     assert.ok(data.riskyFractions.every((fractions) => fractions[i] >= -1e-9));

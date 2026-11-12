@@ -2,7 +2,10 @@ import {
   compatiblePortfolio,
   type CompatiblePolicyInputs,
 } from "../../lib/model/analytical/compatible-policy";
-import { projectCovarianceSimplex } from "../../lib/model/analytical/simplex-projection";
+import {
+  interpolateProjection,
+  type ProjectionCurve,
+} from "../../lib/model/analytical/projection-curve";
 import { safeBoundary } from "../../lib/model/analytical/safe-boundary";
 
 /** Selected CE portfolio fractions over the risky wealth interval. */
@@ -25,14 +28,14 @@ export function allocationTimeLimit(endpoint: number): number {
  * Sample the CE feedback for a fixed time and withdrawal. The first sample
  * approaches the impoverishment boundary from above: the portfolio stops at
  * the boundary itself. The mortality endpoint is excluded because the risky
- * interval collapses there and the feedback is undefined. If covariance is
- * provided, project each allocation in its covariance metric onto the simplex.
+ * interval collapses there and the feedback is undefined. A prepared curve
+ * selects the projected policy; otherwise the unconstrained policy is used.
  */
 export function makeAllocationData(
   model: CompatiblePolicyInputs,
   annualWithdrawal: number,
   time: number,
-  covariance?: readonly (readonly number[])[],
+  projection?: ProjectionCurve,
 ): AllocationData {
   const safeLevel = safeBoundary({
     realRiskFreeRate: model.market.realRiskFreeRate,
@@ -55,16 +58,13 @@ export function makeAllocationData(
       width * (index === 0 ? 0.000001 : index / 100),
   );
   const allocations = wealth.map((amount) => {
-    const allocation = compatiblePortfolio(
-      model,
-      annualWithdrawal,
-      time,
-      amount,
-    );
+    if (projection) {
+      const scale = (safeLevel - amount) / amount / (model.mortality.p - 1);
 
-    return covariance
-      ? projectCovarianceSimplex({ allocation, covariance })
-      : allocation;
+      return interpolateProjection(projection, scale);
+    }
+
+    return compatiblePortfolio(model, annualWithdrawal, time, amount);
   });
   const riskyFractions = model.market.mertonDirection.map((_, index) =>
     allocations.map((fractions) => fractions[index]),

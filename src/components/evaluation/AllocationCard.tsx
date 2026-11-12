@@ -7,6 +7,10 @@ import {
   type AllocationData,
 } from "./allocation-data";
 import type { RiskWithdrawalWithCovariance } from "./RiskWithdrawalChart";
+import {
+  prepareProjectionCurve,
+  type ProjectionCurve,
+} from "../../lib/model/analytical/projection-curve";
 import { StatusBadge } from "../StatusBadge";
 
 /** Render portfolio fractions without clipping short positions or borrowing. */
@@ -198,8 +202,37 @@ export function AllocationCard({
   assetNames: readonly string[];
 }) {
   const [timePercent, setTimePercent] = useState(0);
+  const prepared = useMemo<
+    { projection?: ProjectionCurve } | { message: string }
+  >(() => {
+    if ("message" in result) return { message: result.message };
+    if (!projected) return { projection: undefined };
+
+    try {
+      return {
+        projection: prepareProjectionCurve({
+          covariance: result.covariance,
+          mertonDirection: result.model.market.mertonDirection,
+          realRiskFreeRate: result.model.market.realRiskFreeRate,
+          annualWithdrawal: result.data.selectedWithdrawal,
+          impoverishmentLevel: result.model.impoverishmentLevel,
+          mortalityEndpoint: result.model.mortality.tau,
+          delta: result.model.mortality.p,
+        }),
+      };
+    } catch (error) {
+      return {
+        message:
+          error instanceof Error
+            ? error.message
+            : "The projected allocation could not be prepared.",
+      };
+    }
+  }, [result, projected]);
+
   const chart = useMemo((): { data: AllocationData } | { message: string } => {
     if ("message" in result) return { message: result.message };
+    if ("message" in prepared) return { message: prepared.message };
 
     const time =
       (allocationTimeLimit(result.model.mortality.tau) * timePercent) / 100;
@@ -210,7 +243,7 @@ export function AllocationCard({
           result.model,
           result.data.selectedWithdrawal,
           time,
-          projected ? result.covariance : undefined,
+          prepared.projection,
         ),
       };
     } catch (error) {
@@ -221,8 +254,7 @@ export function AllocationCard({
             : "The portfolio allocation could not be calculated.",
       };
     }
-  }, [result, projected, timePercent]);
-
+  }, [result, prepared, timePercent]);
   const endpoint = "data" in result ? result.model.mortality.tau : null;
   const timeLimit = endpoint === null ? null : allocationTimeLimit(endpoint);
   const selectedTime =

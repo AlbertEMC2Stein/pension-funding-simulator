@@ -79,7 +79,8 @@ The preparer enumerates the simplex faces for the validated market (at most ten
 assets). For each face, affine KKT inequalities determine where it is optimal;
 the resulting breakpoints and projected allocations define a piecewise-linear
 curve. `interpolateProjection` evaluates that curve in double precision. This
-preparation has not yet been connected to the TensorFlow simulation; GPU
-Float32 behavior, near-degenerate markets, and preparation/run-time performance
+The allocation chart uses this curve, and a standalone TensorFlow wealth step
+can evaluate it in Float32. The step is not yet integrated into a batch run;
+GPU behavior, near-degenerate markets, and preparation/run-time performance
 still need assessment before doing so. Tests compare against the existing
 point-by-point solver across several correlated markets and boundary cases.
