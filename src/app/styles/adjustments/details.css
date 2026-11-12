@@ -180,3 +180,13 @@ input[aria-invalid="true"] {
   font-size: 10px;
   line-height: 1.4;
 }
+
+.table-settings-panel {
+  margin-bottom: 16px;
+}
+
+.table-settings-panel .simulation-detail-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+  gap: 8px 16px;
+}

@@ -71,7 +71,7 @@ test("setup and data views retain the requested design elements", () => {
   assert.match(data, /id="table-step"/);
   assert.match(data, /id="table-batch-size"/);
   assert.match(data, /Withdrawal, risk &amp; policy/);
-  assert.match(data, /CALCULATED CE VALUE/);
+  assert.match(data, /ANNUAL WITHDRAWAL/);
   assert.match(data, /ESTIMATED GM RISK/);
   assert.match(data, /GM STATUS/);
   assert.match(data, /Policy for variation 1/);
