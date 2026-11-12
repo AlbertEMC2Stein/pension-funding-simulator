@@ -477,8 +477,9 @@ export function BorrowingCard({
       ) : hasNegativeMerton ? (
         <p role="status">
           This diagnostic is unavailable because a Merton-vector component is
-          negative. The unconstrained strategy can require short selling and is
-          not globally simplex-feasible.
+          negative. The unconstrained strategy requires short selling whenever
+          wealth is below the safe boundary, so it is not globally
+          simplex-feasible.
         </p>
       ) : (
         <>
