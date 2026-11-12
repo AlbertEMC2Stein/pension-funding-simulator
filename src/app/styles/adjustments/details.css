@@ -337,6 +337,54 @@ input[aria-invalid="true"] {
   line-height: 1.5;
 }
 
+.quick-start h2 {
+  color: var(--text-strong);
+  font: 700 17px Manrope, sans-serif;
+  margin: 8px 0;
+}
+
+.quick-start-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 12px;
+  list-style: none;
+  margin: 18px 0;
+  padding: 0;
+}
+
+.quick-start-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.quick-start-number {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.quick-start-step h3 {
+  margin: 0 0 6px;
+}
+
+.quick-start .quick-start-step p {
+  color: var(--text-secondary);
+  margin: 0 0 10px;
+}
+
+.quick-start-link {
+  text-align: left;
+}
+
+.quick-start-notes {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
 .table-details-toggle {
   margin-top: 7px;
 }

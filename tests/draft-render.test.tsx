@@ -83,7 +83,16 @@ test("setup and data views retain the requested design elements", () => {
 });
 
 test("dictionary renders its examples and mathematical notation", () => {
-  const html = renderToStaticMarkup(<HelpView selectedTerm={null} />);
+  const html = renderToStaticMarkup(
+    <DraftContext.Provider value={actions}>
+      <HelpView selectedTerm={null} />
+    </DraftContext.Provider>,
+  );
+  assert.match(html, /Your quick start/);
+  assert.match(html, /Set up the market/);
+  assert.match(html, /Fit mortality|fit the mortality models/i);
+  assert.match(html, /Open Evaluation/);
+  assert.match(html, /Monte Carlo/);
   assert.match(html, /Safe boundary/);
   assert.match(html, /class="katex"/);
   for (const label of [

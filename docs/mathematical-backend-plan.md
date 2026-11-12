@@ -230,13 +230,13 @@ setup or results exports. Exported results are not currently re-importable.
 
 ## Next work
 
-1. **Quick Start and dictionary:** Add an approachable workflow guide, initially
-   considering its placement in Help & dictionary. Audit the interface for
-   technical terms such as `pp`, GM, CE, projection, safe boundary and random
-   seed; add explanations and links in small reviewable groups. Explain that
-   numerical intervals describe Monte Carlo sampling only. Include an
-   explanation of reproducibility and how the seed, batch size and numerical
-   backend affect repeatability.
+1. **Quick Start and dictionary:** A workflow guide is available in Help &
+   dictionary. Review it with users, then audit the interface for technical
+   terms such as `pp`, GM, CE, projection, safe boundary and random seed; add
+   explanations and links in small reviewable groups. Explain that numerical
+   intervals describe Monte Carlo sampling only. Include an explanation of
+   reproducibility and how the seed, batch size and numerical backend affect
+   repeatability.
 2. **Refresh supporting documentation:** Review the analytical and simulation
    READMEs for stale statements about UI connections and worker availability.
    Keep the codebase guide and export documentation aligned with actual behavior.

@@ -4,6 +4,7 @@ import katex from "katex";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeading, PreviewBanner } from "./common";
 import { RESULT_STATUSES, StatusBadge } from "./StatusBadge";
+import { QuickStart } from "./QuickStart";
 
 /** One example dictionary entry; `id` is also the target of a `TermLink`. */
 interface Entry {
@@ -146,9 +147,10 @@ export function HelpView({ selectedTerm }: { selectedTerm: string | null }) {
         description="Plain-language explanations, with technical detail when you want it."
       />
       <PreviewBanner>
-        <strong>Dictionary preview.</strong> These sample entries illustrate how
-        help could work.
+        <strong>Dictionary in progress.</strong> The Quick Start covers the
+        current workflow; more explanations will be added.
       </PreviewBanner>
+      <QuickStart />
       <div className="status-guide form-card">
         <span className="tiny-label">A QUICK GUIDE</span>
         <h2>Result statuses</h2>

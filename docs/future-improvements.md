@@ -5,8 +5,6 @@ These are ideas to revisit later, not implemented requirements or a fixed work o
 - Review what the development panel needs, including the usefulness of its
   event log. If “Last prepared options” is retained, consider how it should
   reflect runs started from Data & tables as well as Evaluation.
-- Provide an About / Quick Start explanation of the workflow. Decide whether
-  it belongs on its own page or in Help & dictionary.
 - Review the entire application for terms that need explanations, such as
   “pp” and “GM”, and collect them for the dictionary.
 - Add a dictionary explanation of random seeds and reproducibility, including
