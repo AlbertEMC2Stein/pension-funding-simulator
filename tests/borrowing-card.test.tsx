@@ -13,6 +13,7 @@ function renderCard(feasibility: FeasibilityResult, projected = false) {
       projected={projected}
       run={null}
       stale={false}
+      diagnostics={{ available: false }}
     />,
   );
 }
@@ -84,6 +85,7 @@ test("completed simulated borrowing displays its estimate and MC interval", () =
       projected={false}
       run={run}
       stale={false}
+      diagnostics={{ available: false }}
     />,
   );
 
@@ -94,4 +96,30 @@ test("completed simulated borrowing displays its estimate and MC interval", () =
     html,
     /probability of ever borrowing is not calculated yet/i,
   );
+});
+
+test("analytical borrowing diagnostics are displayed independently of simulation", () => {
+  const html = renderToStaticMarkup(
+    <BorrowingCard
+      feasibility={{
+        status: "borrowing",
+        zeta: 2,
+        message: "Borrowing possible",
+      }}
+      projected={false}
+      run={null}
+      stale={false}
+      diagnostics={{
+        available: true,
+        borrowingAtRetirement: true,
+        lastPossibleTimeYears: 5.85,
+      }}
+    />,
+  );
+  assert.match(html, /Borrowing at retirement<\/dt><dd>Yes/);
+  assert.match(
+    html,
+    /Last possible borrowing time<\/dt><dd>5\.85 years after retirement/,
+  );
+  assert.match(html, /not a predicted borrowing time/);
 });

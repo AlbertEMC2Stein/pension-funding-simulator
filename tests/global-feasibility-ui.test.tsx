@@ -121,6 +121,7 @@ test("current negative Merton direction is detected even when mortality fit is s
       projected={false}
       run={null}
       stale={true}
+      diagnostics={{ available: false }}
     />,
   );
   assert.match(html, /NOT AVAILABLE/);

@@ -6,6 +6,10 @@ import { TimingCard } from "./TimingCard";
 import { SimulationRunControl } from "./SimulationRunControl";
 import { StatusBadge, type ResultStatus } from "../StatusBadge";
 import { useEvaluationRun, type EvaluationRun } from "./useEvaluationRun";
+import {
+  calculateBorrowingDiagnostics,
+  type BorrowingDiagnostics,
+} from "./borrowing-diagnostics";
 import { FeasibilityControls } from "./FeasibilityControls";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import {
@@ -424,11 +428,13 @@ export function BorrowingCard({
   projected,
   run,
   stale,
+  diagnostics,
 }: {
   feasibility: FeasibilityResult;
   projected: boolean;
   run: EvaluationRun | null;
   stale: boolean;
+  diagnostics: BorrowingDiagnostics;
 }) {
   const hasNegativeMerton = feasibility.status === "negative-merton";
   const analyticalZero = feasibility.status === "feasible";
@@ -549,8 +555,22 @@ export function BorrowingCard({
                     ? `${occupation.interval95Years.lower.toFixed(3)} – ${occupation.interval95Years.upper.toFixed(3)} years`
                     : "—",
                 ],
-                ["Borrowing at retirement", "Not evaluated"],
-                ["Last possible borrowing time", "—"],
+                [
+                  "Borrowing at retirement",
+                  diagnostics.available
+                    ? diagnostics.borrowingAtRetirement
+                      ? "Yes"
+                      : "No"
+                    : "Not available",
+                ],
+                [
+                  "Last possible borrowing time",
+                  diagnostics.available
+                    ? diagnostics.lastPossibleTimeYears === null
+                      ? "Not possible"
+                      : `${diagnostics.lastPossibleTimeYears.toFixed(2)} years after retirement`
+                    : "Not available",
+                ],
               ].map(([a, b]) => (
                 <div key={a}>
                   <dt>{a}</dt>
@@ -562,7 +582,12 @@ export function BorrowingCard({
             <p>
               Where the model assumptions apply, ζ &gt; 1 indicates that the
               relative bandwidth exceeds the global no-borrowing threshold.
-              Possibility does not imply borrowing on a particular path.
+              Possibility does not imply borrowing on a particular path. The
+              last possible time is a model boundary, not a predicted borrowing
+              time.{" "}
+              {stale &&
+                occupation &&
+                "These analytical checks use your current inputs; the simulated results use the previous run."}
             </p>
             <p>
               {analyticalZero
@@ -816,6 +841,10 @@ export function Evaluation() {
                     projected={projected}
                     run={run}
                     stale={stale}
+                    diagnostics={calculateBorrowingDiagnostics(
+                      ceResult,
+                      feasibility,
+                    )}
                   />
                 )}
               </div>
