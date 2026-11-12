@@ -32,6 +32,9 @@ test("evaluation renders illustrative results and the main controls", () => {
   assert.match(html, /Target risk/);
   assert.ok(html.indexOf("YOUR SETUP") < html.indexOf("Run simulation"));
   assert.match(html, /Edit setup/);
+  assert.match(html, /id="evaluation-paths"/);
+  assert.match(html, /id="evaluation-step"/);
+  assert.match(html, /id="evaluation-batch-size"/);
   assert.doesNotMatch(html, />Policy comparison</);
 });
 
@@ -62,6 +65,11 @@ test("setup and data views retain the requested design elements", () => {
   assert.match(setup, /Import setup/);
   assert.match(setup, /Export setup/);
   assert.match(data, /Comparison table/);
+  assert.match(data, /Simulation settings/);
+  assert.match(data, /shared with Evaluation/);
+  assert.match(data, /id="table-paths"/);
+  assert.match(data, /id="table-step"/);
+  assert.match(data, /id="table-batch-size"/);
   assert.match(data, /Withdrawal, risk &amp; policy/);
   assert.match(data, /CALCULATED CE VALUE/);
   assert.match(data, /ESTIMATED GM RISK/);

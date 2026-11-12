@@ -27,10 +27,7 @@ import {
   calculateCapitalComparison,
   type CapitalComparison,
 } from "./capital-comparison";
-import {
-  MANUAL_BATCH_SIZES,
-  type BatchSizeChoice,
-} from "../../lib/options/batch-size";
+import { SimulationDetailFields } from "../SimulationDetailFields";
 import {
   Metric,
   PageHeading,
@@ -998,59 +995,11 @@ export function Evaluation() {
               <div className="group-title">
                 <span>03</span> Simulation detail
               </div>
-              <label className="field-label" htmlFor="paths">
-                Number of paths
-              </label>
-              <select
-                id="paths"
-                value={simulation.paths}
-                onChange={(event) =>
-                  updateSimulation({ paths: Number(event.target.value) })
-                }
-              >
-                <option value={10000}>10,000 paths</option>
-                <option value={5000}>5,000 paths</option>
-                <option value={50000}>50,000 paths</option>
-                <option value={100000}>100,000 paths</option>
-              </select>
-              <label className="field-label" htmlFor="step">
-                Time step
-              </label>
-              <select
-                id="step"
-                value={simulation.timeStep}
-                onChange={(event) =>
-                  updateSimulation({
-                    timeStep: event.target.value as typeof simulation.timeStep,
-                  })
-                }
-              >
-                <option value="monthly">Monthly</option>
-                <option value="fortnightly">Fortnightly</option>
-                <option value="weekly">Weekly</option>
-              </select>
-              <label className="field-label" htmlFor="batch-size">
-                Batch size
-              </label>
-              <select
-                id="batch-size"
-                value={simulation.batchSize}
-                onChange={(event) =>
-                  updateSimulation({
-                    batchSize:
-                      event.target.value === "auto"
-                        ? "auto"
-                        : (Number(event.target.value) as BatchSizeChoice),
-                  })
-                }
-              >
-                <option value="auto">Automatic</option>
-                {MANUAL_BATCH_SIZES.map((size) => (
-                  <option key={size} value={size}>
-                    {size.toLocaleString("en-US")}
-                  </option>
-                ))}
-              </select>
+              <SimulationDetailFields
+                simulation={simulation}
+                onChange={updateSimulation}
+                idPrefix="evaluation"
+              />
             </div>
           </aside>
         )}
