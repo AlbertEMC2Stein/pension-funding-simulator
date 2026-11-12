@@ -185,11 +185,17 @@ input[aria-invalid="true"] {
   margin-bottom: 16px;
 }
 
-.setup-file-error {
-  flex-basis: 100%;
-  margin: 4px 0 0;
+.setup-file-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.setup-file-actions .setup-file-error {
+  margin: 8px 0 0;
   color: var(--feasibility-bad-text);
   font-size: 10px;
+  line-height: 1.4;
 }
 
 .table-settings-panel .simulation-detail-fields {

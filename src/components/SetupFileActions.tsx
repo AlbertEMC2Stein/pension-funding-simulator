@@ -75,33 +75,35 @@ export function SetupFileActions() {
   }
 
   return (
-    <>
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".json,application/json"
-        hidden
-        onChange={readSetup}
-      />
-      <button
-        type="button"
-        className="button button-light"
-        onClick={() => inputRef.current?.click()}
-      >
-        ↥ &nbsp; Import setup
-      </button>
-      <button
-        type="button"
-        className="button button-light"
-        onClick={exportSetup}
-      >
-        ↓ &nbsp; Export setup
-      </button>
+    <div className="setup-file-actions">
+      <div className="setup-file-buttons">
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".json,application/json"
+          hidden
+          onChange={readSetup}
+        />
+        <button
+          type="button"
+          className="button button-light"
+          onClick={() => inputRef.current?.click()}
+        >
+          ↥ &nbsp; Import setup
+        </button>
+        <button
+          type="button"
+          className="button button-light"
+          onClick={exportSetup}
+        >
+          ↓ &nbsp; Export setup
+        </button>
+      </div>
       {error && (
         <p className="setup-file-error" role="alert">
           {error}
         </p>
       )}
-    </>
+    </div>
   );
 }
