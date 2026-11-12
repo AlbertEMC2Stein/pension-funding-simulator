@@ -1,3 +1,4 @@
+import { TermLink } from "../common";
 import type { FeasibilityResult } from "./global-feasibility";
 import type { FeasibilityThreshold } from "./feasibility-threshold";
 
@@ -38,7 +39,8 @@ export function FeasibilityControls({
     <>
       <div className="feasibility-status" data-status={status} role="status">
         <strong>
-          Global feasibility <span>{label}</span>
+          <TermLink term="global-feasibility">Global feasibility</TermLink>{" "}
+          <span>{label}</span>
         </strong>
         <p>{message}</p>
         <small>

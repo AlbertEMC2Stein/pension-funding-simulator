@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { PanelHelp } from "../PanelHelp";
+
+import { useMemo, useState } from "react";
 import { AllocationCard } from "./AllocationCard";
 import { TimingCard } from "./TimingCard";
 import { TrajectoryCard } from "./TrajectoryCard";
@@ -94,8 +96,6 @@ export function GmRiskCard({
   stale: boolean;
   custom: boolean;
 }) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  const { navigate } = useDraft();
   const running =
     run?.phase === "starting" ||
     run?.phase === "running" ||
@@ -139,17 +139,10 @@ export function GmRiskCard({
           <span className="tiny-label">
             REFERENCE MORTALITY · SIMULATION RESULT
           </span>
-          <h3>
-            Risk under Gompertz–Makeham mortality{" "}
-            <button
-              type="button"
-              className="card-help"
-              aria-label="Explain the GM risk card"
-              onClick={() => dialog.current?.showModal()}
-            >
-              ?
-            </button>
-          </h3>
+          <div className="panel-help-heading">
+            <h3>Risk under Gompertz–Makeham mortality</h3>
+            <PanelHelp panel="gm" />
+          </div>
           <p className="timing-intro">
             Compare the CE-model reference with the estimated risk under the
             fitted <TermLink term="gm-risk">GM model</TermLink>.
@@ -283,46 +276,6 @@ export function GmRiskCard({
           risks.
         </p>
       )}
-      <dialog
-        ref={dialog}
-        className="help-dialog"
-        aria-labelledby="gm-help-title"
-      >
-        <div className="help-dialog-heading">
-          <div>
-            <span className="tiny-label">UNDERSTANDING THIS CARD</span>
-            <h2 id="gm-help-title">Risk under GM mortality</h2>
-          </div>
-          <button
-            type="button"
-            className="close-settings"
-            aria-label="Close help"
-            onClick={() => dialog.current?.close()}
-          >
-            ×
-          </button>
-        </div>
-        <p>
-          This card compares the CE-model risk with an estimate using the fitted
-          Gompertz–Makeham mortality model. If a withdrawal amount was entered
-          directly, the CE value is its model-implied risk.
-        </p>
-        <p>
-          If projection is selected, the comparison also shows how projected and
-          unprojected policies differ. Results are model-based estimates, not
-          guaranteed outcomes.
-        </p>
-        <button
-          type="button"
-          className="term-link"
-          onClick={() => {
-            dialog.current?.close();
-            navigate("help", "gm-risk");
-          }}
-        >
-          Read the GM risk dictionary entry ↗
-        </button>
-      </dialog>
     </article>
   );
 }
@@ -348,7 +301,10 @@ export function CapitalCard({ comparison }: { comparison: CapitalComparison }) {
           <span className="tiny-label">
             THE VALUE OF RISK-TAKING · UNCONSTRAINED POLICY
           </span>
-          <h3>What does accepting risk change?</h3>
+          <div className="panel-help-heading">
+            <h3>What does accepting risk change?</h3>
+            <PanelHelp panel="capital" />
+          </div>
           <p className="timing-intro">
             Compare your starting capital with the amount needed without
             investment risk for your setup&apos;s{" "}
@@ -479,7 +435,10 @@ export function BorrowingCard({
       <div className="card-top">
         <div>
           <span className="tiny-label">UNCONSTRAINED POLICY</span>
-          <h3>Borrowing exposure</h3>
+          <div className="panel-help-heading">
+            <h3>Borrowing exposure</h3>
+            <PanelHelp panel="borrowing" />
+          </div>
           <p className="timing-intro">
             Explore the chance that your portfolio{" "}
             <TermLink term="borrowing">borrows</TermLink> and how long borrowing

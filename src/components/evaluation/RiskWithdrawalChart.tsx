@@ -1,5 +1,7 @@
 "use client";
 
+import { PanelHelp } from "../PanelHelp";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { calibrateMarket } from "../../lib/market/calibrate-market";
 import { mortalityFitKeys } from "../../lib/mortality/fit-status";
@@ -397,7 +399,10 @@ export function RiskWithdrawalChart({
     <div className="chart-card">
       <div className="card-top">
         <div>
-          <span className="tiny-label">UNCONSTRAINED CE BENCHMARK</span>
+          <div className="panel-help-heading">
+            <span className="tiny-label">UNCONSTRAINED CE BENCHMARK</span>
+            <PanelHelp panel="withdrawal" />
+          </div>
           <div className="big-value">
             {"data" in result
               ? result.data.custom

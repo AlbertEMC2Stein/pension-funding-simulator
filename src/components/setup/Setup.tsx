@@ -1,5 +1,7 @@
 "use client";
 
+import { PanelHelp } from "../PanelHelp";
+
 import { useState } from "react";
 import { StatusBadge } from "../StatusBadge";
 import {
@@ -600,7 +602,10 @@ function InvestorSetup({
           <div className="card-heading">
             <div>
               <span className="tiny-label">MORTALITY CALIBRATION</span>
-              <h3>Survival curve & model fit</h3>
+              <div className="panel-help-heading">
+                <h3>Survival curve & model fit</h3>
+                <PanelHelp panel="mortality" />
+              </div>
             </div>
           </div>
           <p>

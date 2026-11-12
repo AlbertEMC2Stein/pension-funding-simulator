@@ -1,5 +1,7 @@
 "use client";
 
+import { PanelHelp } from "./PanelHelp";
+
 import { Fragment, useMemo, useState } from "react";
 import { useSimulationDraft } from "./SimulationDraftContext";
 import { SimulationDetailFields } from "./SimulationDetailFields";
@@ -310,9 +312,18 @@ export function DataView() {
             + &nbsp; Add row
           </button>
         </div>
-        <p className="table-description">
-          {tableDescriptions[tableType]} All other settings are shared.
-        </p>
+        <div className="panel-help-heading table-help-heading">
+          <p className="table-description">
+            {tableDescriptions[tableType]} All other settings are shared.
+          </p>
+          <PanelHelp
+            panel={
+              tableType === "withdrawal"
+                ? "withdrawalTable"
+                : "feasibilityTable"
+            }
+          />
+        </div>
         {tableType === "withdrawal" &&
           !running &&
           !withdrawalContext.available && (

@@ -1,5 +1,7 @@
 "use client";
 
+import { PanelHelp } from "../PanelHelp";
+
 import { TermLink } from "../common";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -471,7 +473,10 @@ export function TimingCard({
             {projected ? "PROJECTED POLICY" : "UNCONSTRAINED POLICY"} · GM
             MORTALITY
           </span>
-          <h3>When might impoverishment occur?</h3>
+          <div className="panel-help-heading">
+            <h3>When might impoverishment occur?</h3>
+            <PanelHelp panel="timing" />
+          </div>
           <p className="timing-intro">
             Explore{" "}
             <TermLink term="timing">forecast and conditional risk</TermLink>{" "}

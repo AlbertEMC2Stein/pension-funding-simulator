@@ -1,5 +1,7 @@
 "use client";
 
+import { PanelHelp } from "../PanelHelp";
+
 import { TermLink } from "../common";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -313,7 +315,10 @@ export function AllocationCard({
           <span className="tiny-label">
             {projected ? "PROJECTED CE POLICY" : "UNCONSTRAINED CE POLICY"}
           </span>
-          <h3>Portfolio allocation</h3>
+          <div className="panel-help-heading">
+            <h3>Portfolio allocation</h3>
+            <PanelHelp panel="allocation" />
+          </div>
         </div>
         <StatusBadge
           status={"data" in chart ? "calculated" : "not-available"}

@@ -655,3 +655,26 @@ table.capital-table {
   background: var(--chart-borrowing-fill);
   border: 1px solid var(--border);
 }
+
+/* Keep panel titles and their help controls together without nesting dialogs. */
+.panel-help-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.panel-help-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 16px;
+}
+
+.table-help-heading {
+  padding: 0 20px 16px;
+}
+
+.table-help-heading .table-description {
+  padding: 0;
+}
