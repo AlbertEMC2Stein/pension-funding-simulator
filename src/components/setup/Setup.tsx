@@ -25,7 +25,11 @@ import { MarketAssumptionChecks } from "./MarketAssumptionChecks";
 import { MarketValidation } from "./MarketValidation";
 import { MortalityDataInfo } from "./MortalityDataInfo";
 import { MarketDataInfo } from "./MarketDataInfo";
-import { parseAmount } from "../../lib/options/simulation-options";
+import {
+  initialSimulationDraft,
+  parseAmount,
+  type SimulationDraft,
+} from "../../lib/options/simulation-options";
 import { CohortChart } from "./CohortChart";
 import type { CeFitStatus } from "../../lib/mortality/fit-status";
 import {
@@ -356,6 +360,11 @@ function InvestorSetup({
 }) {
   const { draft, setDraft } = useSimulationDraft();
   const { investor } = draft;
+  const [undoInvestor, setUndoInvestor] = useState<
+    SimulationDraft["investor"] | null
+  >(null);
+  const exampleInvestor = initialSimulationDraft().investor;
+  const isExample = JSON.stringify(investor) === JSON.stringify(exampleInvestor);
   const mortality = investor.mortality;
   const mix = investor.maleWeight;
   const cohortYears = validateCohortYears(
@@ -380,6 +389,20 @@ function InvestorSetup({
     }));
   }
 
+  /** Restore the example investor and retain the current inputs for one undo. */
+  function resetInvestor() {
+    setUndoInvestor({ ...investor });
+    setDraft((current) => ({ ...current, investor: exampleInvestor }));
+  }
+
+  /** Restore the saved pre-reset investor, including edits made before reset. */
+  function undoInvestorReset() {
+    if (!undoInvestor) return;
+
+    setDraft((current) => ({ ...current, investor: undoInvestor }));
+    setUndoInvestor(null);
+  }
+
   return (
     <div className="setup-layout">
       <aside className="insight-card">
@@ -402,7 +425,26 @@ function InvestorSetup({
           eyebrow="YOUR RETIREMENT PROFILE"
           title="Investor & mortality"
           description="Set the person and retirement context for your setup."
-        />
+        >
+          <div className="market-actions">
+            <button
+              type="button"
+              className="button button-light"
+              onClick={resetInvestor}
+              disabled={isExample}
+            >
+              ↺ &nbsp; Reset to example
+            </button>
+            <button
+              type="button"
+              className="button button-light"
+              onClick={undoInvestorReset}
+              disabled={!undoInvestor}
+            >
+              Undo reset
+            </button>
+          </div>
+        </SectionHeading>
         <div className="form-card">
           <div className="card-heading">
             <div>
