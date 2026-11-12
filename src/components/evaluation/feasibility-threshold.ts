@@ -84,7 +84,13 @@ export function findFeasibilityThreshold(
           "The boundary could not be verified at the supported numerical precision.",
       };
 
-    return { value, amount };
+    return {
+      value: amount.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+      amount,
+    };
   } catch {
     return {
       message: "The boundary cannot be calculated for the current assumptions.",

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { parseAmount } from "../src/lib/options/simulation-options";
 import { makeChartData } from "../src/components/evaluation/RiskWithdrawalChart";
 import { findFeasibilityThreshold } from "../src/components/evaluation/feasibility-threshold";
 import {
@@ -19,8 +20,10 @@ test("boundary preserves target risk and recomputes the withdrawal", () => {
   const data = makeChartData(model, 150000, { mode: "targetRisk", risk: 0.25 });
   const result = findFeasibilityThreshold({ data, model });
   assert.ok("amount" in result);
-  assert.match(result.value, /^\d+\.\d{2}$/);
+  assert.match(result.value, /^\d{1,3}(?:,\d{3})*\.\d{2}$/);
   assert.ok(Math.abs(result.amount - 100000) <= 0.011);
+  assert.equal(parseAmount(result.value), result.amount);
+  assert.match(result.value, /,/);
 
   const updated = { ...model, impoverishmentLevel: result.amount };
   const withdrawal = compatibleWithdrawal(updated, 150000, 0.25);
@@ -38,7 +41,7 @@ test("boundary preserves a custom withdrawal", () => {
   });
   const result = findFeasibilityThreshold({ data, model });
   assert.ok("amount" in result);
-  assert.match(result.value, /^\d+\.\d{2}$/);
+  assert.match(result.value, /^\d{1,3}(?:,\d{3})*\.\d{2}$/);
   assert.ok(Math.abs(result.amount - 100000) <= 0.011);
 
   const diagnostic = compatibleGlobalFeasibility(
@@ -57,7 +60,7 @@ test("non-cent boundary is rounded upward while keeping the strategy feasible", 
 
   const exact = 150000 / (2 - Math.sqrt(risk));
   assert.ok(result.amount >= exact && result.amount - exact < 0.010001);
-  assert.match(result.value, /^\d+\.\d{2}$/);
+  assert.match(result.value, /^\d{1,3}(?:,\d{3})*\.\d{2}$/);
   const updated = { ...model, impoverishmentLevel: result.amount };
   const withdrawal = compatibleWithdrawal(updated, 150000, risk);
   assert.equal(
