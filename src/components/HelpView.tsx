@@ -3,13 +3,9 @@
 import katex from "katex";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeading } from "./common";
-import {
-  dictionaryEntries,
-  type DictionaryEntry,
-} from "../lib/help/dictionary";
-
-/** The shared registry provides stable IDs for dictionary navigation. */
-const entries: readonly DictionaryEntry[] = dictionaryEntries;
+import { localizedDictionary } from "../lib/help/localized-dictionary";
+import { helpMessages } from "../lib/i18n/help";
+import { useLanguage } from "./LanguageContext";
 import { RESULT_STATUSES, StatusBadge } from "./StatusBadge";
 import { QuickStart } from "./QuickStart";
 
@@ -37,6 +33,9 @@ function Equation({ source }: { source: string }) {
  * and focuses that entry after the parent makes the panel visible.
  */
 export function HelpView({ selectedTerm }: { selectedTerm: string | null }) {
+  const { language } = useLanguage();
+  const text = helpMessages[language];
+  const entries = localizedDictionary(language);
   const [query, setQuery] = useState("");
   const container = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -63,88 +62,116 @@ export function HelpView({ selectedTerm }: { selectedTerm: string | null }) {
   );
 
   return (
-    <section className="view active" ref={container}>
+    <section className="view active" ref={container} lang={language}>
       <PageHeading
-        eyebrow="HERE WHEN YOU NEED IT"
-        title="A little more clarity"
-        description="Plain-language explanations, with technical detail when you want it."
+        eyebrow={text.eyebrow}
+        title={text.title}
+        description={text.description}
       />
       <QuickStart />
       <div className="status-guide form-card">
-        <span className="tiny-label">A QUICK GUIDE</span>
-        <h2>Result statuses</h2>
-        <p>
-          These labels explain the state of a result. The examples do not
-          reflect an actual run.
-        </p>
+        <span className="tiny-label">{text.guide}</span>
+        <h2>{text.statuses}</h2>
+        <p>{text.statusIntro}</p>
         <div className="status-examples">
-          {RESULT_STATUSES.map(({ status, description }) => (
+          {RESULT_STATUSES.map(({ status }) => (
             <div className="status-example" key={status}>
               <StatusBadge status={status} />
-              <small>{description}</small>
+              <small>{text.statusDescriptions[status]}</small>
             </div>
           ))}
         </div>
         <details className="borrowing-details diagnostic-details">
-          <summary>Other status labels</summary>
+          <summary>
+            {language === "de"
+              ? "Weitere Statusangaben"
+              : "Other status labels"}
+          </summary>
           <p>
-            The developer panel also uses labels for input validation and
-            prepared settings:
+            {language === "de"
+              ? "Zusätzliche Kennzeichnungen beschreiben Eingabeprüfung und erfasste Einstellungen:"
+              : "Additional labels describe input validation and captured settings:"}
           </p>
           <div className="status-examples">
-            {(
-              [
-                [
-                  "not-available",
-                  "CHECK INPUTS",
-                  "Some inputs need attention.",
-                ],
-                ["calculated", "VALID", "The input validation passed."],
-                ["error", "FAILED", "A development calculation failed."],
-                [
-                  "not-calculated",
-                  "NOT PREPARED",
-                  "No run settings have been captured yet.",
-                ],
-                [
-                  "calculated",
-                  "CURRENT",
-                  "The captured settings match the current inputs.",
-                ],
-              ] as const
+            {(language === "de"
+              ? [
+                  [
+                    "not-available",
+                    "EINGABEN PRÜFEN",
+                    "Einige Eingaben müssen geprüft werden.",
+                  ],
+                  [
+                    "calculated",
+                    "GÜLTIG",
+                    "Die Eingabeprüfung war erfolgreich.",
+                  ],
+                  [
+                    "error",
+                    "FEHLGESCHLAGEN",
+                    "Eine Entwicklerberechnung ist fehlgeschlagen.",
+                  ],
+                  [
+                    "not-calculated",
+                    "NICHT VORBEREITET",
+                    "Es wurden noch keine Laufeinstellungen erfasst.",
+                  ],
+                  [
+                    "calculated",
+                    "AKTUELL",
+                    "Die erfassten Einstellungen entsprechen den aktuellen Eingaben.",
+                  ],
+                ]
+              : [
+                  [
+                    "not-available",
+                    "CHECK INPUTS",
+                    "Some inputs need attention.",
+                  ],
+                  ["calculated", "VALID", "The input validation passed."],
+                  ["error", "FAILED", "A development calculation failed."],
+                  [
+                    "not-calculated",
+                    "NOT PREPARED",
+                    "No run settings have been captured yet.",
+                  ],
+                  [
+                    "calculated",
+                    "CURRENT",
+                    "The captured settings match the current inputs.",
+                  ],
+                ]
             ).map(([status, label, description]) => (
               <div className="status-example" key={label}>
-                <StatusBadge status={status} label={label} />
+                <StatusBadge
+                  status={status as import("./StatusBadge").ResultStatus}
+                  label={label}
+                />
                 <small>{description}</small>
               </div>
             ))}
           </div>
           <p>
-            <strong>Review fit</strong> means the mortality fit needs updating.
-            Imported-data diagnostics use <strong>Matches inputs</strong> or{" "}
-            <strong>Inputs changed</strong> to describe their relationship to
-            the current market settings. The feasibility box separately reports{" "}
-            <strong>Feasible</strong> or <strong>Not feasible</strong>.
+            {language === "de"
+              ? "Die Anpassungs- und Importdiagnostik zeigt außerdem an, ob die Ergebnisse zu den aktuellen Eingaben passen. Das Zulässigkeitsfeld meldet separat, ob die Strategie zulässig ist."
+              : "Fit and imported-data diagnostics also indicate whether their results match the current inputs. The feasibility box separately reports whether the strategy is feasible."}
           </p>
         </details>
       </div>
       <div className="dictionary-layout">
         <div>
           <label className="dictionary-search">
-            Search the dictionary
+            {text.search}
             <input
               type="search"
-              placeholder="Try ‘risk’ or ‘withdrawal’"
+              placeholder={text.placeholder}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
           </label>
           <p className="dictionary-count" role="status">
-            Showing {filtered.length} {filtered.length === 1 ? "term" : "terms"}
+            {text.count(filtered.length)}
           </p>
-          <p className="math-status">
-            Equations are rendered in the technical details of selected entries.
-          </p>
+          <p className="math-status">{text.math}</p>
           <div className="dictionary-list">
             {filtered.map((entry) => (
               <article
@@ -158,7 +185,7 @@ export function HelpView({ selectedTerm }: { selectedTerm: string | null }) {
                 <p>{entry.summary}</p>
                 <p>{entry.explanation}</p>
                 <details>
-                  <summary>Technical details</summary>
+                  <summary>{text.technical}</summary>
                   <p>{entry.technical}</p>
                   {entry.equation && <Equation source={entry.equation} />}
                   {entry.symbols && <p>{entry.symbols}</p>}
@@ -167,19 +194,13 @@ export function HelpView({ selectedTerm }: { selectedTerm: string | null }) {
             ))}
           </div>
           {filtered.length === 0 && (
-            <p className="dictionary-empty">
-              No matching terms. Try another search.
-            </p>
+            <p className="dictionary-empty">{text.empty}</p>
           )}
         </div>
         <aside className="insight-card dictionary-aside">
-          <span className="tiny-label">LEARN AS YOU GO</span>
-          <h3>As much detail as you need.</h3>
-          <p>
-            Choose an underlined term in the workspace to open its explanation
-            here. Card help offers a shorter guide without leaving your current
-            view.
-          </p>
+          <span className="tiny-label">{text.asideLabel}</span>
+          <h3>{text.asideTitle}</h3>
+          <p>{text.asideText}</p>
         </aside>
       </div>
     </section>

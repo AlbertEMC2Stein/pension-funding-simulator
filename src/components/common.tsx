@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import { useLanguage } from "./LanguageContext";
+import { localizedTermTitle } from "../lib/help/localized-dictionary";
 import {
   dictionaryEntries,
   type DictionaryTermId,
@@ -58,13 +60,16 @@ export function TermLink({
   children: React.ReactNode;
 }) {
   const { navigate } = useDraft();
-  const entry = dictionaryEntries.find((item) => item.id === term);
+  const { language } = useLanguage();
+  const title = localizedTermTitle(term, language);
 
   return (
     <button
       type="button"
       className="term-link"
-      aria-label={`Learn about ${entry?.title ?? term}`}
+      aria-label={
+        language === "de" ? `Mehr über ${title}` : `Learn about ${title}`
+      }
       onClick={() => navigate("help", term)}
     >
       {children}

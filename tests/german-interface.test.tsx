@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { LanguageProvider } from "../src/components/LanguageContext";
 import { DraftContext } from "../src/components/common";
+import { HelpView } from "../src/components/HelpView";
 import { QuickStart } from "../src/components/QuickStart";
 import { SimulationRunControl } from "../src/components/evaluation/SimulationRunControl";
 import { StatusBadge } from "../src/components/StatusBadge";
@@ -62,4 +63,13 @@ test("run controls and status labels are translated", () => {
     renderGerman(<StatusBadge status="not-calculated" />),
     /NICHT BERECHNET/,
   );
+});
+
+test("German dictionary renders translated content and unchanged formulas", () => {
+  const html = renderGerman(<HelpView selectedTerm={null} />);
+
+  assert.match(html, /Verarmungsgrenze/);
+  assert.match(html, /Sichere Grenze/);
+  assert.match(html, /Technische Details/);
+  assert.match(html, /katex/);
 });

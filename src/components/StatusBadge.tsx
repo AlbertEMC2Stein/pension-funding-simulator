@@ -85,11 +85,7 @@ export function StatusBadge({
     (language === "de" ? germanStatusLabels[status] : definition.label);
 
   return (
-    <span
-      className="chip status-badge"
-      data-status={status}
-      lang={label ? "en" : language}
-    >
+    <span className="chip status-badge" data-status={status} lang={language}>
       <span aria-hidden="true">{definition.symbol}</span> {text}
     </span>
   );

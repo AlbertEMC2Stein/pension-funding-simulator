@@ -30,3 +30,22 @@ test("term links expose a descriptive accessible name", () => {
   assert.match(html, /aria-label="Learn about Safe boundary"/);
   assert.match(html, />safe level<\/button>/);
 });
+
+test("German glossary retains all IDs and mathematical formulas", async () => {
+  const { localizedDictionary, localizedTermTitle } =
+    await import("../src/lib/help/localized-dictionary");
+  const translated = localizedDictionary("de");
+
+  assert.deepEqual(
+    translated.map((entry) => entry.id),
+    dictionaryEntries.map((entry) => entry.id),
+  );
+  for (const [index, entry] of dictionaryEntries.entries()) {
+    assert.equal(
+      translated[index].equation,
+      "equation" in entry ? entry.equation : undefined,
+    );
+    assert.ok(translated[index].summary && translated[index].technical);
+  }
+  assert.equal(localizedTermTitle("safe-boundary", "de"), "Sichere Grenze");
+});

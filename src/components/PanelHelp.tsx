@@ -1,10 +1,8 @@
 "use client";
 
 import { useId, useRef } from "react";
-import {
-  dictionaryEntries,
-  type DictionaryTermId,
-} from "../lib/help/dictionary";
+import type { DictionaryTermId } from "../lib/help/dictionary";
+import { localizedTermTitle } from "../lib/help/localized-dictionary";
 import { useDraft } from "./common";
 import { useLanguage } from "./LanguageContext";
 import { panelHelpGerman } from "../lib/i18n/panel-help-de";
@@ -158,20 +156,19 @@ export function PanelHelp({ panel }: { panel: PanelHelpId }) {
           }
         >
           {content.terms.map((term) => {
-            const entry = dictionaryEntries.find((item) => item.id === term);
+            const title = localizedTermTitle(term, language);
 
             return (
               <button
                 key={term}
                 type="button"
                 className="term-link"
-                lang="en"
                 onClick={() => {
                   dialog.current?.close();
                   navigate("help", term);
                 }}
               >
-                {entry?.title} ↗
+                {title} ↗
               </button>
             );
           })}
