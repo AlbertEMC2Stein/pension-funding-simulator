@@ -10,6 +10,7 @@ import {
   calculateWithdrawalRow,
 } from "../src/lib/model/comparison/withdrawal-table";
 import { createRunSnapshot } from "../src/lib/model/simulation/run-configuration";
+import { runScheduler } from "../src/lib/model/simulation/tensorflow/run-scheduler";
 import { compatibleRisk } from "../src/lib/model/analytical/compatible-policy";
 import { calibrateMarket } from "../src/lib/market/calibrate-market";
 import { mortalityFitKeys } from "../src/lib/mortality/fit-status";
@@ -303,4 +304,144 @@ test("completed rows are reused until their inputs or shared settings change", (
     changedSetup.rows.map((row) => row.status),
     ["queued", "queued"],
   );
+});
+
+test("feasibility rows capture their thresholds, analytical zeros and reusable results", () => {
+  const { draft, fits } = example();
+  const input = buildMarketOptions(draft.market);
+  assert.ok(input.ok);
+  const calibrated = calibrateMarket(input.market);
+  assert.ok(calibrated.ok);
+  const keys = mortalityFitKeys({
+    ...draft.investor,
+    market: calibrated.market,
+  });
+  const completeFits = {
+    ...fits,
+    gm: {
+      key: keys.gm,
+      fit: {
+        ...fits.ce.fit,
+        parameters: { alpha: 0.01, beta: 0.1, lambda: 0.01 },
+      },
+    },
+  };
+  const rows = [
+    {
+      id: 1,
+      type: "Withdrawal" as const,
+      value: "0",
+      policy: "Unconstrained" as const,
+      impoverishmentLevel: "100,000",
+    },
+    {
+      id: 2,
+      type: "Target risk" as const,
+      value: "5",
+      policy: "Unconstrained" as const,
+      impoverishmentLevel: "1",
+    },
+    {
+      id: 3,
+      type: "Target risk" as const,
+      value: "5",
+      policy: "Unconstrained" as const,
+      impoverishmentLevel: "900,000",
+    },
+  ];
+  const prepared = prepareComparisonRows(
+    rows,
+    draft,
+    completeFits,
+    null,
+    "feasibility",
+  );
+  assert.ok(prepared.ok);
+  assert.deepEqual(
+    prepared.rows.map((row) => row.status),
+    ["calculated", "queued", "error"],
+  );
+  assert.equal(prepared.rows[0].borrowing?.probability?.estimate, 0);
+  assert.equal(prepared.rows[0].borrowing?.zeta, 0);
+  assert.ok(prepared.rows[1].input);
+  assert.equal(
+    createRunSnapshot(prepared.rows[1].input).options.investor
+      .impoverishmentLevel,
+    1,
+  );
+  assert.ok(prepared.rows[1].borrowing!.zeta > 1);
+  const cached = prepareComparisonRows(
+    rows,
+    draft,
+    completeFits,
+    prepared,
+    "feasibility",
+  );
+  assert.ok(cached.ok);
+  assert.equal(cached.rows[0].status, "calculated");
+  const changed = prepareComparisonRows(
+    [{ ...rows[0], impoverishmentLevel: "50,000" }],
+    draft,
+    completeFits,
+    prepared,
+    "feasibility",
+  );
+  assert.ok(changed.ok);
+  assert.notEqual(changed.rows[0].rowSignature, prepared.rows[0].rowSignature);
+  draft.simulation.projected = true;
+  assert.equal(
+    prepareComparisonRows(rows, draft, completeFits, null, "feasibility").ok,
+    false,
+  );
+});
+
+test("a feasibility row runs borrowing estimates on the CPU", async () => {
+  const { draft, fits } = example();
+  draft.simulation.paths = 8;
+  const marketInput = buildMarketOptions(draft.market);
+  assert.ok(marketInput.ok);
+  const calibrated = calibrateMarket(marketInput.market);
+  assert.ok(calibrated.ok);
+  const keys = mortalityFitKeys({
+    ...draft.investor,
+    market: calibrated.market,
+  });
+  const completeFits = {
+    ...fits,
+    gm: {
+      key: keys.gm,
+      fit: {
+        ...fits.ce.fit,
+        parameters: { alpha: 0.01, beta: 0.1, lambda: 0.01 },
+      },
+    },
+  };
+  const prepared = prepareComparisonRows(
+    [
+      {
+        id: 1,
+        type: "Target risk",
+        value: "5",
+        policy: "Unconstrained",
+        impoverishmentLevel: "1",
+      },
+    ],
+    draft,
+    completeFits,
+    null,
+    "feasibility",
+  );
+  assert.ok(prepared.ok);
+  assert.ok(prepared.rows[0].input);
+  const result = await runScheduler(createRunSnapshot(prepared.rows[0].input), {
+    backendOrder: ["cpu"],
+  });
+  assert.equal(result.completedPaths, 8);
+  assert.ok(result.borrowingProbability);
+  assert.ok(result.borrowingOccupation);
+  assert.ok(
+    result.borrowingProbability.estimate >= 0 &&
+      result.borrowingProbability.estimate <= 1,
+  );
+  assert.ok(result.borrowingOccupation.estimateYears >= 0);
 });

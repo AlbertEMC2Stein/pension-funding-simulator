@@ -7,6 +7,7 @@ import { ComparisonQueue, type ComparisonQueueState } from "./comparison-queue";
 import {
   prepareComparisonRows,
   type ComparisonRowInput,
+  type ComparisonKind,
 } from "./comparison-run";
 
 /** One captured comparison run and its current queue state. */
@@ -22,6 +23,7 @@ export interface ComparisonRun extends ComparisonQueueState {
 export function useComparisonSimulation(
   draft: SimulationDraft,
   fits: SharedMortalityFits,
+  kind: ComparisonKind = "withdrawal",
 ) {
   const [run, setRun] = useState<ComparisonRun | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export function useComparisonSimulation(
   /** Capture and start the current rows; invalid rows are reported individually. */
   function start(rows: readonly ComparisonRowInput[]) {
     if (queueRef.current) return;
-    const prepared = prepareComparisonRows(rows, draft, fits, run);
+    const prepared = prepareComparisonRows(rows, draft, fits, run, kind);
     if (!prepared.ok) {
       setError(prepared.message);
       return;

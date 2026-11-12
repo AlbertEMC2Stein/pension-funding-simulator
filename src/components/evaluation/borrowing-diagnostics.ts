@@ -1,6 +1,7 @@
 import { safeBoundaryValue } from "../../lib/model/analytical/safe-boundary";
 import type { FeasibilityResult } from "./global-feasibility";
 import type { RiskWithdrawalResult } from "./RiskWithdrawalChart";
+import type { CompatiblePolicyInputs } from "../../lib/model/analytical/compatible-policy";
 
 /** Analytical borrowing properties of the current unconstrained CE policy. */
 export type BorrowingDiagnostics =
@@ -27,7 +28,21 @@ export function calculateBorrowingDiagnostics(
   if ("message" in ce || !("zeta" in feasibility)) return { available: false };
 
   const { model, data } = ce;
-  const zeta = feasibility.zeta;
+  return borrowingProperties(
+    model,
+    data.selectedWithdrawal,
+    data.initialCapital,
+    feasibility.zeta,
+  );
+}
+
+/** Calculate the borrowing boundary properties for one resolved CE policy. */
+export function borrowingProperties(
+  model: CompatiblePolicyInputs,
+  annualWithdrawal: number,
+  initialCapital: number,
+  zeta: number,
+): BorrowingDiagnostics {
   const r = model.market.realRiskFreeRate;
   const endpoint = model.mortality.tau;
   const sum = model.market.mertonDirection.reduce(
@@ -36,13 +51,13 @@ export function calculateBorrowingDiagnostics(
   );
   const safe = safeBoundaryValue({
     realRiskFreeRate: r,
-    annualWithdrawal: data.selectedWithdrawal,
+    annualWithdrawal,
     impoverishmentLevel: model.impoverishmentLevel,
     mortalityEndpoint: endpoint,
     time: 0,
   });
   const boundary = (sum / (sum + model.mortality.p - 1)) * safe;
-  const borrowingAtRetirement = data.initialCapital < boundary;
+  const borrowingAtRetirement = initialCapital < boundary;
 
   if (zeta <= 1)
     return {

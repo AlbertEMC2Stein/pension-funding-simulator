@@ -118,6 +118,49 @@ test("queue runs two rows, then starts the next and keeps policy results distinc
   assert.equal(state!.running, false);
 });
 
+test("feasibility jobs request and retain borrowing estimates", () => {
+  const worker = new FakeWorker();
+  let state: ComparisonQueueState | null = null;
+  const job: ComparisonRunRow = {
+    ...row(1),
+    kind: "feasibility",
+    borrowing: {
+      zeta: 2,
+      borrowingAtRetirement: true,
+      lastPossibleTimeYears: 5,
+    },
+  };
+  const queue = new ComparisonQueue(
+    [job],
+    () => worker,
+    (next) => {
+      state = next;
+    },
+  );
+  queue.start();
+  const request = worker.messages[0];
+  assert.ok(request.type === "start");
+  assert.equal(request.riskOnly, false);
+  const message = complete(1);
+  assert.equal(message.type, "complete");
+  message.result = {
+    borrowingProbability: {
+      estimate: 0.2,
+      standardError: 0.01,
+      interval95: null,
+    },
+    borrowingOccupation: {
+      estimateYears: 0.9,
+      standardErrorYears: 0.03,
+      interval95Years: null,
+    },
+  } as typeof message.result;
+  worker.emit(message);
+  assert.equal(state!.rows[0].status, "calculated");
+  assert.equal(state!.rows[0].borrowing?.probability?.estimate, 0.2);
+  assert.equal(state!.rows[0].borrowing?.occupation?.estimateYears, 0.9);
+});
+
 test("cancellation stops queued rows immediately and active workers after acknowledgement", () => {
   const workers: FakeWorker[] = [];
   let state: ComparisonQueueState | null = null;

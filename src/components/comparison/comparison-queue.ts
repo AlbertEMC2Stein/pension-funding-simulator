@@ -107,7 +107,7 @@ export class ComparisonQueue {
           type: "start",
           runId: row.id,
           input: row.input,
-          riskOnly: true,
+          riskOnly: row.kind !== "feasibility",
         });
       } catch (error) {
         this.finish(
@@ -147,7 +147,30 @@ export class ComparisonQueue {
           ? message.risk.projected?.gm
           : message.risk.gm;
       if (this.cancelling) this.finish(id, { status: "cancelled" });
-      else if (!gm)
+      else if (row.kind === "feasibility") {
+        const { borrowingProbability, borrowingOccupation } = message.result;
+        if (!row.borrowing || !borrowingProbability || !borrowingOccupation)
+          this.finish(id, {
+            status: "error",
+            message: "The borrowing results are missing.",
+          });
+        else
+          this.finish(id, {
+            status: "calculated",
+            borrowing: {
+              ...row.borrowing,
+              probability: borrowingProbability,
+              occupation: borrowingOccupation,
+            },
+            batchProgress: row.batchProgress
+              ? {
+                  completed: row.batchProgress.total,
+                  total: row.batchProgress.total,
+                }
+              : undefined,
+            elapsedMs: message.elapsedMs,
+          });
+      } else if (!gm)
         this.finish(id, {
           status: "error",
           message: "The projected GM result is missing.",

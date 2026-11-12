@@ -68,6 +68,17 @@ function formatComparisonEta(milliseconds: number): string {
     : `About ${Math.floor(seconds / 60)} min ${seconds % 60} s left`;
 }
 
+/** Format an approximate Monte Carlo interval in the displayed units. */
+function formatInterval(
+  interval: { lower: number; upper: number } | null,
+  scale: number,
+  unit: string,
+): string {
+  return interval
+    ? `${(interval.lower * scale).toFixed(2)}${unit} – ${(interval.upper * scale).toFixed(2)}${unit}`
+    : "Unavailable";
+}
+
 const tableDescriptions: Record<TableType, string> = {
   withdrawal:
     "Compare withdrawals and risk across unconstrained and projected policies.",
@@ -95,16 +106,24 @@ export function DataView() {
     : marketFeasibility.status === "negative-merton"
       ? "This comparison is unavailable because a Merton-vector component is negative. The unconstrained policy requires short selling whenever wealth is below the safe boundary."
       : null;
-  const simulation = useComparisonSimulation(draft, mortalityFits);
+  const withdrawalSimulation = useComparisonSimulation(draft, mortalityFits);
+  const feasibilitySimulation = useComparisonSimulation(
+    draft,
+    mortalityFits,
+    "feasibility",
+  );
+  const [tableType, setTableType] = useState<TableType>("withdrawal");
+  const simulation =
+    tableType === "withdrawal" ? withdrawalSimulation : feasibilitySimulation;
   const run = simulation.run;
   const running = run?.running ?? false;
   const sharedStale = run
-    ? run.signature !== comparisonSetupSignature(draft, mortalityFits)
+    ? run.signature !==
+      comparisonSetupSignature(draft, mortalityFits, tableType)
     : false;
   const overallEta =
     run?.running && !run.cancelling ? comparisonQueueRemaining(run.rows) : null;
   const batchProgress = run ? comparisonBatchProgress(run.rows) : null;
-  const [tableType, setTableType] = useState<TableType>("withdrawal");
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [expandedFeasibilityRows, setExpandedFeasibilityRows] = useState<
     number[]
@@ -117,7 +136,7 @@ export function DataView() {
   const allComputed =
     run !== null &&
     !sharedStale &&
-    areComparisonRowsCalculated(tables.withdrawal, run.rows);
+    areComparisonRowsCalculated(tables[tableType], run.rows, tableType);
   const resultHeading =
     rows.length === 0
       ? "CE RESULT"
@@ -147,8 +166,7 @@ export function DataView() {
       />
       <PreviewBanner>
         <strong>In progress.</strong> CE values update analytically; GM risk is
-        estimated by simulation. Feasibility sensitivity and exports are
-        previews.
+        estimated by simulation. Exports are previews.
       </PreviewBanner>
       <SectionHeading
         eyebrow="YOUR COMPARISON"
@@ -252,8 +270,6 @@ export function DataView() {
         </div>
         <p className="table-description">
           {tableDescriptions[tableType]} All other settings are shared.
-          {tableType !== "withdrawal" &&
-            " This table is a layout preview; values are not calculated."}
         </p>
         {tableType === "withdrawal" &&
           !running &&
@@ -319,14 +335,12 @@ export function DataView() {
             </thead>
             <tbody>
               {rows.map((row) => {
-                const captured =
-                  tableType === "withdrawal"
-                    ? run?.rows.find((item) => item.id === row.id)
-                    : undefined;
+                const captured = run?.rows.find((item) => item.id === row.id);
                 const rowStale =
                   captured &&
                   (sharedStale ||
-                    captured.rowSignature !== comparisonRowSignature(row));
+                    captured.rowSignature !==
+                      comparisonRowSignature(row, tableType));
                 const result =
                   running && captured
                     ? captured.ce
@@ -342,23 +356,29 @@ export function DataView() {
                           row.value,
                         )
                       : null;
-                const status = captured
-                  ? !running && rowStale
-                    ? ("needs-updating" as const)
-                    : captured.status
-                  : tableType !== "withdrawal"
-                    ? feasibilityUnavailable
-                      ? ("not-available" as const)
-                      : ("not-calculated" as const)
-                    : !withdrawalContext.available
-                      ? ("not-available" as const)
-                      : result?.ok
-                        ? ("not-calculated" as const)
-                        : ("error" as const);
+                const status =
+                  tableType === "feasibility" && feasibilityUnavailable
+                    ? ("not-available" as const)
+                    : captured
+                      ? !running && rowStale
+                        ? ("needs-updating" as const)
+                        : captured.status
+                      : tableType !== "withdrawal"
+                        ? feasibilityUnavailable
+                          ? ("not-available" as const)
+                          : ("not-calculated" as const)
+                        : !withdrawalContext.available
+                          ? ("not-available" as const)
+                          : result?.ok
+                            ? ("not-calculated" as const)
+                            : ("error" as const);
                 const rowEta = captured
                   ? comparisonRowRemaining(captured)
                   : null;
                 const expanded = expandedFeasibilityRows.includes(row.id);
+                const borrowing = feasibilityUnavailable
+                  ? undefined
+                  : captured?.borrowing;
                 const inputValue = (
                   <div className="input-suffix table-input-suffix">
                     <input
@@ -505,9 +525,17 @@ export function DataView() {
                         </>
                       ) : (
                         <>
-                          <td>—</td>
-                          <td>—</td>
-                          <td>—</td>
+                          <td>{borrowing ? borrowing.zeta.toFixed(3) : "—"}</td>
+                          <td>
+                            {borrowing?.probability
+                              ? `${(borrowing.probability.estimate * 100).toFixed(2)}%`
+                              : "—"}
+                          </td>
+                          <td>
+                            {borrowing?.occupation
+                              ? `${borrowing.occupation.estimateYears.toFixed(2)} years`
+                              : "—"}
+                          </td>
                         </>
                       )}
                       <td>
@@ -528,6 +556,13 @@ export function DataView() {
                             {captured.message}
                           </small>
                         )}
+                        {rowStale &&
+                          !running &&
+                          tableType === "feasibility" && (
+                            <small className="table-result-detail">
+                              Previous setup or row inputs
+                            </small>
+                          )}
                         {result &&
                           !result.ok &&
                           result.message !== captured?.message && (
@@ -544,7 +579,9 @@ export function DataView() {
                           disabled={running}
                           onClick={() => {
                             if (
-                              (captured?.gm || result?.ok) &&
+                              (captured?.gm ||
+                                captured?.borrowing ||
+                                result?.ok) &&
                               !window.confirm(
                                 "Delete this variation and its calculated values?",
                               )
@@ -568,28 +605,73 @@ export function DataView() {
                           <div className="feasibility-detail-grid">
                             <div>
                               <span>
-                                {row.type === "Target risk"
+                                {(captured?.inputType ?? row.type) ===
+                                "Target risk"
                                   ? "Annual withdrawal"
                                   : "CE lifetime risk"}
                               </span>
-                              <strong>—</strong>
+                              <strong>
+                                {!feasibilityUnavailable && captured?.ce
+                                  ? (captured.inputType ?? row.type) ===
+                                    "Target risk"
+                                    ? `€${captured.ce.annualWithdrawal.toLocaleString("en-US", { maximumFractionDigits: 2 })} / year`
+                                    : `${(captured.ce.ceRisk * 100).toFixed(2)}%`
+                                  : "—"}
+                              </strong>
                             </div>
                             <div>
                               <span>Borrowing at retirement</span>
-                              <strong>—</strong>
+                              <strong>
+                                {borrowing
+                                  ? borrowing.borrowingAtRetirement
+                                    ? "Yes"
+                                    : "No"
+                                  : "—"}
+                              </strong>
                             </div>
                             <div>
                               <span>Last possible borrowing time</span>
-                              <strong>—</strong>
+                              <strong>
+                                {borrowing
+                                  ? borrowing.lastPossibleTimeYears === null
+                                    ? "Never"
+                                    : `${borrowing.lastPossibleTimeYears.toFixed(2)} years after retirement`
+                                  : "—"}
+                              </strong>
                             </div>
                             <div>
-                              <span>Monte Carlo uncertainty</span>
-                              <strong>—</strong>
+                              <span>95% MC interval · ever borrowing</span>
+                              <strong>
+                                {borrowing?.probability
+                                  ? captured?.analytical
+                                    ? "Analytical zero"
+                                    : formatInterval(
+                                        borrowing.probability.interval95,
+                                        100,
+                                        "%",
+                                      )
+                                  : "—"}
+                              </strong>
+                            </div>
+                            <div>
+                              <span>95% MC interval · time borrowing</span>
+                              <strong>
+                                {borrowing?.occupation
+                                  ? captured?.analytical
+                                    ? "Analytical zero"
+                                    : formatInterval(
+                                        borrowing.occupation.interval95Years,
+                                        1,
+                                        " years",
+                                      )
+                                  : "—"}
+                              </strong>
                             </div>
                           </div>
                           <p>
-                            Details will appear here when feasibility
-                            calculations are available.
+                            {captured?.analytical
+                              ? "Borrowing is analytically impossible when ζ ≤ 1."
+                              : "Intervals cover Monte Carlo uncertainty only. Borrowing estimates also depend on the time step and crossing approximations."}
                           </p>
                         </td>
                       </tr>
@@ -601,90 +683,67 @@ export function DataView() {
           </table>
         </div>
         <div className="table-footer">
-          {tableType === "withdrawal" ? (
-            <>
-              <div
-                className="table-run-summary"
-                role="status"
-                aria-live="polite"
-              >
-                {running ? (
-                  <>
-                    <span>
-                      {run?.cancelling
-                        ? "Stopping after the current batches…"
-                        : overallEta === null
-                          ? "Estimating overall time…"
-                          : formatComparisonEta(overallEta)}
-                    </span>
-                    {batchProgress && batchProgress.total > 0 && (
-                      <>
-                        <progress
-                          aria-label="Table simulation progress"
-                          max={batchProgress.total}
-                          value={batchProgress.completed}
-                        />
-                        <small>
-                          {batchProgress.completed.toLocaleString("en-US")} /{" "}
-                          {batchProgress.total.toLocaleString("en-US")} batches
-                        </small>
-                      </>
-                    )}
-                    {sharedStale && (
-                      <small>
-                        Settings changed; this run continues with its captured
-                        setup.
-                      </small>
-                    )}
-                  </>
-                ) : (
+          <>
+            <div className="table-run-summary" role="status" aria-live="polite">
+              {running ? (
+                <>
                   <span>
-                    CE values are analytical; GM risk is estimated through the
-                    CE horizon.
+                    {run?.cancelling
+                      ? "Stopping after the current batches…"
+                      : overallEta === null
+                        ? "Estimating overall time…"
+                        : formatComparisonEta(overallEta)}
                   </span>
-                )}
-                {simulation.error && (
-                  <span className="table-row-error">{simulation.error}</span>
-                )}
-              </div>
-              <button
-                type="button"
-                className="button button-primary"
-                onClick={() =>
-                  running
-                    ? simulation.cancel()
-                    : simulation.start(tables.withdrawal)
-                }
-                disabled={
-                  running ? run?.cancelling : rows.length === 0 || allComputed
-                }
-              >
-                {running ? "Cancel rows" : "▶  Compute rows"}
-              </button>
-            </>
-          ) : (
-            <>
-              <span>
-                ⓘ &nbsp; Analytical and simulation outputs will appear here.
-              </span>
-              {feasibilityUnavailable ? (
-                <button
-                  type="button"
-                  className="button button-primary"
-                  disabled
-                >
-                  ▶ &nbsp; Compute rows
-                </button>
+                  {batchProgress && batchProgress.total > 0 && (
+                    <>
+                      <progress
+                        aria-label="Table simulation progress"
+                        max={batchProgress.total}
+                        value={batchProgress.completed}
+                      />
+                      <small>
+                        {batchProgress.completed.toLocaleString("en-US")} /{" "}
+                        {batchProgress.total.toLocaleString("en-US")} batches
+                      </small>
+                    </>
+                  )}
+                  {sharedStale && (
+                    <small>
+                      Settings changed; this run continues with its captured
+                      setup.
+                    </small>
+                  )}
+                </>
               ) : (
-                <DemoAction
-                  className="button button-primary"
-                  message="Feasibility calculations are not connected yet."
-                >
-                  ▶ &nbsp; Compute rows
-                </DemoAction>
+                <span>
+                  {tableType === "withdrawal"
+                    ? "CE values are analytical; GM risk is estimated through the CE horizon."
+                    : "Borrowing estimates use GM mortality through the CE horizon."}
+                </span>
               )}
-            </>
-          )}
+              {simulation.error && (
+                <span className="table-row-error">{simulation.error}</span>
+              )}
+            </div>
+            <button
+              type="button"
+              className="button button-primary"
+              onClick={() =>
+                running
+                  ? simulation.cancel()
+                  : simulation.start(tables[tableType])
+              }
+              disabled={
+                running
+                  ? run?.cancelling
+                  : rows.length === 0 ||
+                    allComputed ||
+                    (tableType === "feasibility" && !!feasibilityUnavailable)
+              }
+            >
+              {running ? "Cancel rows" : "▶  Compute rows"}
+            </button>
+          </>
         </div>
       </div>
       <SectionHeading
