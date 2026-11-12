@@ -275,23 +275,15 @@ input[aria-invalid="true"] {
 }
 
 .table-details-toggle {
-  display: list-item;
-  list-style-position: inside;
-  list-style-type: disclosure-closed;
   margin-top: 7px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--accent);
-  font: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
 }
 
-.table-details-toggle[aria-expanded="true"] {
-  list-style-type: disclosure-open;
+.table-details-toggle summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .feasibility-row-details {

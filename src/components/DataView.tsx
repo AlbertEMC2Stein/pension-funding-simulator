@@ -389,25 +389,21 @@ export function DataView() {
                           }}
                         />
                         {tableType === "feasibility" && (
-                          <button
-                            type="button"
-                            className="table-details-toggle"
-                            aria-expanded={expanded}
-                            aria-controls={
-                              expanded
-                                ? `feasibility-details-${row.id}`
-                                : undefined
-                            }
-                            onClick={() =>
-                              setExpandedFeasibilityRows((current) =>
-                                expanded
-                                  ? current.filter((id) => id !== row.id)
-                                  : [...current, row.id],
-                              )
-                            }
-                          >
-                            {expanded ? "Hide details" : "View details"}
-                          </button>
+                          <details className="table-details-toggle" open={expanded}>
+                            <summary
+                              aria-controls={expanded ? `feasibility-details-${row.id}` : undefined}
+                              onClick={(event) => {
+                                event.preventDefault();
+                                setExpandedFeasibilityRows((current) =>
+                                  expanded
+                                    ? current.filter((id) => id !== row.id)
+                                    : [...current, row.id],
+                                );
+                              }}
+                            >
+                              {expanded ? "Hide details" : "View details"}
+                            </summary>
+                          </details>
                         )}
                       </td>
                       <td className="table-combined-input">
