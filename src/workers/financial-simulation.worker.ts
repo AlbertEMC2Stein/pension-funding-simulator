@@ -79,6 +79,7 @@ worker.onmessage = ({ data }) => {
       );
       const risk = estimateMortalityRisk({
         firstHitTimes: result.firstHitTimes,
+        projectedFirstHitTimes: result.projected?.firstHitTimes,
         gm: snapshot.mortality.gm.parameters,
         ce: snapshot.mortality.ce.parameters,
         horizonYears: snapshot.numerical.horizonYears,

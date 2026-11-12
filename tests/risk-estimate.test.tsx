@@ -76,3 +76,44 @@ test("zero variation and one-path samples do not produce misleading normal inter
   assert.equal(one.gm.standardError, null);
   assert.equal(one.gm.interval95, null);
 });
+
+test("paired risk difference uses pathwise differences and can be negative", () => {
+  const unconstrained = [0, -1, 1, -1];
+  const projected = [-1, 0, -1, -1];
+  const result = estimateMortalityRisk({
+    firstHitTimes: unconstrained,
+    projectedFirstHitTimes: projected,
+    gm,
+    ce,
+    horizonYears: 3,
+    ceBenchmark: 0.5,
+  });
+  const differences = [-1, 1, -gompertzMakehamSurvival(1, gm), 0];
+  const mean =
+    differences.reduce((sum, value) => sum + value, 0) / differences.length;
+  const variance =
+    differences.reduce((sum, value) => sum + (value - mean) ** 2, 0) /
+    (differences.length - 1);
+
+  assert.ok(result.projected);
+  assert.ok(Math.abs(result.projected.gmDifference.estimate - mean) < 1e-15);
+  assert.ok(
+    Math.abs(
+      result.projected.gmDifference.standardError! -
+        Math.sqrt(variance / differences.length),
+    ) < 1e-15,
+  );
+  assert.ok(result.projected.gmDifference.interval95!.lower < 0);
+  assert.throws(
+    () =>
+      estimateMortalityRisk({
+        firstHitTimes: [1, 2],
+        projectedFirstHitTimes: [1],
+        gm,
+        ce,
+        horizonYears: 3,
+        ceBenchmark: 0.5,
+      }),
+    /matching/,
+  );
+});

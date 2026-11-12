@@ -7,6 +7,13 @@ import type { RandomStream } from "../random";
 import { detectCeImpoverishment } from "./ce-impoverishment-bridge";
 import { createTensorBridgeDraws } from "./bridge-random";
 import type { BridgeDraws } from "./bridge-hit";
+import type { ProjectionCurve } from "../../analytical/projection-curve";
+import {
+  advanceProjectedWealthStep,
+  createTensorProjectedPolicy,
+  disposeTensorProjectedPolicy,
+} from "./projected-wealth-step";
+import { detectProjectedImpoverishment } from "./projected-impoverishment-bridge";
 
 /** Deterministic grid experiment; each step supplies asset noise for all paths. */
 export interface TensorWealthBatchInput {
@@ -34,6 +41,12 @@ export interface TensorWealthBatchInput {
         step: number,
         timeStepYears: number,
       ) => readonly number[] | tf.Tensor2D);
+  /** When supplied, run the projected policy alongside the unconstrained one. */
+  projected?: {
+    curve: ProjectionCurve;
+    excessReturn: readonly number[];
+    covariance: readonly (readonly number[])[];
+  };
   /** Create independent auxiliary bridge draws inside each step's tensor scope. */
   bridgeDraws: (step: number) => BridgeDraws;
 }
@@ -46,6 +59,12 @@ export interface TensorWealthBatchResult {
   firstHitStep: Int32Array;
   /** Approximate years after retirement, or -1 when no hit occurred. */
   firstHitTime: Float32Array;
+  /** The matched projected-policy observations, present for paired runs. */
+  projected?: {
+    finalWealth: Float32Array;
+    firstHitStep: Int32Array;
+    firstHitTime: Float32Array;
+  };
 }
 
 /**
@@ -68,6 +87,7 @@ export async function simulateTensorWealthBatch(
     times,
     increments,
     bridgeDraws,
+    projected,
   } = input;
   const { initialCapital, impoverishmentLevel: threshold } = investor;
   const { realRiskFreeRate: r, mertonDirection } = market;
@@ -91,6 +111,22 @@ export async function simulateTensorWealthBatch(
   let firstHit: tf.Tensor1D = tf.fill([count], -1, "int32");
   let firstHitTime: tf.Tensor1D = tf.fill([count], -1, "float32");
   const direction = tf.tensor2d([...mertonDirection], [assets, 1]);
+  const projectedPolicy = projected
+    ? createTensorProjectedPolicy(
+        projected.curve,
+        projected.excessReturn,
+        projected.covariance,
+      )
+    : null;
+  let projectedWealth = projected
+    ? (tf.fill([count], initialCapital, "float32") as tf.Tensor1D)
+    : null;
+  let projectedHit = projected
+    ? (tf.fill([count], -1, "int32") as tf.Tensor1D)
+    : null;
+  let projectedHitTime = projected
+    ? (tf.fill([count], -1, "float32") as tf.Tensor1D)
+    : null;
 
   try {
     for (let step = 0; step < times.length - 1; step += 1) {
@@ -155,6 +191,7 @@ export async function simulateTensorWealthBatch(
 
         // Apply the CE-specific coordinate adapter to the proposed step. The
         // policy-independent primitive detects and times the first crossing.
+        const draws = bridgeDraws(step);
         const crossing = detectCeImpoverishment({
           currentWealth: wealth,
           proposedWealth,
@@ -164,7 +201,7 @@ export async function simulateTensorWealthBatch(
           nextSafeBoundary: prepared.nextBoundary,
           timeStepYears: dt,
           logGapVarianceRate: (2 * model.market.rho) / (delta - 1) ** 2,
-          draws: bridgeDraws(step),
+          draws,
         });
         const nextWealth = tf.where(
           crossing.hit,
@@ -182,6 +219,58 @@ export async function simulateTensorWealthBatch(
           firstHitTime,
         ) as tf.Tensor1D;
 
+        if (
+          projectedPolicy &&
+          projectedWealth &&
+          projectedHit &&
+          projectedHitTime
+        ) {
+          const projectedActive = projectedHit.equal(-1) as tf.Tensor1D;
+          const projectedStep = advanceProjectedWealthStep({
+            policy: projectedPolicy,
+            wealth: projectedWealth,
+            active: projectedActive,
+            increments: z,
+            currentSafeBoundary: prepared.currentBoundary,
+            impoverishmentLevel: threshold,
+            realRiskFreeRate: r,
+            annualWithdrawal,
+            delta,
+            timeStepYears: dt,
+            riskFreeAnnuityFactor: prepared.riskFreeAnnuityFactor,
+          });
+          const projectedCrossing = detectProjectedImpoverishment({
+            currentWealth: projectedWealth,
+            proposedWealth: projectedStep.wealth,
+            active: projectedActive,
+            impoverishmentLevel: threshold,
+            varianceRate: projectedStep.varianceRate,
+            timeStepYears: dt,
+            draws,
+          });
+
+          return {
+            wealth: nextWealth,
+            firstHit: nextHit,
+            firstHitTime: nextHitTime,
+            projectedWealth: tf.where(
+              projectedCrossing.hit,
+              tf.fill([count], threshold),
+              projectedStep.wealth,
+            ) as tf.Tensor1D,
+            projectedHit: tf.where(
+              projectedCrossing.hit,
+              tf.fill([count], step + 1, "int32"),
+              projectedHit,
+            ) as tf.Tensor1D,
+            projectedHitTime: tf.where(
+              projectedCrossing.hit,
+              projectedCrossing.fraction.mul(dt).add(times[step]),
+              projectedHitTime,
+            ) as tf.Tensor1D,
+          };
+        }
+
         return {
           wealth: nextWealth,
           firstHit: nextHit,
@@ -196,6 +285,20 @@ export async function simulateTensorWealthBatch(
       wealth = next.wealth;
       firstHit = next.firstHit;
       firstHitTime = next.firstHitTime;
+
+      if (
+        "projectedWealth" in next &&
+        next.projectedWealth &&
+        next.projectedHit &&
+        next.projectedHitTime
+      ) {
+        projectedWealth?.dispose();
+        projectedHit?.dispose();
+        projectedHitTime?.dispose();
+        projectedWealth = next.projectedWealth;
+        projectedHit = next.projectedHit;
+        projectedHitTime = next.projectedHitTime;
+      }
     }
 
     // Read back once after the batch; the returned arrays are caller-owned.
@@ -211,7 +314,35 @@ export async function simulateTensorWealthBatch(
     )
       throw new RangeError("Tensor simulation produced a non-finite result.");
 
+    let projectedResult: TensorWealthBatchResult["projected"];
+
+    if (projectedWealth && projectedHit && projectedHitTime) {
+      const [projectedWealthData, projectedHitData, projectedTimeData] =
+        await Promise.all([
+          projectedWealth.data(),
+          projectedHit.data(),
+          projectedHitTime.data(),
+        ]);
+
+      if (
+        Array.from(projectedWealthData).some(
+          (value) => !Number.isFinite(value),
+        ) ||
+        Array.from(projectedTimeData).some((value) => !Number.isFinite(value))
+      )
+        throw new RangeError(
+          "Projected tensor simulation produced a non-finite result.",
+        );
+
+      projectedResult = {
+        finalWealth: Float32Array.from(projectedWealthData),
+        firstHitStep: Int32Array.from(projectedHitData),
+        firstHitTime: Float32Array.from(projectedTimeData),
+      };
+    }
+
     return {
+      projected: projectedResult,
       finalWealth: Float32Array.from(wealthData),
       firstHitStep: Int32Array.from(hitData),
       firstHitTime: Float32Array.from(hitTimeData),
@@ -221,6 +352,10 @@ export async function simulateTensorWealthBatch(
     firstHit.dispose();
     firstHitTime.dispose();
     direction.dispose();
+    projectedWealth?.dispose();
+    projectedHit?.dispose();
+    projectedHitTime?.dispose();
+    if (projectedPolicy) disposeTensorProjectedPolicy(projectedPolicy);
   }
 }
 
@@ -240,8 +375,14 @@ export async function simulateTensorBatch(
   snapshot: RunSnapshot,
   pathCount: number,
   stream: RandomStream,
+  projectionCurve?: ProjectionCurve,
 ): Promise<TensorWealthBatchResult> {
   assertRunSnapshot(snapshot);
+  if (snapshot.options.policy.projected !== Boolean(projectionCurve))
+    throw new RangeError(
+      "The prepared projection must match the selected policy.",
+    );
+
   const { market, options, mortality, numerical } = snapshot;
   const withdrawal = snapshot.resolvedAnnualWithdrawal;
   const times = generateTimeGrid(
@@ -268,6 +409,13 @@ export async function simulateTensorBatch(
       },
       pathCount,
       times,
+      projected: projectionCurve
+        ? {
+            curve: projectionCurve,
+            excessReturn: market.excessReturn,
+            covariance: market.covariance,
+          }
+        : undefined,
       increments: (_step, dt) => {
         // The existing seeded stream runs on the CPU. Upload one flat buffer
         // per step, then correlate all paths on the TensorFlow backend.

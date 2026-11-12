@@ -226,7 +226,7 @@ test("TensorFlow CPU batch matches scalar paths with the same supplied increment
   assert.equal(tf.memory().numTensors, before);
 });
 
-test("snapshot copies and freezes inputs and rejects changed markets and unsupported projection", async () => {
+test("snapshot copies and freezes inputs and rejects changed markets", async () => {
   const built = buildSimulationOptions(initialSimulationDraft());
   assert.ok(built.ok);
   const calibrated = calibrateMarket(built.options.market);
@@ -350,16 +350,15 @@ test("snapshot copies and freezes inputs and rejects changed markets and unsuppo
     simulateTensorBatch(structuredClone(tiny), 1, createRandomStream("test")),
     /validated/,
   );
-  assert.throws(
-    () =>
-      createRunSnapshot({
-        ...input,
-        options: {
-          ...input.options,
-          policy: { ...input.options.policy, projected: true },
-        },
-      }),
-    /Projected/,
+  assert.equal(
+    createRunSnapshot({
+      ...input,
+      options: {
+        ...input.options,
+        policy: { ...input.options.policy, projected: true },
+      },
+    }).options.policy.projected,
+    true,
   );
   assert.throws(
     () =>

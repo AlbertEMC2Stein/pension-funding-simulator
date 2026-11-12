@@ -189,8 +189,6 @@ export function createRunSnapshot(input: RunConfigurationInput): RunSnapshot {
     throw new RangeError(
       "Initial capital must exceed the impoverishment level of at least €1.",
     );
-  if (options.policy.projected)
-    throw new RangeError("Projected policies are not implemented yet.");
 
   const model = {
     market,

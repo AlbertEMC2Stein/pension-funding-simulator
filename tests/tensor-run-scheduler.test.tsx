@@ -18,9 +18,10 @@ import {
 } from "../src/lib/model/simulation/tensorflow/run-scheduler";
 
 /** Create a small valid CE run with a final partial batch. */
-function exampleSnapshot(recordTrajectories = false) {
+function exampleSnapshot(recordTrajectories = false, projected = false) {
   const draft = initialSimulationDraft();
   draft.simulation.paths = 5;
+  draft.simulation.projected = projected;
   const built = buildSimulationOptions(draft);
   assert.ok(built.ok);
   const calibrated = calibrateMarket(built.options.market);
@@ -150,4 +151,24 @@ test("scheduler rejects unsupported trajectory recording and unvalidated snapsho
     runScheduler(structuredClone(exampleSnapshot()), { backendOrder: ["cpu"] }),
     /validated/,
   );
+});
+
+test("paired batches retain matching observations without altering the unconstrained stream", async () => {
+  const before = tf.memory().numTensors;
+  const single = await runScheduler(exampleSnapshot(), {
+    backendOrder: ["cpu"],
+  });
+  const paired = await runScheduler(exampleSnapshot(false, true), {
+    backendOrder: ["cpu"],
+  });
+
+  assert.ok(paired.projected);
+  assert.equal(paired.projected.firstHitTimes.length, 5);
+  assert.deepEqual(paired.firstHitTimes, single.firstHitTimes);
+  assert.deepEqual(paired.firstHitCounts, single.firstHitCounts);
+  assert.equal(
+    paired.projected.observedHits,
+    paired.projected.firstHitCounts.reduce((sum, count) => sum + count, 0),
+  );
+  assert.equal(tf.memory().numTensors, before);
 });

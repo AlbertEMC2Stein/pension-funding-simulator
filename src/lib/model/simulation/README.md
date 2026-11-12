@@ -1,7 +1,8 @@
 # Financial simulation
 
 This directory contains an initial scalar reference and a TensorFlow.js batch
-prototype for the unconstrained CE wealth process. The TensorFlow prototype is
+prototype for the unconstrained CE wealth process and a paired projected-policy
+prototype. The TensorFlow prototype is
 available through a worker in the developer panel. It estimates first-passage
 times with a local bridge approximation and reports CE- and GM-survival-weighted
 risk within the simulated horizon.
@@ -70,8 +71,8 @@ same investor input rather than maintained as a separate editable value.
 All paths in a batch share one investor's initial capital. The tensor backend
 creates the path-state vector internally from that amount and the batch size.
 The snapshot and batch result format are not stable. Bridge-detected times
-remain approximate for a curved boundary. Projected-policy estimates and
-evaluation-panel integration are later work. CPU TensorFlow has
+remain approximate for a curved boundary. Evaluation-panel integration of
+projected-policy estimates is later work. CPU TensorFlow has
 deterministic bridge checks and an analytical CE risk sanity check; the new
 bridge integration has not been verified on WebGPU.
 
@@ -93,9 +94,15 @@ code was read to inform these comments, not executed or modified.
 projection curve on the selected TensorFlow backend and advances wealth using
 Euler–Maruyama in the risky region. It retains the exact risk-free update for
 safe paths and freezes inactive paths. The step also returns the frozen wealth
-variance rate needed by a future projected first-passage bridge. Its caller
+variance rate used by the projected first-passage bridge. Its caller
 creates and disposes the TensorFlow policy tensors once per batch.
 
-This standalone step has CPU tests but is not connected to the batch loop,
-scheduler, or UI simulation. It does not detect hits, and its timestep error and
-GPU behavior must be assessed before interpreting projected risk estimates.
+For a projected run the batch loop uses this step alongside the unconstrained
+update with the same market increments and auxiliary bridge draws. A separate
+wealth-coordinate bridge freezes the projected diffusion over each step. Both
+policies have independent stopped states and paired hit-time arrays; the worker
+computes projected risks and standard errors of paired differences. The developer
+panel displays these provisional results; the evaluation panel remains guarded.
+CPU tests include a known CE reference where projection does not bind. Projected
+risk depends on Euler and bridge approximations, and its time-step sensitivity,
+GPU behavior and performance require further checks before production use.

@@ -3,6 +3,7 @@ import { createRandomStream } from "../random";
 import { generateTimeGrid } from "../time-grid";
 import { initializeTensorBackend, type TensorBackend } from "./backend";
 import { simulateTensorBatch } from "./wealth-batch";
+import { prepareProjectionCurve } from "../../analytical/projection-curve";
 
 /** Progress emitted after a complete batch has been incorporated into the run. */
 export interface RunProgress {
@@ -36,6 +37,12 @@ export interface RunSchedulerResult {
   observedHits: number;
   /** Approximate first-hit times in years; -1 denotes no hit by the horizon. */
   firstHitTimes: Float32Array;
+  /** Matching projected-policy observations for a paired run. */
+  projected?: {
+    firstHitTimes: Float32Array;
+    firstHitCounts: readonly number[];
+    observedHits: number;
+  };
 }
 
 /** Throw a recognizable cancellation error before starting another batch. */
@@ -87,6 +94,24 @@ export async function runScheduler(
   const firstHitCounts = Array<number>(times.length).fill(0);
   const firstHitTimes = new Float32Array(totalPaths);
   const stream = createRandomStream(snapshot.numerical.seed);
+  const projectionCurve = snapshot.options.policy.projected
+    ? prepareProjectionCurve({
+        covariance: snapshot.market.covariance,
+        mertonDirection: snapshot.market.mertonDirection,
+        realRiskFreeRate: snapshot.market.realRiskFreeRate,
+        annualWithdrawal: snapshot.resolvedAnnualWithdrawal,
+        impoverishmentLevel: snapshot.options.investor.impoverishmentLevel,
+        mortalityEndpoint: snapshot.mortality.ce.parameters.tau,
+        delta: snapshot.mortality.ce.parameters.p,
+      })
+    : undefined;
+  const projected = projectionCurve
+    ? {
+        firstHitTimes: new Float32Array(totalPaths),
+        firstHitCounts: Array<number>(times.length).fill(0),
+        observedHits: 0,
+      }
+    : undefined;
   let completedPaths = 0;
   let completedBatches = 0;
   let observedHits = 0;
@@ -94,10 +119,29 @@ export async function runScheduler(
   while (completedPaths < totalPaths) {
     checkCancellation(options.signal);
     const pathCount = Math.min(batchSize, totalPaths - completedPaths);
-    const batch = await simulateTensorBatch(snapshot, pathCount, stream);
+    const batch = await simulateTensorBatch(
+      snapshot,
+      pathCount,
+      stream,
+      projectionCurve,
+    );
     checkCancellation(options.signal);
 
     firstHitTimes.set(batch.firstHitTime, completedPaths);
+
+    if (projected && !batch.projected)
+      throw new Error("The projected batch result is missing.");
+
+    if (projected && batch.projected) {
+      projected.firstHitTimes.set(batch.projected.firstHitTime, completedPaths);
+
+      for (const hitIndex of batch.projected.firstHitStep) {
+        if (hitIndex >= 0) {
+          projected.firstHitCounts[hitIndex] += 1;
+          projected.observedHits += 1;
+        }
+      }
+    }
 
     for (const hitIndex of batch.firstHitStep) {
       if (hitIndex >= 0) {
@@ -130,5 +174,6 @@ export async function runScheduler(
     firstHitCounts,
     observedHits,
     firstHitTimes,
+    projected,
   };
 }

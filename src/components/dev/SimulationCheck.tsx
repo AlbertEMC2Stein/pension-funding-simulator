@@ -187,7 +187,9 @@ export function SimulationCheck() {
         schema: "prototype-1",
         model: "compatible-ce-1",
         randomGenerator: "cyrb128-sfc32-box-muller-1",
-        simulationAlgorithm: "tensorflow-bridge-2",
+        simulationAlgorithm: options.options.policy.projected
+          ? "tensorflow-paired-euler-1"
+          : "tensorflow-bridge-2",
       },
       provenance: {
         mortalityData: `Current cohort fit: ${keys.gm}`,
@@ -502,14 +504,16 @@ export function SimulationCheck() {
             <p>
               {run.result.completedPaths.toLocaleString("en-US")} paths
               completed · {run.result.observedHits.toLocaleString("en-US")}{" "}
-              approximate bridge hits ·{" "}
+              approximate unconstrained bridge hits ·{" "}
               {((run.elapsedMs ?? 0) / 1000).toFixed(2)} seconds. This count is
               not a lifetime-risk estimate.
             </p>
           )}
           {run.risk && (
             <div className={styles.riskSummary}>
-              <strong>Mortality-weighted risk by the run horizon</strong>
+              <strong>
+                Unconstrained mortality-weighted risk by the run horizon
+              </strong>
               <div className={styles.riskTableWrap}>
                 <table>
                   <thead>
@@ -541,6 +545,67 @@ export function SimulationCheck() {
                   </tbody>
                 </table>
               </div>
+              {run.risk.projected && (
+                <>
+                  <strong>Projected policy and paired differences</strong>
+                  <div className={styles.riskTableWrap}>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Result</th>
+                          <th>Estimate</th>
+                          <th>Monte Carlo SE</th>
+                          <th>Approx. 95% MC interval</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(
+                          [
+                            ["CE projected", run.risk.projected.ce, false],
+                            ["GM projected", run.risk.projected.gm, false],
+                            [
+                              "CE projected − unconstrained",
+                              run.risk.projected.ceDifference,
+                              true,
+                            ],
+                            [
+                              "GM projected − unconstrained",
+                              run.risk.projected.gmDifference,
+                              true,
+                            ],
+                          ] as const
+                        ).map(([name, estimate, difference]) => (
+                          <tr key={name}>
+                            <th scope="row">{name}</th>
+                            <td>
+                              {difference
+                                ? `${(estimate.estimate * 100).toFixed(3)} pp`
+                                : percentage(estimate.estimate)}
+                            </td>
+                            <td>
+                              {estimate.standardError === null
+                                ? "Not available"
+                                : difference
+                                  ? `${(estimate.standardError * 100).toFixed(3)} pp`
+                                  : percentage(estimate.standardError)}
+                            </td>
+                            <td>
+                              {difference && estimate.interval95
+                                ? `${(estimate.interval95.lower * 100).toFixed(3)} – ${(estimate.interval95.upper * 100).toFixed(3)} pp`
+                                : riskInterval(estimate)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p>
+                    Differences and their Monte Carlo uncertainty use matched
+                    paths. The projected policy uses Euler steps and a
+                    frozen-variance bridge; check time-step sensitivity.
+                  </p>
+                </>
+              )}
               <p>
                 Analytical CE risk over the full CE horizon:{" "}
                 {percentage(run.risk.ceBenchmark)}.

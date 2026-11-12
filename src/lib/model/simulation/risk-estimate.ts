@@ -5,12 +5,12 @@ import {
   type GompertzMakehamParameters,
 } from "../../mortality/mortality-models";
 
-/** Mean and sampling uncertainty of independent, survival-weighted path payoffs. */
+/** Mean and Monte Carlo uncertainty of path payoffs or paired payoff differences. */
 export interface RiskEstimate {
   estimate: number;
   /** Sample-based Monte Carlo standard error, unavailable with fewer than two paths. */
   standardError: number | null;
-  /** Approximate 95% normal interval, clipped to [0, 1]; null if uninformative. */
+  /** Approximate 95% normal interval, clipped to the estimand range; null if uninformative. */
   interval95: { lower: number; upper: number } | null;
 }
 
@@ -21,6 +21,14 @@ export interface MortalityRiskResults {
   ceBenchmark: number;
   horizonYears: number;
   ceEndpoint: number;
+  /** Paired projected-policy results, when both policies were simulated. */
+  projected?: {
+    ce: RiskEstimate;
+    gm: RiskEstimate;
+    /** Projected minus unconstrained risk, with uncertainty from paired payoffs. */
+    ceDifference: RiskEstimate;
+    gmDifference: RiskEstimate;
+  };
 }
 
 /** Incremental moments for the pathwise Monte Carlo payoffs. */
@@ -42,8 +50,13 @@ function addPayoff(moments: Moments, payoff: number): void {
  * Convert pathwise sample moments into a normal Monte Carlo interval. With no
  * observed variation, the sample cannot support an informative normal
  * interval; in particular, zero hits must not be presented as zero uncertainty.
+ * Probability estimates use [0, 1]; paired differences use [-1, 1].
  */
-function summarizeMoments(moments: Moments): RiskEstimate {
+function summarizeMoments(
+  moments: Moments,
+  lowerBound = 0,
+  upperBound = 1,
+): RiskEstimate {
   if (moments.count < 2)
     return { estimate: moments.mean, standardError: null, interval95: null };
 
@@ -61,8 +74,8 @@ function summarizeMoments(moments: Moments): RiskEstimate {
     estimate: moments.mean,
     standardError,
     interval95: {
-      lower: Math.max(0, moments.mean - halfWidth),
-      upper: Math.min(1, moments.mean + halfWidth),
+      lower: Math.max(lowerBound, moments.mean - halfWidth),
+      upper: Math.min(upperBound, moments.mean + halfWidth),
     },
   };
 }
@@ -71,7 +84,8 @@ function summarizeMoments(moments: Moments): RiskEstimate {
  * Estimate P(financial hit ≤ horizon and hit before death) under independent
  * CE and GM mortality. Each hit contributes its mortality survival probability
  * at the approximate first-hit time; a no-hit path (−1) contributes zero.
- * Paths are treated as independent samples, not antithetic pair averages.
+ * Matching projected hit times yield paired payoff differences and their own
+ * standard errors. Paths are independent samples, not antithetic pair averages.
  * Inputs come from a validated run and its trusted simulation output.
  *
  * The intervals quantify Monte Carlo sampling only. They do not cover finite
@@ -79,6 +93,7 @@ function summarizeMoments(moments: Moments): RiskEstimate {
  */
 export function estimateMortalityRisk(input: {
   firstHitTimes: ArrayLike<number>;
+  projectedFirstHitTimes?: ArrayLike<number>;
   gm: GompertzMakehamParameters;
   ce: CompactifiedExponentialParameters;
   horizonYears: number;
@@ -89,10 +104,37 @@ export function estimateMortalityRisk(input: {
   const gm: Moments = { count: 0, mean: 0, sumSquaredDeviations: 0 };
   const ce: Moments = { count: 0, mean: 0, sumSquaredDeviations: 0 };
 
+  const projectedGm: Moments = { count: 0, mean: 0, sumSquaredDeviations: 0 };
+  const projectedCe: Moments = { count: 0, mean: 0, sumSquaredDeviations: 0 };
+  const gmDifference: Moments = { count: 0, mean: 0, sumSquaredDeviations: 0 };
+  const ceDifference: Moments = { count: 0, mean: 0, sumSquaredDeviations: 0 };
+
+  if (
+    input.projectedFirstHitTimes &&
+    input.projectedFirstHitTimes.length !== input.firstHitTimes.length
+  )
+    throw new RangeError(
+      "Paired policy results must have matching path counts.",
+    );
+
   for (let index = 0; index < input.firstHitTimes.length; index += 1) {
     const time = input.firstHitTimes[index];
-    addPayoff(gm, time < 0 ? 0 : gmSurvival(time));
-    addPayoff(ce, time < 0 ? 0 : ceSurvival(time));
+    const gmPayoff = time < 0 ? 0 : gmSurvival(time);
+    const cePayoff = time < 0 ? 0 : ceSurvival(time);
+    addPayoff(gm, gmPayoff);
+    addPayoff(ce, cePayoff);
+
+    if (input.projectedFirstHitTimes) {
+      const projectedTime = input.projectedFirstHitTimes[index];
+      const projectedGmPayoff =
+        projectedTime < 0 ? 0 : gmSurvival(projectedTime);
+      const projectedCePayoff =
+        projectedTime < 0 ? 0 : ceSurvival(projectedTime);
+      addPayoff(projectedGm, projectedGmPayoff);
+      addPayoff(projectedCe, projectedCePayoff);
+      addPayoff(gmDifference, projectedGmPayoff - gmPayoff);
+      addPayoff(ceDifference, projectedCePayoff - cePayoff);
+    }
   }
 
   return {
@@ -101,5 +143,13 @@ export function estimateMortalityRisk(input: {
     ceBenchmark: input.ceBenchmark,
     horizonYears: input.horizonYears,
     ceEndpoint: input.ce.tau,
+    projected: input.projectedFirstHitTimes
+      ? {
+          gm: summarizeMoments(projectedGm),
+          ce: summarizeMoments(projectedCe),
+          gmDifference: summarizeMoments(gmDifference, -1, 1),
+          ceDifference: summarizeMoments(ceDifference, -1, 1),
+        }
+      : undefined,
   };
 }
