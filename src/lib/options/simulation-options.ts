@@ -75,13 +75,13 @@ export function initialSimulationDraft(): SimulationDraft {
   return {
     market: initialMarketCalibration(),
     investor: {
-      birthYear: "1965",
-      retirementYear: "2032",
-      mortality: "female",
+      birthYear: "1959",
+      retirementYear: "2026",
+      mortality: "custom",
       maleWeight: 0.5,
       longevity: "medium",
       initialCapital: "500,000",
-      impoverishmentLevel: "100,000",
+      impoverishmentLevel: "300,000",
     },
     simulation: {
       withdrawalMode: "targetRisk",

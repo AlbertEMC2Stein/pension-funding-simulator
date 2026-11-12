@@ -7,6 +7,18 @@ import {
 import { setCorrelation } from "../src/lib/market/market-calibration";
 import { resolveBatchSize } from "../src/lib/options/batch-size";
 
+test("initial investor and risk settings match the chosen example", () => {
+  const draft = initialSimulationDraft();
+
+  assert.equal(draft.investor.birthYear, "1959");
+  assert.equal(draft.investor.retirementYear, "2026");
+  assert.equal(draft.investor.initialCapital, "500,000");
+  assert.equal(draft.investor.impoverishmentLevel, "300,000");
+  assert.equal(draft.investor.mortality, "custom");
+  assert.equal(draft.investor.maleWeight, 0.5);
+  assert.equal(draft.simulation.targetRiskPercent, 5);
+});
+
 test("builds a numerical, independent snapshot from current inputs", () => {
   const draft = initialSimulationDraft();
   draft.market = setCorrelation(draft.market, 1, 0, "0.25");

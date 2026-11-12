@@ -27,6 +27,8 @@ function exampleSnapshot(
   initiallyBorrowing = false,
 ) {
   const draft = initialSimulationDraft();
+  // These scheduler scenarios use a €100,000 threshold independently of UI defaults.
+  draft.investor.impoverishmentLevel = "100,000";
   draft.simulation.paths = 5;
   draft.simulation.projected = projected;
   if (initiallyBorrowing) {
