@@ -179,10 +179,7 @@ test("GM card displays paired projected values and labels stale runs", () => {
   assert.match(html, /\+0\.500 pp/);
   assert.match(html, /0\.200 pp – 0\.400 pp/);
   assert.match(html, /time-step and bridge errors are not included/);
-  assert.ok(
-    html.indexOf("PROJECTED POLICY · PAIRED COMPARISON") <
-      html.indexOf("Settings used for this run"),
-  );
+  assert.doesNotMatch(html, /Settings used for this run/);
   assert.doesNotMatch(html, /When projection is selected/);
 });
 

@@ -27,10 +27,11 @@ function exampleRun(): EvaluationRun {
 }
 
 /** Render the shared run control without invoking its callbacks. */
-function render(run: EvaluationRun | null): string {
+function render(run: EvaluationRun | null, stale = false): string {
   return renderToStaticMarkup(
     <SimulationRunControl
       run={run}
+      stale={stale}
       errors={[]}
       settingsOpen
       onToggleSettings={() => {}}
@@ -83,4 +84,26 @@ test("cancelling control reports that the current batch must finish", () => {
   const html = render({ ...exampleRun(), phase: "cancelling" });
   assert.match(html, /Stopping after the current batch/);
   assert.match(html, /disabled=""/);
+});
+
+test("completed run settings are accessible from the shared control and identify stale inputs", () => {
+  const base = exampleRun();
+  const estimate = { estimate: 0.05, standardError: null, interval95: null };
+  const run: EvaluationRun = {
+    ...base,
+    annualWithdrawal: 24000,
+    risk: {
+      ce: estimate,
+      gm: estimate,
+      ceBenchmark: 0.05,
+      horizonYears: 10,
+      ceEndpoint: 10,
+    },
+  };
+  const html = render(run, true);
+  assert.match(html, /Settings used for this run/);
+  assert.match(html, /Inputs changed since this run/);
+  assert.match(html, /24,000/);
+  assert.match(html, /500,000/);
+  assert.match(html, /test/);
 });

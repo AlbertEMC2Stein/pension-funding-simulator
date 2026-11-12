@@ -260,72 +260,6 @@ export function GmRiskCard({
           )}
         </div>
       )}
-      {risk && run && (
-        <details className="borrowing-details diagnostic-details">
-          <summary>Settings used for this run</summary>
-          <dl>
-            <div>
-              <dt>Policy</dt>
-              <dd>
-                {run.options.policy.projected
-                  ? "Unconstrained and projected CE (paired)"
-                  : "Unconstrained CE"}
-              </dd>
-            </div>
-            <div>
-              <dt>Annual withdrawal</dt>
-              <dd>
-                {run.annualWithdrawal === undefined
-                  ? "—"
-                  : `€${Math.round(run.annualWithdrawal).toLocaleString("en-US")} / year`}
-              </dd>
-            </div>
-            <div>
-              <dt>Starting capital / impoverishment level</dt>
-              <dd>
-                €{run.options.investor.initialCapital.toLocaleString("en-US")} /
-                €
-                {run.options.investor.impoverishmentLevel.toLocaleString(
-                  "en-US",
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt>Mortality cohort</dt>
-              <dd>
-                {run.options.investor.birthYear} · retirement{" "}
-                {run.options.investor.retirementYear} ·{" "}
-                {run.options.investor.mortality.table} ·{" "}
-                {run.options.investor.mortality.longevity}
-                {run.options.investor.mortality.table === "custom" &&
-                  ` · male weight ${run.options.investor.mortality.maleWeight}`}
-              </dd>
-            </div>
-            <div>
-              <dt>Market assets</dt>
-              <dd>
-                {run.options.market.assets
-                  .map((asset) => asset.name)
-                  .join(", ")}
-              </dd>
-            </div>
-            <div>
-              <dt>Paths / time step</dt>
-              <dd>
-                {run.options.numerical.paths.toLocaleString("en-US")} /{" "}
-                {run.options.numerical.timeStep}
-              </dd>
-            </div>
-            <div>
-              <dt>Batch size / seed</dt>
-              <dd>
-                {run.numerical.batchSize.toLocaleString("en-US")} /{" "}
-                {run.numerical.seed}
-              </dd>
-            </div>
-          </dl>
-        </details>
-      )}
       {!projected && (
         <p className="chart-disclaimer">
           When projection is selected, a paired policy comparison will also
@@ -672,6 +606,7 @@ export function Evaluation() {
             </button>
             <SimulationRunControl
               run={run}
+              stale={stale}
               errors={errors}
               settingsOpen={settingsOpen}
               onToggleSettings={() => setSettingsOpen(!settingsOpen)}
