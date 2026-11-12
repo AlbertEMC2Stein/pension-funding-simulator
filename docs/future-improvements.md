@@ -9,4 +9,6 @@ These are ideas to revisit later, not implemented requirements or a fixed work o
   it belongs on its own page or in Help & dictionary.
 - Review the entire application for terms that need explanations, such as
   “pp” and “GM”, and collect them for the dictionary.
+- Add a dictionary explanation of random seeds and reproducibility, including
+  the effects of batch size and numerical backend.
 - Implement the language switch, with English and German support.

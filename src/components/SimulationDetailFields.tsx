@@ -84,13 +84,15 @@ export function SimulationDetailFields({
           type="text"
           value={simulation.seed}
           maxLength={64}
-          aria-describedby={`${idPrefix}-seed-hint`}
           onChange={(event) => onChange({ seed: event.target.value })}
         />
-        <small id={`${idPrefix}-seed-hint`} className="simulation-field-hint">
-          Keep the seed, path count and batch size to repeat random draws. Table
-          rows use separate streams. Results can differ across backends.
-        </small>
+        <details className="simulation-seed-details">
+          <summary>About the random seed</summary>
+          <p className="simulation-field-hint">
+            Keep the seed, path count and batch size to repeat random draws.
+            Table rows use separate streams. Results can differ across backends.
+          </p>
+        </details>
       </div>
     </div>
   );

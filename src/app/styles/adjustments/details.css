@@ -242,6 +242,21 @@ input[aria-invalid="true"] {
   line-height: 1.5;
 }
 
+.simulation-seed-details {
+  margin-top: 6px;
+}
+
+.simulation-seed-details summary {
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.simulation-seed-details .simulation-field-hint {
+  margin-bottom: 0;
+}
+
 .table-input-suffix {
   width: 165px;
 }
