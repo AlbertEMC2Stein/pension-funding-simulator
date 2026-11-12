@@ -131,7 +131,7 @@ function or clearly identify any visual approximation.
 
 The curve includes only hits by the simulation horizon and inherits the
 simulation's time-step and bridge approximations. It is currently a standalone
-calculation, with no confidence bands, conditional update, or UI connection.
+calculation; the evaluation timing chart displays it without confidence bands.
 
 `conditional-impoverishment-forecast.ts` prepares the same first-hit data for
 repeated conditional updates. The hit times are sorted once; `atTime(a)` then
@@ -139,4 +139,5 @@ conditions on financial paths with no hit by `a` and weights their later hits
 by mortality survival relative to `a`. No-hit paths stay in the denominator.
 The result is explicitly unavailable outside the simulated interval, when no
 financial paths remain, or when mortality survival is numerically zero. It does
-not condition on observed current wealth and is not yet connected to the UI.
+not condition on observed current wealth. The evaluation timing chart uses the
+captured GM mortality fit and the selected policy's hit times from the same run.

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { SimulationOptions } from "../../lib/options/simulation-options";
 import type { RunNumerics } from "../../lib/model/simulation/run-configuration";
+import type { GompertzMakehamParameters } from "../../lib/mortality/mortality-models";
 import type { MortalityRiskResults } from "../../lib/model/simulation/risk-estimate";
 import type { RunProgress } from "../../lib/model/simulation/tensorflow/run-scheduler";
 import type {
@@ -25,6 +26,12 @@ export interface EvaluationRun {
   /** Elapsed processing time after backend initialization. */
   batchElapsedMs?: number;
   risk?: MortalityRiskResults;
+  /** Run-captured mortality and first hits for the optional timing visual. */
+  timing?: {
+    gm: GompertzMakehamParameters;
+    firstHitTimes: Float32Array;
+    projectedFirstHitTimes?: Float32Array;
+  };
   message?: string;
 }
 
@@ -83,6 +90,8 @@ export function useEvaluationRun() {
       return;
     }
 
+    // Capture the fit independently of later draft or calibration edits.
+    const gm = structuredClone(prepared.input.mortality.gm.parameters);
     const runId = ++runIdRef.current;
     workerRef.current = worker;
     setPrepared({ draft, options: prepared.input.options });
@@ -132,7 +141,16 @@ export function useEvaluationRun() {
         finish();
         setRun(
           (current) =>
-            current && { ...current, phase: "complete", risk: message.risk },
+            current && {
+              ...current,
+              phase: "complete",
+              risk: message.risk,
+              timing: {
+                gm,
+                firstHitTimes: message.result.firstHitTimes,
+                projectedFirstHitTimes: message.result.projected?.firstHitTimes,
+              },
+            },
         );
       } else if (message.type === "cancelled") {
         finish();

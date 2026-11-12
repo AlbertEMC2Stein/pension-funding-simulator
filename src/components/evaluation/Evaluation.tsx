@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { AllocationCard } from "./AllocationCard";
+import { TimingCard } from "./TimingCard";
 import { StatusBadge, type ResultStatus } from "../StatusBadge";
 import { useEvaluationRun, type EvaluationRun } from "./useEvaluationRun";
 import { FeasibilityControls } from "./FeasibilityControls";
@@ -500,152 +501,6 @@ export function CapitalCard({ comparison }: { comparison: CapitalComparison }) {
   );
 }
 
-/**
- * Demonstrate the age, perspective and chart-type controls using fixed SVG
- * shapes. The conditional curve and probabilities are not calculated yet.
- */
-function TimingCard() {
-  const [age, setAge] = useState(67);
-  const [conditional, setConditional] = useState(false);
-  const [cumulative, setCumulative] = useState(false);
-  // Map the example age range 67–100 to the SVG's horizontal span 48–735.
-  // These numbers describe the mock chart coordinates, not model parameters.
-  const x = 48 + ((age - 67) / 33) * 687;
-
-  return (
-    <article className="chart-card timing-card">
-      <div className="card-top">
-        <div>
-          <span className="tiny-label">OPTIONAL VISUAL</span>
-          <h3>When might impoverishment occur?</h3>
-          <p className="timing-intro">
-            Explore risk across attained ages under the selected policy and
-            mortality assumptions.
-          </p>
-        </div>
-        <StatusBadge status="not-calculated" />
-      </div>
-      <div className="timing-controls">
-        <fieldset>
-          <legend>Perspective</legend>
-          <div className="segmented timing-switch">
-            <button
-              type="button"
-              className={!conditional ? "selected" : ""}
-              aria-pressed={!conditional}
-              onClick={() => setConditional(false)}
-            >
-              Forecast
-            </button>
-            <button
-              type="button"
-              className={conditional ? "selected" : ""}
-              aria-pressed={conditional}
-              onClick={() => setConditional(true)}
-            >
-              Conditional update
-            </button>
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend>Chart</legend>
-          <div className="segmented timing-switch">
-            <button
-              type="button"
-              className={!cumulative ? "selected" : ""}
-              aria-pressed={!cumulative}
-              onClick={() => setCumulative(false)}
-            >
-              Density
-            </button>
-            <button
-              type="button"
-              className={cumulative ? "selected" : ""}
-              aria-pressed={cumulative}
-              onClick={() => setCumulative(true)}
-            >
-              Cumulative
-            </button>
-          </div>
-        </fieldset>
-      </div>
-      <div className="timing-chart">
-        <svg
-          viewBox="0 0 760 210"
-          role="img"
-          aria-label={`Illustrative ${cumulative ? "cumulative probability" : "density"} by attained age`}
-        >
-          <defs>
-            <clipPath id="timing-tail">
-              <rect x={x} y="0" width={735 - x} height="180" />
-            </clipPath>
-          </defs>
-          <g className="timing-grid">
-            <path d="M48 30H735 M48 78H735 M48 126H735 M48 174H735" />
-          </g>
-          {cumulative ? (
-            <path
-              className="timing-curve"
-              d="M48 174 C150 172 220 157 290 125 C365 90 430 59 505 47 C580 37 655 34 735 34"
-            />
-          ) : (
-            <>
-              <path
-                className="timing-tail"
-                clipPath="url(#timing-tail)"
-                d="M48 174 C140 171 200 159 267 116 C335 66 390 51 445 70 C512 93 570 141 635 162 C680 172 710 174 735 174 L735 174 Z"
-              />
-              <path
-                className="timing-curve"
-                d="M48 174 C140 171 200 159 267 116 C335 66 390 51 445 70 C512 93 570 141 635 162 C680 172 710 174 735 174"
-              />
-            </>
-          )}
-          <line className="timing-age-line" x1={x} x2={x} y1="25" y2="174" />
-          <g className="timing-axis">
-            <text x="48" y="198">
-              67
-            </text>
-            <text x="360" y="198">
-              82
-            </text>
-            <text x="710" y="198">
-              100
-            </text>
-          </g>
-        </svg>
-        <div className="chart-foot">
-          <span>{cumulative ? "CUMULATIVE PROBABILITY" : "DENSITY"}</span>
-          <span>ATTAINED AGE →</span>
-        </div>
-      </div>
-      <label className="field-label timing-age-label" htmlFor="timing-age">
-        Selected age <b>{age} years</b>
-      </label>
-      <input
-        id="timing-age"
-        className="timing-age-slider"
-        type="range"
-        min="67"
-        max="100"
-        value={age}
-        onChange={(event) => setAge(Number(event.target.value))}
-      />
-      <p className="timing-explanation">
-        {conditional
-          ? "Conditional update: risk after the selected age, given survival without impoverishment to that age. The actual conditional curve requires calculation."
-          : cumulative
-            ? "Forecast: the curve would show the cumulative probability of impoverishment before death by each age, assessed at retirement."
-            : "Forecast: the shaded tail represents impoverishment after the selected age and before death, assessed at retirement."}
-      </p>
-      <p className="chart-disclaimer">
-        Illustrative shapes only. Switching views demonstrates the layout; no
-        risk or conditional density is calculated.
-      </p>
-    </article>
-  );
-}
-
 /** Show unconstrained borrowing diagnostics or explain why projection excludes borrowing. */
 function BorrowingCard({
   feasibility,
@@ -927,8 +782,8 @@ export function Evaluation() {
                 Mortality fit is shown in Investor & mortality. The CE chart,
                 allocation, capital comparison and global feasibility are
                 calculated when available. GM risk is estimated when a
-                simulation completes. Other unfinished visuals remain
-                illustrative placeholders.
+                simulation completes. The timing view uses the same run; density
+                and other unfinished visuals remain unavailable or illustrative.
               </p>
             </div>
           )}
@@ -981,7 +836,9 @@ export function Evaluation() {
                 }
               />
               <div className="risk-section-grid">
-                {visuals.timing && <TimingCard />}
+                {visuals.timing && (
+                  <TimingCard run={run} stale={stale} projected={projected} />
+                )}
                 {visuals.borrowing && (
                   <BorrowingCard
                     feasibility={feasibility}

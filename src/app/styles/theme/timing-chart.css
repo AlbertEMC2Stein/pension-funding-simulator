@@ -48,12 +48,6 @@
   margin-top: 15px;
 }
 
-.timing-chart svg {
-  display: block;
-  width: 100%;
-  max-height: 240px;
-}
-
 .timing-grid path {
   fill: none;
   stroke: var(--chart-grid);
