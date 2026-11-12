@@ -132,3 +132,11 @@ function or clearly identify any visual approximation.
 The curve includes only hits by the simulation horizon and inherits the
 simulation's time-step and bridge approximations. It is currently a standalone
 calculation, with no confidence bands, conditional update, or UI connection.
+
+`conditional-impoverishment-forecast.ts` prepares the same first-hit data for
+repeated conditional updates. The hit times are sorted once; `atTime(a)` then
+conditions on financial paths with no hit by `a` and weights their later hits
+by mortality survival relative to `a`. No-hit paths stay in the denominator.
+The result is explicitly unavailable outside the simulated interval, when no
+financial paths remain, or when mortality survival is numerically zero. It does
+not condition on observed current wealth and is not yet connected to the UI.
