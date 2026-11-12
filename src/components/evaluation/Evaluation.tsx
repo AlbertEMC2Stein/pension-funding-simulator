@@ -51,30 +51,30 @@ const visualGroups: {
   title: string;
   entries: { id: Visual; label: string }[];
 }[] = [
-  {
-    title: "Withdrawal & risk",
-    entries: [
-      { id: "withdrawal", label: "Withdrawal & risk" },
-      { id: "gm", label: "Estimated GM risk" },
-      { id: "capital", label: "Value of risk-taking" },
-    ],
-  },
-  {
-    title: "Portfolio & policies",
-    entries: [{ id: "allocation", label: "Portfolio allocation" }],
-  },
-  {
-    title: "Impoverishment & borrowing",
-    entries: [
-      { id: "timing", label: "Impoverishment timing" },
-      { id: "borrowing", label: "Borrowing exposure" },
-    ],
-  },
-  {
-    title: "Wealth trajectories",
-    entries: [{ id: "trajectories", label: "Illustrative trajectories" }],
-  },
-];
+    {
+      title: "Withdrawal & risk",
+      entries: [
+        { id: "withdrawal", label: "Withdrawal & risk" },
+        { id: "gm", label: "Estimated GM risk" },
+        { id: "capital", label: "Value of risk-taking" },
+      ],
+    },
+    {
+      title: "Portfolio & policies",
+      entries: [{ id: "allocation", label: "Portfolio allocation" }],
+    },
+    {
+      title: "Impoverishment & borrowing",
+      entries: [
+        { id: "timing", label: "Impoverishment timing" },
+        { id: "borrowing", label: "Borrowing exposure" },
+      ],
+    },
+    {
+      title: "Wealth trajectories",
+      entries: [{ id: "trajectories", label: "Illustrative trajectories" }],
+    },
+  ];
 
 /**
  * Show the captured GM estimate and its CE reference without attributing an
@@ -644,6 +644,7 @@ export function Evaluation() {
     }));
   }
   const [settingsOpen, setSettingsOpen] = useState(true);
+  const [setupName, setSetupName] = useState("A thoughtful start");
   const [pickerOpen, setPickerOpen] = useState(false);
   const projected = simulation.projected;
   // Keep both draft inputs when switching modes; neither triggers a calculation.
@@ -693,16 +694,26 @@ export function Evaluation() {
           <div className="scenario-intro">
             <span className="tiny-label">YOUR SETUP</span>
             <strong>
-              A thoughtful start <span>✳</span>
+              <input
+                className="setup-name"
+                aria-label="Setup name"
+                title="Edit setup name"
+                value={setupName}
+                maxLength={20}
+                onChange={(event) => setSetupName(event.target.value)}
+                onBlur={() => {
+                  if (!setupName.trim()) setSetupName("A thoughtful start");
+                }}
+              />{" "}
             </strong>
           </div>
           <div className="scenario-item">
             <span>Retirement age</span>
             <strong>
               {/^\d{4}$/.test(draft.investor.birthYear) &&
-              /^\d{4}$/.test(draft.investor.retirementYear)
+                /^\d{4}$/.test(draft.investor.retirementYear)
                 ? Number(draft.investor.retirementYear) -
-                  Number(draft.investor.birthYear)
+                Number(draft.investor.birthYear)
                 : "—"}{" "}
               <small>years</small>
             </strong>
@@ -921,11 +932,11 @@ export function Evaluation() {
                 onChange={(event) =>
                   custom
                     ? updateSimulation({
-                        withdrawalEuros: Number(event.target.value),
-                      })
+                      withdrawalEuros: Number(event.target.value),
+                    })
                     : updateSimulation({
-                        targetRiskPercent: Number(event.target.value),
-                      })
+                      targetRiskPercent: Number(event.target.value),
+                    })
                 }
               />
               <div className="range-ends">

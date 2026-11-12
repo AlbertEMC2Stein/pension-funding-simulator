@@ -75,6 +75,22 @@ export function SimulationDetailFields({
           ))}
         </select>
       </div>
+      <div>
+        <label className="field-label" htmlFor={`${idPrefix}-seed`}>
+          Random seed
+        </label>
+        <input
+          id={`${idPrefix}-seed`}
+          type="text"
+          value={simulation.seed}
+          maxLength={64}
+          onChange={(event) => onChange({ seed: event.target.value })}
+        />
+        <small>
+          Keep the seed, path count and batch size to repeat random draws. Table
+          rows use separate streams; results can differ across backends.
+        </small>
+      </div>
     </div>
   );
 }

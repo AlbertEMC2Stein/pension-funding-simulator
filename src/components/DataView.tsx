@@ -33,6 +33,8 @@ type TableType = "withdrawal" | "feasibility";
 /** Editable row shared by the table layouts; values are text until validated. */
 interface ExampleRow {
   id: number;
+  /** Display name only; changing it does not affect calculated results. */
+  name: string;
   type: "Target risk" | "Withdrawal";
   value: string;
   /** Row-specific threshold used only by the feasibility layout. */
@@ -45,6 +47,7 @@ function initialRows(impoverishmentLevel: string): ExampleRow[] {
   return [
     {
       id: 1,
+      name: "Variation 01",
       type: "Target risk",
       value: "5.0",
       policy: "Unconstrained",
@@ -52,6 +55,7 @@ function initialRows(impoverishmentLevel: string): ExampleRow[] {
     },
     {
       id: 2,
+      name: "Variation 02",
       type: "Target risk",
       value: "10.0",
       policy: "Projected",
@@ -255,6 +259,7 @@ export function DataView() {
                   ...current[tableType],
                   {
                     id: nextId,
+                    name: `Variation ${String(nextId).padStart(2, "0")}`,
                     type: "Target risk",
                     value: "5.0",
                     policy: "Unconstrained",
@@ -392,7 +397,22 @@ export function DataView() {
                   <Fragment key={row.id}>
                     <tr>
                       <td>
-                        <b>Variation {String(row.id).padStart(2, "0")}</b>
+                        <input
+                          className="comparison-name"
+                          aria-label={`Name for variation ${row.id}`}
+                          title="Edit variation name"
+                          value={row.name}
+                          maxLength={20}
+                          onChange={(event) =>
+                            changeRow(row.id, { name: event.target.value })
+                          }
+                          onBlur={() => {
+                            if (!row.name.trim())
+                              changeRow(row.id, {
+                                name: `Variation ${String(row.id).padStart(2, "0")}`,
+                              });
+                          }}
+                        />
                         {tableType === "feasibility" && (
                           <button
                             type="button"

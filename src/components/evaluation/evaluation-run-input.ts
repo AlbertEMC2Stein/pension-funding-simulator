@@ -15,13 +15,16 @@ export type EvaluationRunInput =
 /**
  * Capture the current evaluation settings and matching converged mortality fits.
  * The worker creates and validates the actual snapshot. The provisional run
- * covers the full CE policy horizon and uses a documented fixed seed.
+ * covers the full CE policy horizon and captures the selected random seed.
  */
 export function prepareEvaluationRun(
   draft: SimulationDraft,
   fits: SharedMortalityFits,
   recordTrajectories = false,
 ): EvaluationRunInput {
+  if (!draft.simulation.seed.trim())
+    return { ok: false, errors: ["Enter a random seed before running."] };
+
   const options = buildSimulationOptions(draft);
   if (!options.ok) return options;
   const calibrated = calibrateMarket(options.options.market);
@@ -58,7 +61,7 @@ export function prepareEvaluationRun(
       market: calibrated.market,
       mortality: { gm: fits.gm.fit, ce: fits.ce.fit },
       numerical: {
-        seed: "evaluation-1",
+        seed: draft.simulation.seed,
         horizonYears: fits.ce.fit.parameters.tau,
         batchSize: resolveBatchSize(
           options.options.numerical.batchSize,

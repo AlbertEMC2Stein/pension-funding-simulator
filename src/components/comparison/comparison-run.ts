@@ -68,6 +68,7 @@ export function comparisonSetupSignature(
       paths: draft.simulation.paths,
       timeStep: draft.simulation.timeStep,
       batchSize: draft.simulation.batchSize,
+      seed: draft.simulation.seed,
     },
     ...(kind === "feasibility"
       ? { projected: draft.simulation.projected }
@@ -266,7 +267,8 @@ export function prepareComparisonRows(
       projected: common.policy === "Projected",
       withdrawal: { mode: "customAmount", annualAmount: ce.annualWithdrawal },
     };
-    input.numerical.seed = `comparison-row-${row.id}`;
+    // Derive distinct row streams from the shared seed and stable row ID.
+    input.numerical.seed = JSON.stringify([draft.simulation.seed, row.id]);
     input.versions.simulationAlgorithm =
       common.policy === "Projected"
         ? "tensorflow-paired-euler-1"

@@ -89,6 +89,20 @@ test("evaluation accepts projection and refuses stale and missing mortality inpu
   assert.equal(prepareEvaluationRun(draft, fits).ok, false);
 });
 
+test("evaluation captures the selected seed and rejects a blank seed", () => {
+  const { draft, fits } = setup();
+  draft.simulation.seed = "example seed";
+  const prepared = prepareEvaluationRun(draft, fits);
+  assert.ok(prepared.ok);
+  assert.equal(
+    createRunSnapshot(prepared.input).numerical.seed,
+    "example seed",
+  );
+
+  draft.simulation.seed = "   ";
+  assert.equal(prepareEvaluationRun(draft, fits).ok, false);
+});
+
 test("GM card displays the captured estimate and marks changed settings", () => {
   const { draft, fits } = setup();
   draft.simulation.withdrawalMode = "customAmount";

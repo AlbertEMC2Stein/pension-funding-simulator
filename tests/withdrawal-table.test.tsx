@@ -181,6 +181,10 @@ test("table jobs capture one shared setup and independently prepare selected pol
     prepared.rows[0].input.numerical.seed,
     prepared.rows[1].input.numerical.seed,
   );
+  assert.equal(
+    prepared.rows[0].input.numerical.seed,
+    JSON.stringify([draft.simulation.seed, 1]),
+  );
   assert.equal(prepared.rows[2].gm?.estimate, 0);
   assert.equal(prepared.rows[2].analytical, true);
   const capturedPaths = prepared.rows[0].input.options.numerical.paths;
@@ -244,6 +248,8 @@ test("completed rows are reused until their inputs or shared settings change", (
     ["calculated", "queued"],
   );
   assert.equal(areComparisonRowsCalculated([firstRow], previous.rows), true);
+  const renamedRow = { ...firstRow, name: "Retirement" };
+  assert.equal(areComparisonRowsCalculated([renamedRow], previous.rows), true);
   assert.equal(
     areComparisonRowsCalculated([firstRow, secondRow], previous.rows),
     false,

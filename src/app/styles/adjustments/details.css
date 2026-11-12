@@ -207,6 +207,58 @@ input[aria-invalid="true"] {
   margin-bottom: 6px;
 }
 
+.comparison-name,
+.setup-name {
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.comparison-name {
+  width: 145px;
+  padding: 4px !important;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.scenario-intro > .tiny-label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.scenario-intro strong {
+  margin-top: 0;
+}
+
+.scenario-intro input.setup-name {
+  display: block;
+  width: 20ch;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  outline: 1px solid var(--border);
+  outline-offset: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.comparison-name:hover {
+  border-color: var(--border);
+}
+
+.comparison-name:focus-visible,
+.scenario-intro input.setup-name:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .table-details-toggle {
   display: block;
   margin-top: 7px;

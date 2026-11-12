@@ -27,6 +27,8 @@ export interface SimulationDraft {
     paths: number;
     timeStep: "monthly" | "fortnightly" | "weekly";
     batchSize: BatchSizeChoice;
+    /** User-selected seed for reproducible simulation runs. */
+    seed: string;
   };
 }
 
@@ -89,6 +91,7 @@ export function initialSimulationDraft(): SimulationDraft {
       paths: 10000,
       timeStep: "monthly",
       batchSize: "auto",
+      seed: "evaluation-1",
     },
   };
 }
