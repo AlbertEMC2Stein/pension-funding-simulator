@@ -59,7 +59,10 @@ const visualGroups: {
   },
   {
     title: "Portfolio & policies",
-    entries: [{ id: "allocation", label: "Portfolio allocation" }],
+    entries: [
+      { id: "allocation", label: "Portfolio allocation" },
+      { id: "trajectories", label: "Illustrative trajectories" },
+    ],
   },
   {
     title: "Impoverishment & borrowing",
@@ -67,10 +70,6 @@ const visualGroups: {
       { id: "timing", label: "Impoverishment timing" },
       { id: "borrowing", label: "Borrowing exposure" },
     ],
-  },
-  {
-    title: "Other",
-    entries: [{ id: "trajectories", label: "Illustrative trajectories" }],
   },
 ];
 
@@ -638,6 +637,19 @@ export function Evaluation() {
     trajectories: false,
   });
 
+  const showWithdrawalSection =
+    visuals.withdrawal || visuals.capital || visuals.gm;
+  const visualPickerButton = (
+    <button
+      type="button"
+      className="button button-light"
+      aria-expanded={pickerOpen}
+      onClick={() => setPickerOpen(!pickerOpen)}
+    >
+      ◫ &nbsp; Customize visuals
+    </button>
+  );
+
   return (
     <section className="view active">
       <PageHeading
@@ -706,20 +718,17 @@ export function Evaluation() {
               onCancel={cancel}
             />
           </div>
-          <SectionHeading
-            eyebrow="01 / THE DECISION"
-            title="Withdrawal & risk"
-            description="Find a balance that feels right for your retirement."
-          >
-            <button
-              type="button"
-              className="button button-light"
-              aria-expanded={pickerOpen}
-              onClick={() => setPickerOpen(!pickerOpen)}
+          {showWithdrawalSection ? (
+            <SectionHeading
+              eyebrow="01 / THE DECISION"
+              title="Withdrawal & risk"
+              description="Find a balance that feels right for your retirement."
             >
-              ◫ &nbsp; Customize visuals
-            </button>
-          </SectionHeading>
+              {visualPickerButton}
+            </SectionHeading>
+          ) : (
+            <div className="visual-picker-trigger">{visualPickerButton}</div>
+          )}
           {pickerOpen && (
             <div className="visual-options visual-picker">
               <div className="visual-picker-heading">
@@ -774,33 +783,24 @@ export function Evaluation() {
               custom={custom}
             />
           )}
-          <div className="lower-grid">
-            {visuals.allocation && (
+          {visuals.allocation && (
+            <section className="risk-section">
+              <SectionHeading
+                eyebrow="02 / PORTFOLIO"
+                title="Portfolio & policies"
+                description="See how the selected policy allocates your portfolio."
+              />
               <AllocationCard
                 result={ceResult}
                 projected={projected}
                 assetNames={assetNames}
               />
-            )}
-            {visuals.trajectories && (
-              <article className="small-card">
-                <div className="card-heading">
-                  <div>
-                    <span className="tiny-label">OPTIONAL VISUAL</span>
-                    <h3>Illustrative trajectories</h3>
-                  </div>
-                  <StatusBadge status="not-calculated" />
-                </div>
-                <p>Sample paths can be displayed here when enabled.</p>
-                <div className="empty-visual">﹏　﹋　﹏</div>
-                <div className="small-note">Placeholder · not a simulation</div>
-              </article>
-            )}
-          </div>
+            </section>
+          )}
           {(visuals.timing || visuals.borrowing) && (
             <section className="risk-section">
               <SectionHeading
-                eyebrow="02 / UNDERSTANDING EXPOSURE"
+                eyebrow="03 / UNDERSTANDING EXPOSURE"
                 title="Impoverishment & borrowing"
                 description={
                   projected
@@ -821,6 +821,27 @@ export function Evaluation() {
                   />
                 )}
               </div>
+            </section>
+          )}
+          {visuals.trajectories && (
+            <section className="risk-section">
+              <SectionHeading
+                eyebrow="04 / ILLUSTRATIVE PATHS"
+                title="Wealth trajectories"
+                description="Explore example paths of wealth over time."
+              />
+              <article className="small-card">
+                <div className="card-heading">
+                  <div>
+                    <span className="tiny-label">OPTIONAL VISUAL</span>
+                    <h3>Illustrative trajectories</h3>
+                  </div>
+                  <StatusBadge status="not-calculated" />
+                </div>
+                <p>Sample paths can be displayed here when enabled.</p>
+                <div className="empty-visual">﹏　﹋　﹏</div>
+                <div className="small-note">Placeholder · not a simulation</div>
+              </article>
             </section>
           )}
         </div>
