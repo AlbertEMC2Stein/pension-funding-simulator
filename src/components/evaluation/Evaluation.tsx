@@ -591,74 +591,92 @@ function TimingCard() {
   );
 }
 
-/** Display analytical global feasibility alongside borrowing simulation placeholders. */
-function BorrowingCard({ feasibility }: { feasibility: FeasibilityResult }) {
+/** Show unconstrained borrowing diagnostics or explain why projection excludes borrowing. */
+function BorrowingCard({
+  feasibility,
+  projected,
+}: {
+  feasibility: FeasibilityResult;
+  projected: boolean;
+}) {
   return (
     <article className="chart-card borrowing-card">
       <div className="card-top">
         <div>
-          <span className="tiny-label">UNPROJECTED POLICY</span>
+          <span className="tiny-label">
+            {projected ? "PROJECTED POLICY" : "UNPROJECTED POLICY"}
+          </span>
           <h3>Borrowing exposure</h3>
           <p className="timing-intro">
-            Borrowing is possible when the risky allocation requires a negative
-            risk-free position.
+            Explore the chance that your portfolio borrows and how long
+            borrowing may last.
           </p>
         </div>
-        <StatusBadge status="not-calculated" />
+        <StatusBadge status={projected ? "not-available" : "not-calculated"} />
       </div>
-      <div className="borrowing-metrics">
-        <Metric
-          label="Probability of ever borrowing"
-          note="While alive and before impoverishment"
-        />
-        <Metric
-          label="Expected time borrowing"
-          note="Total time alive while borrowing"
-        />
-      </div>
-      <details className="borrowing-details">
-        <summary>View borrowing diagnostics</summary>
-        <dl>
-          {[
-            [
-              "Global simplex feasibility",
-              feasibility.status === "feasible"
-                ? "Feasible"
-                : feasibility.status === "unavailable"
-                  ? "Not available"
-                  : "Not feasible",
-            ],
-            [
-              "Relative bandwidth multiplier ζ",
-              "zeta" in feasibility
-                ? `${feasibility.zeta.toPrecision(6)} (${feasibility.zeta <= 1 ? "≤" : ">"} 1)`
-                : "—",
-            ],
-            ["Borrowing at retirement", "Not evaluated"],
-            ["Last possible borrowing time", "—"],
-          ].map(([a, b]) => (
-            <div key={a}>
-              <dt>{a}</dt>
-              <dd>{b}</dd>
-            </div>
-          ))}
-        </dl>
-        <p>{feasibility.message}</p>
-        <p>
-          Where the model assumptions apply, ζ &gt; 1 indicates that the
-          relative bandwidth exceeds the global no-borrowing threshold.
-          Possibility does not imply borrowing on a particular path.
+      {projected ? (
+        <p role="status">
+          This diagnostic is available for the unconstrained policy only. Turn
+          off projection to view it. The projected policy prevents borrowing by
+          keeping allocations within the simplex.
         </p>
-        <p>
-          Simulation uncertainty and numerical approximations will be reported
-          with calculated results. Some diagnostics require additional
-          assumptions.
-        </p>
-      </details>
-      <p className="chart-disclaimer">
-        Borrowing exposure is not calculated yet. The global feasibility
-        diagnostic is analytical when available.
-      </p>
+      ) : (
+        <>
+          <div className="borrowing-metrics">
+            <Metric
+              label="Probability of ever borrowing"
+              note="While alive and before impoverishment"
+            />
+            <Metric
+              label="Expected time borrowing"
+              note="Total time alive while borrowing"
+            />
+          </div>
+          <details className="borrowing-details">
+            <summary>View borrowing diagnostics</summary>
+            <dl>
+              {[
+                [
+                  "Global simplex feasibility",
+                  feasibility.status === "feasible"
+                    ? "Feasible"
+                    : feasibility.status === "unavailable"
+                      ? "Not available"
+                      : "Not feasible",
+                ],
+                [
+                  "Relative bandwidth multiplier ζ",
+                  "zeta" in feasibility
+                    ? `${feasibility.zeta.toPrecision(6)} (${feasibility.zeta <= 1 ? "≤" : ">"} 1)`
+                    : "—",
+                ],
+                ["Borrowing at retirement", "Not evaluated"],
+                ["Last possible borrowing time", "—"],
+              ].map(([a, b]) => (
+                <div key={a}>
+                  <dt>{a}</dt>
+                  <dd>{b}</dd>
+                </div>
+              ))}
+            </dl>
+            <p>{feasibility.message}</p>
+            <p>
+              Where the model assumptions apply, ζ &gt; 1 indicates that the
+              relative bandwidth exceeds the global no-borrowing threshold.
+              Possibility does not imply borrowing on a particular path.
+            </p>
+            <p>
+              Simulation uncertainty and numerical approximations will be
+              reported with calculated results. Some diagnostics require
+              additional assumptions.
+            </p>
+          </details>
+          <p className="chart-disclaimer">
+            Borrowing exposure is not calculated yet. The global feasibility
+            diagnostic is analytical when available.
+          </p>
+        </>
+      )}
     </article>
   );
 }
@@ -902,12 +920,19 @@ export function Evaluation() {
               <SectionHeading
                 eyebrow="02 / UNDERSTANDING EXPOSURE"
                 title="Impoverishment & borrowing"
-                description="Explore possible outcomes and the borrowing exposure of the unprojected policy."
+                description={
+                  projected
+                    ? "Explore possible outcomes for the selected policy."
+                    : "Explore possible outcomes and the borrowing exposure of the unprojected policy."
+                }
               />
               <div className="risk-section-grid">
                 {visuals.timing && <TimingCard />}
                 {visuals.borrowing && (
-                  <BorrowingCard feasibility={feasibility} />
+                  <BorrowingCard
+                    feasibility={feasibility}
+                    projected={projected}
+                  />
                 )}
               </div>
             </section>
