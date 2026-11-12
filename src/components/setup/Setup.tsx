@@ -606,8 +606,8 @@ function InvestorSetup({
           <p>
             Explore <TermLink term="cohort">cohort</TermLink>{" "}
             <TermLink term="survival">survival</TermLink> from your expected
-            retirement age and fit
-            <TermLink term="mortality-models"> mortality models</TermLink>.{" "}
+            retirement age and fit{" "}
+            <TermLink term="mortality-models">mortality models</TermLink>.{" "}
             <span role="status">
               {ceFitStatus === "needs-update"
                 ? "The compatible CE fit needs updating after an input change."
