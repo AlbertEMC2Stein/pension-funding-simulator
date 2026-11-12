@@ -30,7 +30,7 @@ export function evaluateGlobalFeasibility(
       return {
         status: "negative-merton",
         message:
-          "A Merton-vector component is negative, so the unconstrained strategy can involve short selling and is not globally simplex-feasible.",
+          "A Merton-vector component is negative. The unconstrained strategy requires short selling whenever wealth is below the safe boundary, so it is not globally simplex-feasible.",
       };
 
     return result.feasible
@@ -74,6 +74,6 @@ export function feasibilityForCurrentMarket(
   return {
     status: "negative-merton",
     message:
-      "A Merton-vector component is negative, so the unconstrained strategy can involve short selling and is not globally simplex-feasible.",
+      "A Merton-vector component is negative. The unconstrained strategy requires short selling whenever wealth is below the safe boundary, so it is not globally simplex-feasible.",
   };
 }

@@ -21,6 +21,7 @@ import {
 } from "../../lib/market/market-calibration";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import { MarketEditor } from "./MarketEditor";
+import { MarketAssumptionChecks } from "./MarketAssumptionChecks";
 import { parseAmount } from "../../lib/options/simulation-options";
 import { CohortChart } from "./CohortChart";
 import type { CeFitStatus } from "../../lib/mortality/fit-status";
@@ -344,20 +345,7 @@ function MarketSetup() {
             )}
           </div>
         )}
-        <div className="feasibility-status market-assumptions" role="status">
-          <strong>
-            Assumption checks <span>Not evaluated</span>
-          </strong>
-          <p>
-            Each result will be checked separately. Negative Merton-direction
-            components can restrict feasibility and borrowing diagnostics
-            without disabling every calculation.
-          </p>
-          <small>
-            Affected assets and unavailable results will be identified when
-            evaluated.
-          </small>
-        </div>
+        <MarketAssumptionChecks market={market} />
       </div>
     </div>
   );
