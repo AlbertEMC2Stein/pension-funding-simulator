@@ -6,6 +6,8 @@ import {
   type DictionaryTermId,
 } from "../lib/help/dictionary";
 import { useDraft } from "./common";
+import { useLanguage } from "./LanguageContext";
+import { panelHelpGerman } from "../lib/i18n/panel-help-de";
 
 /** Plain-language guidance and related dictionary entries for one panel. */
 interface PanelHelpContent {
@@ -101,28 +103,44 @@ export function PanelHelp({ panel }: { panel: PanelHelpId }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const { navigate } = useDraft();
-  const content: PanelHelpContent = panelHelp[panel];
+  const { language } = useLanguage();
+  const base: PanelHelpContent = panelHelp[panel];
+  const content =
+    language === "de" ? { ...base, ...panelHelpGerman[panel] } : base;
 
   return (
     <>
       <button
         type="button"
         className="card-help"
-        aria-label={`Explain ${content.title}`}
+        aria-label={
+          language === "de"
+            ? `${content.title} erklären`
+            : `Explain ${content.title}`
+        }
         onClick={() => dialog.current?.showModal()}
       >
         ?
       </button>
-      <dialog ref={dialog} className="help-dialog" aria-labelledby={titleId}>
+      <dialog
+        ref={dialog}
+        className="help-dialog"
+        aria-labelledby={titleId}
+        lang={language}
+      >
         <div className="help-dialog-heading">
           <div>
-            <span className="tiny-label">UNDERSTANDING THIS PANEL</span>
+            <span className="tiny-label">
+              {language === "de"
+                ? "DIESE ANSICHT VERSTEHEN"
+                : "UNDERSTANDING THIS PANEL"}
+            </span>
             <h2 id={titleId}>{content.title}</h2>
           </div>
           <button
             type="button"
             className="close-settings"
-            aria-label="Close help"
+            aria-label={language === "de" ? "Hilfe schließen" : "Close help"}
             onClick={() => dialog.current?.close()}
           >
             ×
@@ -133,7 +151,11 @@ export function PanelHelp({ panel }: { panel: PanelHelpId }) {
         ))}
         <div
           className="panel-help-links"
-          aria-label="Related dictionary entries"
+          aria-label={
+            language === "de"
+              ? "Zugehörige Glossareinträge"
+              : "Related dictionary entries"
+          }
         >
           {content.terms.map((term) => {
             const entry = dictionaryEntries.find((item) => item.id === term);
@@ -143,6 +165,7 @@ export function PanelHelp({ panel }: { panel: PanelHelpId }) {
                 key={term}
                 type="button"
                 className="term-link"
+                lang="en"
                 onClick={() => {
                   dialog.current?.close();
                   navigate("help", term);

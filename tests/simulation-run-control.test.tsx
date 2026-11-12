@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { renderToStaticMarkup } from "react-dom/server";
+import { renderWithDictionary as renderToStaticMarkup } from "./dictionary-render";
 import { SimulationRunControl } from "../src/components/evaluation/SimulationRunControl";
 import {
   buildSimulationOptions,

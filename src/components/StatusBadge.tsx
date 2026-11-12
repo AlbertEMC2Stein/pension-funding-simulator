@@ -1,3 +1,6 @@
+import { useLanguage } from "./LanguageContext";
+import { germanStatusLabels } from "../lib/i18n/status";
+
 /** Shared calculation states shown in the evaluation and developer panels. */
 export type ResultStatus =
   | "not-calculated"
@@ -76,11 +79,18 @@ export function StatusBadge({
   label?: string;
 }) {
   const definition = RESULT_STATUSES.find((item) => item.status === status)!;
+  const { language } = useLanguage();
+  const text =
+    label ??
+    (language === "de" ? germanStatusLabels[status] : definition.label);
 
   return (
-    <span className="chip status-badge" data-status={status}>
-      <span aria-hidden="true">{definition.symbol}</span>{" "}
-      {label ?? definition.label}
+    <span
+      className="chip status-badge"
+      data-status={status}
+      lang={label ? "en" : language}
+    >
+      <span aria-hidden="true">{definition.symbol}</span> {text}
     </span>
   );
 }

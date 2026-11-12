@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
+import { LanguageProvider } from "../src/components/LanguageContext";
 import { DraftContext } from "../src/components/common";
 import { Evaluation } from "../src/components/evaluation/Evaluation";
 import { Setup } from "../src/components/setup/Setup";
@@ -12,11 +13,13 @@ const actions = { navigate: () => {}, notice: () => {} };
 
 test("evaluation renders illustrative results and the main controls", () => {
   const html = renderToStaticMarkup(
-    <DraftContext.Provider value={actions}>
-      <SimulationDraftProvider>
-        <Evaluation />
-      </SimulationDraftProvider>
-    </DraftContext.Provider>,
+    <LanguageProvider language="en">
+      <DraftContext.Provider value={actions}>
+        <SimulationDraftProvider>
+          <Evaluation />
+        </SimulationDraftProvider>
+      </DraftContext.Provider>
+    </LanguageProvider>,
   );
   assert.match(html, /Run simulation/);
   assert.match(html, /Gompertz–Makeham/);
@@ -40,18 +43,22 @@ test("evaluation renders illustrative results and the main controls", () => {
 
 test("setup and data views retain the requested design elements", () => {
   const setup = renderToStaticMarkup(
-    <DraftContext.Provider value={actions}>
-      <SimulationDraftProvider>
-        <Setup />
-      </SimulationDraftProvider>
-    </DraftContext.Provider>,
+    <LanguageProvider language="en">
+      <DraftContext.Provider value={actions}>
+        <SimulationDraftProvider>
+          <Setup />
+        </SimulationDraftProvider>
+      </DraftContext.Provider>
+    </LanguageProvider>,
   );
   const data = renderToStaticMarkup(
-    <DraftContext.Provider value={actions}>
-      <SimulationDraftProvider>
-        <DataView />
-      </SimulationDraftProvider>
-    </DraftContext.Provider>,
+    <LanguageProvider language="en">
+      <DraftContext.Provider value={actions}>
+        <SimulationDraftProvider>
+          <DataView />
+        </SimulationDraftProvider>
+      </DraftContext.Provider>
+    </LanguageProvider>,
   );
   assert.doesNotMatch(setup, /Estimation uncertainty/);
   assert.doesNotMatch(setup, /Recalibrated market scenarios/);
@@ -84,9 +91,11 @@ test("setup and data views retain the requested design elements", () => {
 
 test("dictionary renders its examples and mathematical notation", () => {
   const html = renderToStaticMarkup(
-    <DraftContext.Provider value={actions}>
-      <HelpView selectedTerm={null} />
-    </DraftContext.Provider>,
+    <LanguageProvider language="en">
+      <DraftContext.Provider value={actions}>
+        <HelpView selectedTerm={null} />
+      </DraftContext.Provider>
+    </LanguageProvider>,
   );
   assert.match(html, /Your quick start/);
   assert.match(html, /Set up the market/);

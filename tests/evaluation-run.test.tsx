@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { renderToStaticMarkup } from "react-dom/server";
+import { renderWithDictionary as renderToStaticMarkup } from "./dictionary-render";
 import { DraftContext } from "../src/components/common";
 import { GmRiskCard } from "../src/components/evaluation/Evaluation";
 import { prepareEvaluationRun } from "../src/components/evaluation/evaluation-run-input";

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { renderToStaticMarkup } from "react-dom/server";
+import { renderWithDictionary as renderToStaticMarkup } from "./dictionary-render";
 import { DraftContext } from "../src/components/common";
 import { CapitalCard } from "../src/components/evaluation/Evaluation";
 import { makeChartData } from "../src/components/evaluation/RiskWithdrawalChart";
