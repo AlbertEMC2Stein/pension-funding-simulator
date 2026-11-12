@@ -85,8 +85,15 @@ test("first term is close to the manuscript's rounded baseline calibration", () 
     horizonYears: tau,
   });
 
-  // The manuscript reports 0.0533755 using unrounded fitted parameters.
+  // The manuscript reports these values using unrounded fitted parameters.
   assert.ok(Math.abs(result.ceWeightedMass - 0.0533755) < 0.0002);
+  assert.notEqual(result.ceConditionalEventTvBound, null);
+  assert.ok(
+    Math.abs(
+      result.ceConditionalEventTvBound! - (1 - 0.05 / result.ceWeightedMass),
+    ) < 1e-14,
+  );
+  assert.ok(Math.abs(result.ceConditionalEventTvBound! - 0.063241) < 0.004);
 });
 
 test("Durbin GM density matches the wealth-boundary formula independently", () => {

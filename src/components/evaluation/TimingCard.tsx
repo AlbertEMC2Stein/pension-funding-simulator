@@ -11,6 +11,10 @@ import {
   type DurbinApproximation,
   type DurbinView,
 } from "../../lib/model/analytical/durbin-approximation";
+import {
+  compareDurbinConditionalCdf,
+  type DurbinCdfComparison,
+} from "../../lib/model/analytical/durbin-cdf-comparison";
 import { StatusBadge, type ResultStatus } from "../StatusBadge";
 import type { EvaluationRun } from "./useEvaluationRun";
 import {
@@ -371,6 +375,26 @@ export function TimingCard({
       };
     }
   }, [showDurbin, projected, run?.timing, run?.risk, horizon]);
+  const cdfComparison = useMemo(():
+    DurbinCdfComparison | { message: string } | null => {
+    if (!durbin || "message" in durbin || !run?.timing) return null;
+
+    try {
+      return compareDurbinConditionalCdf({
+        firstHitTimes: run.timing.firstHitTimes,
+        ce: run.timing.durbin.ce,
+        horizonYears: horizon,
+        approximation: durbin.approximation,
+      });
+    } catch (error) {
+      return {
+        message:
+          error instanceof Error
+            ? error.message
+            : "The CDF comparison could not be calculated.",
+      };
+    }
+  }, [durbin, run?.timing, horizon]);
   const durbinView = useMemo((): DurbinView | { message: string } | null => {
     if (!durbin || "message" in durbin) return durbin;
 
@@ -610,30 +634,52 @@ export function TimingCard({
                 <dt>Simulation horizon</dt>
                 <dd>{horizon.toFixed(2)} years after retirement</dd>
               </div>
-              <div>
-                <dt>Monte Carlo interval for this chart</dt>
-                <dd>Not calculated yet</dd>
-              </div>
-              <div>
-                <dt>CE conditional-on-impoverishment TV bound (approx.)</dt>
-                <dd>
-                  {projected
-                    ? "Not applicable to the projected policy"
-                    : durbin && "approximation" in durbin
+              {!projected && (
+                <div>
+                  <dt>CE conditional-on-impoverishment TV bound (approx.)</dt>
+                  <dd>
+                    {durbin && "approximation" in durbin
                       ? durbin.approximation.ceConditionalEventTvBound === null
                         ? "Not available"
-                        : `${(durbin.approximation.ceConditionalEventTvBound * 100).toFixed(2)}%`
+                        : `${(durbin.approximation.ceConditionalEventTvBound * 100).toFixed(2)} pp`
                       : "Enable the approximation to calculate"}
-                </dd>
-              </div>
+                  </dd>
+                </div>
+              )}
+              {!projected && (
+                <div>
+                  <dt>CE conditional CDF sup distance (estimated)</dt>
+                  <dd>
+                    {!cdfComparison
+                      ? "Enable the approximation to calculate"
+                      : "message" in cdfComparison
+                        ? "Calculation failed"
+                        : cdfComparison.available
+                          ? `${(cdfComparison.supDistance * 100).toFixed(2)} pp`
+                          : cdfComparison.reason === "truncated-horizon"
+                            ? "Requires the full CE horizon"
+                            : cdfComparison.reason === "no-weighted-hits"
+                              ? "No survival-weighted hits observed"
+                              : "Not available at zero CE risk"}
+                  </dd>
+                </div>
+              )}
             </dl>
-            <p>
-              The CE bound concerns the timing distribution conditional on
-              impoverishment before death under CE mortality. It is not a bound
-              for this GM chart or for the age-conditional update. Its numerical
-              value uses approximate quadrature. The simulation also has Monte
-              Carlo, time-step and bridge errors.
-            </p>
+            {!projected && (
+              <p>
+                The CE bound concerns the timing distribution conditional on
+                impoverishment before death under CE mortality. It is not a
+                bound for this GM chart or for the age-conditional update. Its
+                numerical value uses approximate quadrature. The CDF distance
+                compares the same CE conditional laws using simulated paths;
+                Monte Carlo, time-step, bridge and quadrature errors can make it
+                exceed the theoretical bound.
+              </p>
+            )}
+            {!projected && cdfComparison && "message" in cdfComparison && (
+              <p role="status">{cdfComparison.message}</p>
+            )}
+            <p>The simulation has Monte Carlo, time-step and bridge errors.</p>
           </details>
         </>
       )}

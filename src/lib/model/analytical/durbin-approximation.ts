@@ -42,6 +42,8 @@ export interface DurbinApproximation {
   ceConditionalEventTvBound: number | null;
   /** Adaptive quadrature's summed local error estimates, not a rigorous error bound. */
   quadratureErrorEstimate: number;
+  /** CE-weighted first-term CDF conditional on impoverishment before death; null at zero CE mass. */
+  ceConditionalCdf(timeYears: number): number | null;
   /** Calculate GM-weighted forecast or age-conditioned curves for the captured run. */
   view(conditioningTime: number | null): DurbinView;
 }
@@ -50,6 +52,7 @@ export interface DurbinApproximation {
 interface IntegralGrid {
   times: number[];
   financialPrefix: number[];
+  cePrefix: number[];
   gmSuffix: number[];
   ceWeightedMass: number;
   estimatedError: number;
@@ -98,6 +101,7 @@ export function prepareDurbinApproximation(
       ceWeightedMass: 0,
       ceConditionalEventTvBound: null,
       quadratureErrorEstimate: 0,
+      ceConditionalCdf: () => null,
       view: (time) => {
         if (
           time !== null &&
@@ -179,6 +183,7 @@ export function prepareDurbinApproximation(
     (value, index) => index === 0 || value > times[index - 1],
   );
   const financialPrefix = [0];
+  const cePrefix = [0];
   const gmMasses: number[] = [];
   let ceWeightedMass = 0;
   let estimatedError = 0;
@@ -192,6 +197,7 @@ export function prepareDurbinApproximation(
     financialPrefix.push(financialPrefix[i - 1] + financial.value);
     gmMasses.push(weightedGm.value);
     ceWeightedMass += weightedCe.value;
+    cePrefix.push(ceWeightedMass);
     estimatedError +=
       financial.estimatedError +
       weightedGm.estimatedError +
@@ -213,6 +219,7 @@ export function prepareDurbinApproximation(
   const grid: IntegralGrid = {
     times: unique,
     financialPrefix,
+    cePrefix,
     gmSuffix,
     ceWeightedMass,
     estimatedError,
@@ -231,6 +238,21 @@ export function prepareDurbinApproximation(
     }
 
     return lower;
+  }
+
+  /** Evaluate the normalized CE-weighted first-term CDF at a given time. */
+  function ceConditionalCdf(timeYears: number): number | null {
+    if (!(ceWeightedMass > 0)) return null;
+    if (timeYears <= 0) return 0;
+    if (timeYears >= tau) return 1;
+
+    const index = panel(timeYears);
+    const partial =
+      timeYears === grid.times[index]
+        ? 0
+        : integrate(ceDensity, grid.times[index], timeYears).value;
+
+    return (grid.cePrefix[index] + partial) / ceWeightedMass;
   }
 
   /** Integrate the financial first term from retirement to the selected time. */
@@ -303,6 +325,7 @@ export function prepareDurbinApproximation(
     ceWeightedMass,
     ceConditionalEventTvBound,
     quadratureErrorEstimate: grid.estimatedError,
+    ceConditionalCdf,
     view,
   };
 }

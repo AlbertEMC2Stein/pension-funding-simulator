@@ -57,6 +57,9 @@ test("timing card presents captured GM forecast and age control", () => {
   assert.doesNotMatch(html, /Coming soon/);
   assert.match(html, /<input type="checkbox"\/>/);
   assert.match(html, /Approximation error &amp; diagnostics/);
+  assert.match(html, /CE conditional-on-impoverishment TV bound/);
+  assert.match(html, /CE conditional CDF sup distance/);
+  assert.doesNotMatch(html, /Monte Carlo interval for this chart/);
   assert.ok(
     html.indexOf("Approximation error &amp; diagnostics") <
       html.indexOf("Show Durbin approximation"),
@@ -71,6 +74,9 @@ test("timing card labels projected and stale results without silently substituti
   );
   assert.match(projected, /PROJECTED POLICY/);
   assert.doesNotMatch(projected, /Show Durbin approximation/);
+  assert.doesNotMatch(projected, /CE conditional-on-impoverishment TV bound/);
+  assert.doesNotMatch(projected, /CE conditional CDF sup distance/);
+  assert.doesNotMatch(projected, /Monte Carlo interval for this chart/);
   assert.match(projected, /NEEDS UPDATING/);
   assert.match(projected, /earlier settings/);
 

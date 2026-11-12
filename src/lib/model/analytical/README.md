@@ -106,3 +106,13 @@ and is not a bound on GM or age-conditioned chart errors. Adaptive quadrature
 has an estimated numerical error, not a certified enclosure. Tests compare an
 independent boundary-density expression and the manuscript's rounded baseline;
 no MATLAB code was run as part of this implementation.
+
+
+`durbin-cdf-comparison.ts` compares the CE survival-weighted empirical CDF
+conditional on impoverishment before death with the corresponding normalized
+Durbin CDF. It evaluates both sides of each distinct empirical jump to obtain
+the empirical sup distance, rather than approximating it on the chart grid.
+This comparison requires a run covering the full CE horizon and positive
+survival-weighted event mass. The reported distance has Monte Carlo, bridge,
+time-step and quadrature error; unlike the paper's theoretical TV result, it
+is not a certified bound and can exceed it.
