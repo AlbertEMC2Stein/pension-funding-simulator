@@ -107,8 +107,7 @@
   text-transform: none;
 }
 
-.code,
-.log {
+.code {
   max-height: 380px;
   overflow: auto;
   padding: 14px;
@@ -124,15 +123,6 @@
 .code {
   white-space: pre;
 }
-.log {
-  list-style: none;
-}
-.log li + li {
-  margin-top: 8px;
-}
-.log time {
-  color: var(--text-muted);
-}
 .errors {
   color: var(--text-secondary);
   padding-left: 20px;
@@ -143,4 +133,28 @@
   .grid {
     grid-template-columns: 1fr;
   }
+}
+
+.inspectionDetails summary {
+  color: var(--text-strong);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inspectorControls {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.inspectorControls label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.inspectorControls select {
+  width: 100%;
+  min-width: 0;
 }

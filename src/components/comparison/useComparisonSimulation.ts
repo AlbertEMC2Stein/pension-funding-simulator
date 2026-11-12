@@ -5,6 +5,7 @@ import { useSimulationDraft } from "../SimulationDraftContext";
 import type { SimulationDraft } from "../../lib/options/simulation-options";
 import type { SharedMortalityFits } from "../SimulationDraftContext";
 import { ComparisonQueue, type ComparisonQueueState } from "./comparison-queue";
+import { captureTableInspection } from "./inspection";
 import {
   prepareComparisonRows,
   type ComparisonRowInput,
@@ -29,7 +30,7 @@ export function useComparisonSimulation(
   const [run, setRun] = useState<ComparisonRun | null>(null);
   const [error, setError] = useState<string | null>(null);
   const queueRef = useRef<ComparisonQueue | null>(null);
-  const { registerRunGuard } = useSimulationDraft();
+  const { registerRunGuard, setInspectedTables } = useSimulationDraft();
 
   useEffect(
     () => registerRunGuard(() => queueRef.current !== null),
@@ -54,6 +55,14 @@ export function useComparisonSimulation(
     }
 
     setError(null);
+
+    if (process.env.NODE_ENV === "development") {
+      setInspectedTables((current) => ({
+        ...current,
+        [kind]: captureTableInspection(rows, prepared.rows),
+      }));
+    }
+
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
     const queue = new ComparisonQueue(
       prepared.rows,

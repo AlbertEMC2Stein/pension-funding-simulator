@@ -67,9 +67,8 @@ computation limit, not a claim that every ten-asset case performs equally well.
 
 The six packaged cohort tables support female, male and custom survival-curve
 mixtures. GM and market-compatible CE models are fitted in a worker; changes to
-relevant inputs make the appropriate fit outdated. The fresh default example
-starts a one-time background fit. Imported or locally restored setups do not
-fit automatically. The exponential law remains a research benchmark, not a
+relevant inputs make the appropriate fit outdated. Startup performs a one-time background fit using valid default or locally
+restored inputs. A setup imported during a session still requires a manual fit. The exponential law remains a research benchmark, not a
 user-facing model.
 
 **Remaining:** Continue comparisons with appropriately matched reference fits,
@@ -112,8 +111,8 @@ historical price data and their source are not retained in the current snapshot.
 **Remaining:** Review snapshot versioning and provenance for a stable future
 format. Add random-stream known-answer and statistical checks where appropriate;
 do not promise path-by-path equality across batch sizes or numerical backends.
-Review the development panel and its event log, including how prepared options
-from Evaluation and Data & tables are represented.
+The developer panel shows captured worker inputs from Evaluation and table
+rows; continue checking their provenance as the worker interface evolves.
 
 ### 6. Batched financial simulation — implemented; numerical checks ongoing
 
@@ -245,9 +244,9 @@ setup or results exports. Exported results are not currently re-importable.
    policy and borrowing comparisons above; then review responsive layouts,
    keyboard access, both themes and the static GitHub Pages deployment. Record
    platform coverage and known limitations.
-4. **Developer panel:** Review which diagnostics and event-log information are
-   useful. If “Last prepared options” stays, make its coverage of Evaluation
-   and Data & tables clear and consistent.
+4. **Developer panel:** Review the captured worker-input inspector as the worker
+   interface evolves. Its numerical worker-check controls are independent of
+   Evaluation and Data & tables.
 5. **Localization:** Implement the English/German language switch using
    maintainable translations, and check both languages in the responsive UI.
 6. **Further numerical features:** Specify historical stress scenarios before

@@ -26,6 +26,8 @@ import type {
 } from "../../lib/model/simulation/worker-protocol";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import styles from "./developer.module.css";
+import { makeDevelopmentDraft } from "./development-draft";
+import type { SimulationDraft } from "../../lib/options/simulation-options";
 
 /** Maximum path count for an interactive development run. */
 const MAX_DEVELOPMENT_PATHS = 250_000;
@@ -78,12 +80,13 @@ function formatRemainingTime(milliseconds: number): string {
  * The worker owns the validated snapshot; later edits only mark its result old.
  */
 export function SimulationCheck() {
-  const { draft, setDraft, mortalityFits, registerRunGuard } =
-    useSimulationDraft();
+  const { draft, mortalityFits, registerRunGuard } = useSimulationDraft();
   const [seed, setSeed] = useState("development-check");
   const [paths, setPaths] = useState("1000");
   const [horizon, setHorizon] = useState("10");
-  const batch = draft.simulation.batchSize;
+  const [timeStep, setTimeStep] =
+    useState<SimulationDraft["simulation"]["timeStep"]>("monthly");
+  const [batch, setBatch] = useState<BatchSizeChoice>("auto");
   const [backend, setBackend] = useState<"auto" | TensorBackend>("auto");
   const [run, setRun] = useState<CheckRun | null>(null);
   const workerRef = useRef<Worker | null>(null);
@@ -96,8 +99,14 @@ export function SimulationCheck() {
     run?.phase === "starting" ||
     run?.phase === "running" ||
     run?.phase === "cancelling";
+  const checkDraft = makeDevelopmentDraft(draft, {
+    paths: Number(paths),
+    timeStep,
+    batchSize: batch,
+    seed,
+  });
   const signature = JSON.stringify({
-    draft,
+    draft: checkDraft,
     mortalityFits,
     seed,
     paths,
@@ -152,7 +161,7 @@ export function SimulationCheck() {
       return fail("Enter a positive maximum horizon.");
     if (!seed.trim()) return fail("Enter a seed for the development check.");
 
-    const options = buildSimulationOptions(draft);
+    const options = buildSimulationOptions(checkDraft);
     if (!options.ok) return fail(options.errors.join(" "));
 
     const market = calibrateMarket(options.options.market);
@@ -335,7 +344,7 @@ export function SimulationCheck() {
     <article className={`form-card ${styles.wide}`}>
       <div className="card-heading">
         <div>
-          <span className="tiny-label">DEVELOPMENT · BRIDGE PROTOTYPE</span>
+          <span className="tiny-label">DEVELOPMENT · WORKER CHECK</span>
           <h3>Simulation worker check</h3>
         </div>
         {run && <StatusBadge status={runStatus} />}
@@ -370,15 +379,12 @@ export function SimulationCheck() {
         <label>
           Time step
           <select
-            value={draft.simulation.timeStep}
-            onChange={(event) => {
-              const timeStep = event.target
-                .value as typeof draft.simulation.timeStep;
-              setDraft((current) => ({
-                ...current,
-                simulation: { ...current.simulation, timeStep },
-              }));
-            }}
+            value={timeStep}
+            onChange={(event) =>
+              setTimeStep(
+                event.target.value as SimulationDraft["simulation"]["timeStep"],
+              )
+            }
           >
             <option value="monthly">Monthly</option>
             <option value="fortnightly">Fortnightly</option>
@@ -397,16 +403,13 @@ export function SimulationCheck() {
           Batch size
           <select
             value={batch}
-            onChange={(event) => {
-              const batchSize =
+            onChange={(event) =>
+              setBatch(
                 event.target.value === "auto"
                   ? "auto"
-                  : (Number(event.target.value) as BatchSizeChoice);
-              setDraft((current) => ({
-                ...current,
-                simulation: { ...current.simulation, batchSize },
-              }));
-            }}
+                  : (Number(event.target.value) as BatchSizeChoice),
+              )
+            }
           >
             <option value="auto">Automatic (up to 32,768)</option>
             {MANUAL_BATCH_SIZES.map((size) => (
@@ -432,10 +435,10 @@ export function SimulationCheck() {
         </label>
       </div>
       <p className={styles.hint}>
-        Time step and batch size are shared with Evaluation. Automatic batch
-        size aims for four batches and is capped at 32,768 paths. Manual batch
-        sizes are capped at the requested path count. The run horizon is capped
-        at the fitted CE mortality endpoint.
+        These controls apply only to this worker check. Market, investor and
+        policy inputs are shared with Evaluation. Automatic batch size aims for
+        four batches and is capped at 32,768 paths; the horizon is capped at the
+        CE endpoint.
       </p>
       <div className={styles.actions}>
         <button

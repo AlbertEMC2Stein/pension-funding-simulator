@@ -12,8 +12,8 @@ import {
 import {
   initialSimulationDraft,
   type SimulationDraft,
-  type SimulationOptions,
 } from "../lib/options/simulation-options";
+import type { RunConfigurationInput } from "../lib/model/simulation/run-configuration";
 import type { CeFit, GmFit } from "../lib/mortality/mortality-fitting";
 import type { EvaluationRun } from "./evaluation/useEvaluationRun";
 import {
@@ -31,6 +31,19 @@ export interface SharedMortalityFits {
   gm: { key: string; fit: GmFit } | null;
   ce: { key: string; fit: CeFit } | null;
 }
+
+/** Captured worker input or preparation outcome for one comparison-table row. */
+export interface InspectedTableRow {
+  id: number;
+  name: string;
+  input?: RunConfigurationInput;
+  outcome: string;
+}
+
+/** Most recent captured rows per comparison table, retained for developer inspection. */
+export type InspectedTables = Partial<
+  Record<"withdrawal" | "feasibility", InspectedTableRow[]>
+>;
 
 /** One-time startup fit status, shared so Evaluation can show progress. */
 export type InitialMortalityFit =
@@ -59,13 +72,12 @@ const Context = createContext<{
   workspaceRevision: number;
   importSetup: (file: SetupFile) => boolean;
   registerRunGuard: (isRunning: () => boolean) => () => void;
-  prepared: { draft: SimulationDraft; options: SimulationOptions } | null;
+  prepared: RunConfigurationInput | null;
   setPrepared: React.Dispatch<
-    React.SetStateAction<{
-      draft: SimulationDraft;
-      options: SimulationOptions;
-    } | null>
+    React.SetStateAction<RunConfigurationInput | null>
   >;
+  inspectedTables: InspectedTables;
+  setInspectedTables: React.Dispatch<React.SetStateAction<InspectedTables>>;
   mortalityFits: SharedMortalityFits;
   setMortalityFits: React.Dispatch<React.SetStateAction<SharedMortalityFits>>;
   initialMortalityFit: InitialMortalityFit;
@@ -91,10 +103,8 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
   const [evaluationResult, setEvaluationResult] =
     useState<EvaluationRun | null>(null);
   const runGuards = useRef(new Set<() => boolean>());
-  const [prepared, setPrepared] = useState<{
-    draft: SimulationDraft;
-    options: SimulationOptions;
-  } | null>(null);
+  const [prepared, setPrepared] = useState<RunConfigurationInput | null>(null);
+  const [inspectedTables, setInspectedTables] = useState<InspectedTables>({});
   const [mortalityFits, setMortalityFits] = useState<SharedMortalityFits>({
     gm: null,
     ce: null,
@@ -176,6 +186,7 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
     setSetupName(file.name);
     setTables(file.tables);
     setPrepared(null);
+    setInspectedTables({});
     setEvaluationResult(null);
     setMortalityFits({ gm: null, ce: null });
     setInitialMortalityFit({ phase: "skipped" });
@@ -199,6 +210,8 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
         registerRunGuard,
         prepared,
         setPrepared,
+        inspectedTables,
+        setInspectedTables,
         mortalityFits,
         setMortalityFits,
         initialMortalityFit,

@@ -14,6 +14,8 @@ import {
 
 /** Editable row values captured at the start of a table run. */
 export interface ComparisonRowInput {
+  /** Optional user-visible row name, used only for developer inspection. */
+  name?: string;
   id: number;
   type: "Target risk" | "Withdrawal";
   value: string;

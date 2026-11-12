@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { StatusBadge } from "../StatusBadge";
 import { PageHeading } from "../common";
 import { useSimulationDraft } from "../SimulationDraftContext";
@@ -12,65 +12,36 @@ import { calibrateMarket } from "../../lib/market/calibrate-market";
 import styles from "./developer.module.css";
 import { SimulationCheck } from "./SimulationCheck";
 
-/** One local developer event displayed in the bounded in-memory activity log. */
-interface Activity {
-  id: number;
-  time: string;
-  level: "info" | "error";
-  message: string;
-}
+/** The workspace source whose most recently prepared inputs are inspected. */
+type InspectorSource = "evaluation" | "withdrawal" | "feasibility";
 
-/** Development-only diagnostics. Activity stays in memory and is capped at 100 entries. */
+/** Inspect current inputs, market calibration and captured worker requests. */
 export default function DeveloperView() {
-  const { draft, prepared } = useSimulationDraft();
+  const { draft, prepared, inspectedTables } = useSimulationDraft();
+  const [source, setSource] = useState<InspectorSource>("evaluation");
+  const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const current = buildSimulationOptions(draft);
   const marketInput = buildMarketOptions(draft.market);
   const calibration = marketInput.ok
     ? calibrateMarket(marketInput.market)
     : null;
-  const [activity, setActivity] = useState<Activity[]>([]);
-
-  useEffect(() => {
-    let nextId = 0;
-    /** Accept a well-formed debug event and append it to the most recent 100 entries; ignore malformed events. */
-    function record(event: Event) {
-      const detail = (
-        event as CustomEvent<{ level: "info" | "error"; message: string }>
-      ).detail;
-
-      if (
-        !detail ||
-        typeof detail.message !== "string" ||
-        !["info", "error"].includes(detail.level)
-      )
-        return;
-
-      const entry: Activity = {
-        id: nextId++,
-        time: new Date().toLocaleTimeString(),
-        level: detail.level,
-        message: detail.message,
-      };
-      setActivity((previous) => [...previous, entry].slice(-100));
-    }
-    window.addEventListener("simulation-debug-event", record);
-
-    return () => window.removeEventListener("simulation-debug-event", record);
-  }, []);
+  const rows = source === "evaluation" ? [] : (inspectedTables[source] ?? []);
+  const row = rows.find((entry) => entry.id === selectedRow) ?? rows[0];
+  const captured = source === "evaluation" ? prepared : row?.input;
 
   return (
     <section className="view active">
       <PageHeading
         eyebrow="DEVELOPMENT ONLY"
         title="Developer tools"
-        description="Inspect the current inputs and recent activity during local development."
+        description="Inspect current inputs and captured simulation requests during local development."
       />
       <div className={styles.grid}>
         <SimulationCheck />
         <article className="form-card">
           <div className="card-heading">
             <div>
-              <span className="tiny-label">LIVE · MANUAL INPUTS</span>
+              <span className="tiny-label">LIVE · MARKET INPUTS</span>
               <h3>Market calibration</h3>
             </div>
             {!calibration ? (
@@ -111,32 +82,78 @@ export default function DeveloperView() {
         <article className="form-card">
           <div className="card-heading">
             <div>
-              <span className="tiny-label">LIVE · AS ENTERED</span>
-              <h3>Raw input values</h3>
+              <span className="tiny-label">CAPTURED · WORKER REQUEST</span>
+              <h3>Run input inspector</h3>
             </div>
           </div>
           <p>
-            Updates as you edit the interface. Values retain their original
-            format and may be incomplete or invalid.
+            Inputs are captured when a run is prepared and do not change with
+            later edits. The worker validates them after submission. The worker
+            check above is separate.
           </p>
-          <pre className={styles.code}>{JSON.stringify(draft, null, 2)}</pre>
-        </article>
-        <article className="form-card">
-          <div className="card-heading">
-            <div>
-              <span className="tiny-label">LIVE · VALIDATED</span>
-              <h3>Validated simulation options</h3>
-            </div>
-            {current.ok ? (
-              <StatusBadge status="calculated" label="VALID" />
-            ) : (
-              <StatusBadge status="not-available" label="CHECK INPUTS" />
+          <div className={styles.inspectorControls}>
+            <label>
+              Source
+              <select
+                value={source}
+                onChange={(event) => {
+                  setSource(event.target.value as InspectorSource);
+                  setSelectedRow(null);
+                }}
+              >
+                <option value="evaluation">Evaluation</option>
+                <option value="withdrawal">
+                  Withdrawal, risk &amp; policy table
+                </option>
+                <option value="feasibility">
+                  Feasibility sensitivity table
+                </option>
+              </select>
+            </label>
+            {source !== "evaluation" && rows.length > 0 && (
+              <label>
+                Captured row
+                <select
+                  value={row?.id}
+                  onChange={(event) =>
+                    setSelectedRow(Number(event.target.value))
+                  }
+                >
+                  {rows.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name || `Variation ${item.id}`} (#{item.id})
+                    </option>
+                  ))}
+                </select>
+              </label>
             )}
           </div>
+          {source !== "evaluation" && row && <p>{row.outcome}</p>}
+          {captured ? (
+            <pre className={styles.code}>
+              {JSON.stringify(captured, null, 2)}
+            </pre>
+          ) : (
+            <p>
+              {source === "evaluation"
+                ? "No Evaluation worker request has been prepared yet."
+                : row
+                  ? "No worker input is available for this row."
+                  : "No table run has been prepared yet."}
+            </p>
+          )}
+        </article>
+        <details className={`form-card ${styles.inspectionDetails}`}>
+          <summary>Raw input values</summary>
+          <p>Live, as entered; values may be incomplete or invalid.</p>
+          <pre className={styles.code}>{JSON.stringify(draft, null, 2)}</pre>
+        </details>
+        <details className={`form-card ${styles.inspectionDetails}`}>
+          <summary>Validated simulation options</summary>
           <p>
-            Derived from the current inputs after validation. Rates are decimal
-            fractions; amounts are in euros. Errors are shown if inputs are
-            invalid.
+            Live options derived from current inputs. Valid options alone do not
+            establish that the market assumptions or mortality fits are ready
+            for a run.
           </p>
           {current.ok ? (
             <pre className={styles.code}>
@@ -149,68 +166,7 @@ export default function DeveloperView() {
               ))}
             </ul>
           )}
-        </article>
-        <article className="form-card">
-          <div className="card-heading">
-            <div>
-              <span className="tiny-label">LAST RUN REQUEST</span>
-              <h3>Last prepared options</h3>
-            </div>
-            {!prepared ? (
-              <StatusBadge status="not-calculated" label="NOT PREPARED" />
-            ) : prepared.draft === draft ? (
-              <StatusBadge status="calculated" label="CURRENT" />
-            ) : (
-              <StatusBadge status="needs-updating" />
-            )}
-          </div>
-          {prepared ? (
-            <>
-              <p>
-                Captured when Run simulation was last requested. This snapshot
-                does not change as you edit inputs. The worker check above uses
-                its own captured settings.
-              </p>
-              <pre className={styles.code}>
-                {JSON.stringify(prepared.options, null, 2)}
-              </pre>
-            </>
-          ) : (
-            <p>No validated snapshot has been prepared yet.</p>
-          )}
-        </article>
-        <article className="form-card">
-          <div className="card-heading">
-            <div>
-              <span className="tiny-label">LOCAL ACTIVITY</span>
-              <h3>Event log</h3>
-            </div>
-            <button
-              type="button"
-              className="button button-light"
-              onClick={() => setActivity([])}
-              disabled={activity.length === 0}
-            >
-              Clear log
-            </button>
-          </div>
-          <p>
-            In memory only; the most recent 100 interface events are kept. The
-            worker check displays its own status above.
-          </p>
-          {activity.length === 0 ? (
-            <p>No events recorded yet.</p>
-          ) : (
-            <ol className={styles.log} aria-live="polite">
-              {activity.map((entry) => (
-                <li key={entry.id}>
-                  <time>{entry.time}</time>{" "}
-                  <strong>{entry.level.toUpperCase()}</strong> {entry.message}
-                </li>
-              ))}
-            </ol>
-          )}
-        </article>
+        </details>
       </div>
     </section>
   );

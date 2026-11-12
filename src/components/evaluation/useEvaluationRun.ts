@@ -144,7 +144,8 @@ export function useEvaluationRun() {
     };
     const runId = ++runIdRef.current;
     workerRef.current = worker;
-    setPrepared({ draft, options: prepared.input.options });
+    if (process.env.NODE_ENV === "development")
+      setPrepared(structuredClone(prepared.input));
     setRun({
       signature,
       setupName,
