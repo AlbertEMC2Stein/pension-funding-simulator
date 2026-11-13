@@ -136,7 +136,7 @@ export function PageHeading({
         </div>
         <h1>
           {title}
-          <span className="heading-dot">.</span>
+          {!/[?!]$/.test(title) && <span className="heading-dot">.</span>}
         </h1>
         <p>{description}</p>
       </div>

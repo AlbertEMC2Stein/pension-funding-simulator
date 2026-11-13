@@ -70,8 +70,9 @@ export interface EvaluationMessages {
 export const evaluationMessages: Record<Language, EvaluationMessages> = {
   en: {
     eyebrow: "YOUR RETIREMENT, EXPLORED",
-    title: "See the bigger picture",
-    description: "Explore how your choices shape the path ahead.",
+    title: "How much can you withdraw in retirement?",
+    description:
+      "Explore how much you could withdraw each year for a chosen risk of your savings falling below a threshold you set. Compare the effects of investment returns, inflation, longevity and portfolio constraints.",
     previewTitle: "You're exploring a design draft.",
     preview:
       "The CE withdrawal chart, allocation, capital comparison and feasibility diagnostic use your current inputs. Simulation results use the latest completed run.",
@@ -139,9 +140,9 @@ export const evaluationMessages: Record<Language, EvaluationMessages> = {
   },
   de: {
     eyebrow: "IHR RUHESTAND IM BLICK",
-    title: "Das Gesamtbild",
+    title: "Wie viel können Sie sich im Ruhestand auszahlen?",
     description:
-      "Erkunden Sie, wie Ihre Entscheidungen den weiteren Verlauf beeinflussen.",
+      "Erkunden Sie, wie viel Sie sich jährlich auszahlen könnten, wenn Sie ein Risiko dafür wählen, dass Ihr Vermögen unter eine selbst gewählte Grenze fällt. Vergleichen Sie den Einfluss von Anlagerenditen, Inflation, Lebenserwartung und Anlagebeschränkungen.",
     previewTitle: "Sie betrachten einen Designentwurf.",
     preview:
       "CE-Entnahmediagramm, Aufteilung, Kapitalvergleich und Zulässigkeitsdiagnostik verwenden Ihre aktuellen Eingaben. Simulationsergebnisse stammen aus dem letzten abgeschlossenen Lauf.",

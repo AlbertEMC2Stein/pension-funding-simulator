@@ -146,7 +146,8 @@ test("German Evaluation retains numerical selection semantics", async () => {
     </SimulationDraftProvider>,
   );
 
-  assert.match(html, /Das Gesamtbild/);
+  assert.match(html, /Wie viel können Sie sich im Ruhestand auszahlen\?/);
+  assert.match(html, /Risiko dafür wählen/);
   assert.match(html, /Verarmungsgrenze/);
   assert.match(html, /Simulation starten/);
   assert.match(html, /Globale Zulässigkeit/);

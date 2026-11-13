@@ -1,5 +1,12 @@
 # Pension funding simulator
 
+**How much can you withdraw each year in retirement while accepting a chosen
+risk that your savings fall below a threshold you set?**
+
+Explore this question using assumptions about investment returns, inflation and
+longevity, and compare the effects of portfolio constraints. Alternatively,
+choose a withdrawal amount and estimate its associated risk.
+
 A client-side pension funding simulator built with Next.js and exported as a
 static website for GitHub Pages. It combines market calibration, cohort-based
 mortality fitting, analytical calculations and Monte Carlo simulation. The
