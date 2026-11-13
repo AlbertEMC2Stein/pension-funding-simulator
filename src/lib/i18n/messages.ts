@@ -12,8 +12,6 @@ export interface ShellMessages {
   home: string;
   railHeadline: string;
   railDescription: string;
-  designDraft: string;
-  preview: string;
   themeLight: string;
   themeDark: string;
   switchToLight: string;
@@ -23,7 +21,6 @@ export interface ShellMessages {
   documentDescription: string;
   preferenceReadError: string;
   preferenceWriteError: string;
-  footer: string;
 }
 
 /** English and German shell copy; matching keys are enforced by TypeScript. */
@@ -40,21 +37,18 @@ export const shellMessages: Record<Language, ShellMessages> = {
     home: "Stillwell home",
     railHeadline: "Retirement withdrawals",
     railDescription: "Compare withdrawals and risks using your own assumptions.",
-    designDraft: "Design draft",
-    preview: "Interface preview",
     themeLight: "Light mode",
     themeDark: "Dark mode",
     switchToLight: "Switch to light theme",
     switchToDark: "Switch to dark theme",
     languageLabel: "Language",
-    documentTitle: "Stillwell — Pension funding simulator · Design draft",
+    documentTitle: "Stillwell — Pension funding simulator",
     documentDescription:
-      "An illustrative interface draft for a pension funding simulator.",
+      "Explore retirement withdrawals and risks under your chosen assumptions.",
     preferenceReadError:
       "Display preferences could not be restored from this browser.",
     preferenceWriteError:
       "Display preferences could not be saved in this browser.",
-    footer: "Design draft · all values illustrative",
   },
   de: {
     workspace: "Arbeitsbereich",
@@ -69,21 +63,17 @@ export const shellMessages: Record<Language, ShellMessages> = {
     railHeadline: "Auszahlungen im Ruhestand",
     railDescription:
       "Vergleichen Sie Auszahlungen und Risiken anhand Ihrer eigenen Annahmen.",
-    designDraft: "Designentwurf",
-    preview: "Oberflächenvorschau",
     themeLight: "Heller Modus",
     themeDark: "Dunkler Modus",
     switchToLight: "Zum hellen Design wechseln",
     switchToDark: "Zum dunklen Design wechseln",
     languageLabel: "Sprache",
-    documentTitle:
-      "Stillwell — Ruhestandsfinanzierungssimulator · Designentwurf",
+    documentTitle: "Stillwell — Ruhestandsfinanzierungssimulator",
     documentDescription:
-      "Ein beispielhafter Oberflächenentwurf für einen Simulator zur Ruhestandsfinanzierung.",
+      "Erkunden Sie Auszahlungen und Risiken im Ruhestand anhand Ihrer eigenen Annahmen.",
     preferenceReadError:
       "Die Anzeigeeinstellungen konnten nicht aus diesem Browser geladen werden.",
     preferenceWriteError:
       "Die Anzeigeeinstellungen konnten nicht in diesem Browser gespeichert werden.",
-    footer: "Designentwurf · alle Werte dienen der Veranschaulichung",
   },
 };

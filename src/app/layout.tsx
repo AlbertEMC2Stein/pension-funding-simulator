@@ -24,9 +24,9 @@ import "./styles/adjustments/run-control.css";
 
 /** Static page metadata included in the exported site. */
 export const metadata: Metadata = {
-  title: "Stillwell — Pension funding simulator · Design draft",
+  title: "Stillwell — Pension funding simulator",
   description:
-    "An illustrative interface draft for a pension funding simulator.",
+    "Explore retirement withdrawals and risks under your chosen assumptions.",
 };
 
 /** Shared document wrapper and global styles for every Next.js page. */

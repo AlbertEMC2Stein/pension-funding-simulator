@@ -11,7 +11,6 @@ import { StatusBadge } from "../StatusBadge";
 import {
   DemoAction,
   PageHeading,
-  PreviewBanner,
   SectionHeading,
   TermLink,
 } from "../common";
@@ -647,9 +646,6 @@ export function Setup() {
           <SetupFileActions />
         </div>
       </PageHeading>
-      <PreviewBanner>
-        <strong>{text.preview}</strong> {text.previewDescription}
-      </PreviewBanner>
       <div className="form-card setup-name-card">
         <div className="card-heading">
           <div>

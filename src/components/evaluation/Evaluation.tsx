@@ -41,7 +41,6 @@ import { SimulationDetailFields } from "../SimulationDetailFields";
 import {
   Metric,
   PageHeading,
-  PreviewBanner,
   SectionHeading,
   TermLink,
   useDraft,
@@ -643,9 +642,6 @@ export function Evaluation() {
         title={text.title}
         description={text.description}
       />
-      <PreviewBanner>
-        <strong>{text.previewTitle}</strong> {text.preview}
-      </PreviewBanner>
       {initialMortalityFit.phase === "checking-storage" && (
         <p className="initial-fit-status" role="status">
           {text.checkingStorage}

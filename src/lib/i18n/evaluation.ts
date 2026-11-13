@@ -5,8 +5,6 @@ export interface EvaluationMessages {
   eyebrow: string;
   title: string;
   description: string;
-  previewTitle: string;
-  preview: string;
   checkingStorage: string;
   preparingMortality: string;
   fitting: string;
@@ -73,9 +71,6 @@ export const evaluationMessages: Record<Language, EvaluationMessages> = {
     title: "How much can you withdraw in retirement?",
     description:
       "Explore how much you could withdraw each year for a chosen risk of your savings falling below a threshold you set. Compare the effects of investment returns, inflation, longevity and portfolio constraints.",
-    previewTitle: "You're exploring a design draft.",
-    preview:
-      "The CE withdrawal chart, allocation, capital comparison and feasibility diagnostic use your current inputs. Simulation results use the latest completed run.",
     checkingStorage: "Checking for a saved setup…",
     preparingMortality: "Preparing mortality data…",
     fitting: "Fitting mortality models",
@@ -143,9 +138,6 @@ export const evaluationMessages: Record<Language, EvaluationMessages> = {
     title: "Wie viel können Sie sich im Ruhestand auszahlen?",
     description:
       "Erfahren Sie, wie Ihre jährliche Auszahlung mit dem Risiko zusammenhängt, dass Ihr Vermögen unter eine von Ihnen gewählte Grenze fällt. Vergleichen Sie den Einfluss von Anlagerenditen, Inflation, Lebenserwartung und Anlagebeschränkungen.",
-    previewTitle: "Sie betrachten einen Designentwurf.",
-    preview:
-      "CE-Auszahlungsdiagramm, Aufteilung, Kapitalvergleich und Zulässigkeitsdiagnostik verwenden Ihre aktuellen Eingaben. Simulationsergebnisse stammen aus dem letzten abgeschlossenen Lauf.",
     checkingStorage: "Gespeicherte Konfiguration wird gesucht…",
     preparingMortality: "Sterblichkeitsdaten werden vorbereitet…",
     fitting: "Sterblichkeitsmodelle werden angepasst",

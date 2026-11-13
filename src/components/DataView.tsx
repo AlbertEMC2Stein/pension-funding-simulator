@@ -30,7 +30,7 @@ import { SetupFileActions } from "./SetupFileActions";
 import { comparisonTableCsv } from "../lib/export/comparison-table";
 import { downloadText } from "../lib/export/csv";
 import { createResultsExport } from "../lib/export/results";
-import { PageHeading, PreviewBanner, SectionHeading, TermLink } from "./common";
+import { PageHeading, SectionHeading, TermLink } from "./common";
 
 /** Available comparison-table layouts; each keeps separate editable example rows. */
 type TableType = "withdrawal" | "feasibility";
@@ -61,7 +61,7 @@ function formatInterval(
     : unavailable;
 }
 
-/** Compare editable rows against the shared setup; exports and other tables are previews. */
+/** Compare editable rows against the shared setup and export calculated results. */
 export function DataView() {
   const { language } = useLanguage();
   const text = tableMessages[language];
@@ -205,9 +205,6 @@ export function DataView() {
         title={text.title}
         description={text.intro}
       />
-      <PreviewBanner>
-        <strong>{text.previewTitle}</strong> {text.preview}
-      </PreviewBanner>
       <SectionHeading
         eyebrow={text.comparison}
         title={text.comparisonTitle}

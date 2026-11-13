@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { version as appVersion } from "../../package.json";
 import { DraftContext, type View } from "./common";
 import { LanguageProvider, useLanguage } from "./LanguageContext";
 import { validationMessage } from "../lib/i18n/validation";
@@ -214,8 +215,8 @@ export function SimulatorDraft() {
                   <p>{text.railDescription}</p>
                 </div>
                 <div className="rail-footer">
-                  <span className="status-dot" /> {text.designDraft}{" "}
-                  <span>v0.1</span>
+                  <span>Version</span>
+                  <span>v{appVersion}</span>
                 </div>
               </div>
             </aside>
@@ -229,9 +230,6 @@ export function SimulatorDraft() {
                   </b>
                 </div>
                 <div className="top-actions">
-                  <span className="draft-pill">
-                    <span /> {text.preview.toLocaleUpperCase(display.language)}
-                  </span>
                   <button
                     className="theme-toggle"
                     type="button"
@@ -272,7 +270,6 @@ export function SimulatorDraft() {
                 <span>
                   STILLWELL <b>✳</b> PENSION LAB
                 </span>
-                <span>{text.footer.toLocaleUpperCase(display.language)}</span>
               </footer>
             </main>
           </div>

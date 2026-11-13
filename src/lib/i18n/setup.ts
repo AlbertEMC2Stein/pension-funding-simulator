@@ -5,8 +5,6 @@ export interface SetupMessages {
   eyebrow: string;
   title: string;
   description: string;
-  preview: string;
-  previewDescription: string;
   yourSetup: string;
   nameSetup: string;
   savedNote: string;
@@ -79,9 +77,6 @@ export const setupMessages: Record<Language, SetupMessages> = {
     title: "The foundations",
     description:
       "Set the market and investor assumptions behind your analysis.",
-    preview: "Design preview.",
-    previewDescription:
-      "Explore the market and mortality inputs used by the simulator. Export your setup to save it for later.",
     yourSetup: "YOUR SETUP",
     nameSetup: "Name your setup",
     savedNote:
@@ -159,9 +154,6 @@ export const setupMessages: Record<Language, SetupMessages> = {
     title: "Die Grundlagen",
     description:
       "Legen Sie die Markt- und Personenannahmen Ihrer Analyse fest.",
-    preview: "Designvorschau.",
-    previewDescription:
-      "Erkunden Sie die Markt- und Sterblichkeitseingaben des Simulators. Exportieren Sie Ihre Konfiguration, um sie später erneut zu verwenden.",
     yourSetup: "IHRE KONFIGURATION",
     nameSetup: "Konfiguration benennen",
     savedNote:

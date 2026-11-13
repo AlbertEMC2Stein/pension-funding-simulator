@@ -147,11 +147,6 @@
         font-size: 8px
     }
 
-    .draft-pill {
-        font-size: 7px;
-        padding: 6px
-    }
-
     .top-actions {
         gap: 8px
     }
@@ -166,15 +161,6 @@
 
     .heading-actions {
         flex-wrap: wrap
-    }
-
-    .preview-banner {
-        align-items: flex-start;
-        line-height: 1.5
-    }
-
-    .preview-tag {
-        display: none
     }
 
     .scenario-strip {

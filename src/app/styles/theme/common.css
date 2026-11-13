@@ -12,6 +12,7 @@ body {
 .chart-card,
 .small-card,
 .form-card,
+.visual-options,
 .settings-panel,
 .method,
 .segmented button.selected,
@@ -76,9 +77,7 @@ td,
 }
 
 .nav-item.active,
-.draft-pill,
 .setting-callout,
-.visual-options,
 .method.active,
 .insight-card {
   background: var(--surface-accent);
@@ -108,18 +107,6 @@ td,
   background: var(--accent-strong);
   border-color: var(--accent-strong);
   color: var(--accent-text);
-}
-
-.preview-banner {
-  background: var(--notice-bg);
-  border-color: var(--notice-border);
-  color: var(--notice-text);
-}
-
-.preview-banner strong,
-.preview-tag,
-.preview-icon {
-  color: var(--notice-text);
 }
 
 .axis-text {
@@ -162,8 +149,6 @@ td,
 
 .teal,
 .bar-row i,
-.status-dot,
-.draft-pill span,
 .mini-dot {
   background: var(--accent);
 }

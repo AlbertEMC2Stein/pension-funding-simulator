@@ -165,8 +165,6 @@
     margin-left: auto
 }
 
-.status-dot,
-.draft-pill span,
 .mini-dot {
     width: 6px;
     height: 6px;
@@ -209,20 +207,6 @@
     display: flex;
     align-items: center;
     gap: 17px
-}
-
-.draft-pill {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    background: #eaf2eb;
-    border: 1px solid #dce9de;
-    color: #70907c;
-    border-radius: 20px;
-    padding: 7px 10px;
-    font-size: 8px;
-    letter-spacing: 1px;
-    font-weight: 700
 }
 
 .icon-button {
@@ -324,36 +308,5 @@
 
 .button:hover {
     filter: brightness(.97)
-}
-
-.preview-banner {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 11px 14px;
-    background: #f7f4e9;
-    border: 1px solid #ede9d7;
-    border-radius: 7px;
-    color: #8a8065;
-    font-size: 11px;
-    margin-bottom: 21px
-}
-
-.preview-banner strong {
-    color: #6c694f
-}
-
-.preview-icon {
-    font-size: 20px;
-    color: #bd9e65
-}
-
-.preview-tag {
-    margin-left: auto;
-    color: #b29f72;
-    font-weight: 700;
-    letter-spacing: 1px;
-    font-size: 8px;
-    white-space: nowrap
 }
 

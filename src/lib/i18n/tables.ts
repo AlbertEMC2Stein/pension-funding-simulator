@@ -5,8 +5,6 @@ export interface TableMessages {
   eyebrow: string;
   title: string;
   intro: string;
-  previewTitle: string;
-  preview: string;
   comparison: string;
   comparisonTitle: string;
   comparisonDescription: string;
@@ -105,9 +103,6 @@ export const tableMessages: Record<Language, TableMessages> = {
     eyebrow: "EXPLORE THE DETAILS",
     title: "Make room for questions",
     intro: "Compare variations of your setup and save your work.",
-    previewTitle: "In progress.",
-    preview:
-      "CE values update analytically; GM risk is estimated by simulation.",
     comparison: "YOUR COMPARISON",
     comparisonTitle: "Comparison table",
     comparisonDescription:
@@ -218,9 +213,6 @@ export const tableMessages: Record<Language, TableMessages> = {
     title: "Raum für Fragen",
     intro:
       "Vergleichen Sie Varianten Ihrer Konfiguration und speichern Sie Ihre Arbeit.",
-    previewTitle: "In Arbeit.",
-    preview:
-      "CE-Werte werden analytisch aktualisiert; das GM-Risiko wird simuliert.",
     comparison: "IHR VERGLEICH",
     comparisonTitle: "Vergleichstabelle",
     comparisonDescription:
