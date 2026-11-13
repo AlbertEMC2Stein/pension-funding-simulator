@@ -142,7 +142,7 @@ export const evaluationMessages: Record<Language, EvaluationMessages> = {
     eyebrow: "IHR RUHESTAND IM BLICK",
     title: "Wie viel können Sie sich im Ruhestand auszahlen?",
     description:
-      "Erkunden Sie, wie viel Sie sich jährlich auszahlen könnten, wenn Sie ein Risiko dafür wählen, dass Ihr Vermögen unter eine selbst gewählte Grenze fällt. Vergleichen Sie den Einfluss von Anlagerenditen, Inflation, Lebenserwartung und Anlagebeschränkungen.",
+      "Erfahren Sie, wie Ihre jährliche Auszahlung mit dem Risiko zusammenhängt, dass Ihr Vermögen unter eine von Ihnen gewählte Grenze fällt. Vergleichen Sie den Einfluss von Anlagerenditen, Inflation, Lebenserwartung und Anlagebeschränkungen.",
     previewTitle: "Sie betrachten einen Designentwurf.",
     preview:
       "CE-Auszahlungsdiagramm, Aufteilung, Kapitalvergleich und Zulässigkeitsdiagnostik verwenden Ihre aktuellen Eingaben. Simulationsergebnisse stammen aus dem letzten abgeschlossenen Lauf.",
