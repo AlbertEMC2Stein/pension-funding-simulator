@@ -52,14 +52,15 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --page: #171e2c;
-  --surface: #222a3a;
-  --surface-soft: #2c3444;
-  --surface-accent: #42343d;
+  --surface: #293449;
+  --surface-soft: #344158;
+  --surface-accent: #503a43;
   --text: #f0e9e7;
   --text-strong: #fff6f2;
-  --text-secondary: #d1d2da;
-  --text-muted: #b4bac6;
-  --border: #424a59;
+  --text-secondary: #e1e3e9;
+  --text-muted: #d0d6e1;
+  --label: #b8cfc5;
+  --border: #77869b;
   --accent: #f39b8c;
   --accent-strong: #e68072;
   --accent-soft: #c77c75;
@@ -76,7 +77,7 @@
   --feasibility-bad-bg: #493039;
   --feasibility-bad-border: #a05d60;
   --feasibility-bad-text: #ffb9b1;
-  --chart-grid: #424a59;
+  --chart-grid: #526078;
   --chart-borrowing-fill: rgba(209, 210, 218, 0.1);
   --chart-equity: #96b1d0;
   --chart-bond: #e5988a;

@@ -2,6 +2,18 @@
 
 /* The original draft uses green text in several components. Give those
    elements explicit dark-theme colors rather than inheriting light-theme ink. */
+:root[data-theme="dark"] .eyebrow,
+:root[data-theme="dark"] .eyebrow.muted,
+:root[data-theme="dark"] .tiny-label,
+:root[data-theme="dark"] .rail-label,
+:root[data-theme="dark"] th {
+  color: var(--label);
+}
+
+:root[data-theme="dark"] .input-suffix span {
+  color: var(--text-muted);
+}
+
 :root[data-theme="dark"] .setting-callout {
   background: #352d38;
   color: #f2b4a6;
