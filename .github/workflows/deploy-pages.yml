@@ -41,7 +41,7 @@ jobs:
 
       - name: Build static site
         env:
-          NEXT_PUBLIC_BASE_PATH: /pension-funding-simulator-website
+          NEXT_PUBLIC_BASE_PATH: /pension-funding-simulator
         run: npm run build
 
       - name: Upload GitHub Pages artifact

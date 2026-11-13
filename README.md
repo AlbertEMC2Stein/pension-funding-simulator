@@ -55,7 +55,7 @@ For a GitHub Pages project under a repository subpath, set
 `NEXT_PUBLIC_BASE_PATH` at **build time**, for example:
 
 ```sh
-NEXT_PUBLIC_BASE_PATH=/pension-funding-simulator-website npm run build
+NEXT_PUBLIC_BASE_PATH=/pension-funding-simulator npm run build
 ```
 
 Leave it unset for a site at the domain root. Serve `out/` over HTTP rather
@@ -65,7 +65,7 @@ than opening `out/index.html` directly.
 
 `.github/workflows/deploy-pages.yml` tests and builds the static export and
 deploys it to GitHub Pages on pushes to `main` or a manual workflow dispatch.
-The workflow currently sets the base path to `/pension-funding-simulator-website`.
+The workflow currently sets the base path to `/pension-funding-simulator`.
 In the repository's **Settings → Pages**, choose **GitHub Actions** as the
 source. If the repository is renamed, update the workflow's base path and
 check asset, worker and existing link URLs before deploying.
