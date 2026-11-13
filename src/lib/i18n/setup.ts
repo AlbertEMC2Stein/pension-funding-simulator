@@ -92,9 +92,9 @@ export const setupMessages: Record<Language, SetupMessages> = {
     investor: "Investor & mortality",
     reviewFit: "Review fit",
     calibrationNote: "A NOTE ON CALIBRATION",
-    calibrationHeadline: "Good inputs make better questions.",
+    calibrationHeadline: "Historical returns are not forecasts.",
     calibrationDescription:
-      "Historical estimates are a starting point. Review the period, currency, and assumptions before using them.",
+      "Enter your own market assumptions or estimate them from historical prices. Results depend on the inputs you choose.",
     investmentEyebrow: "THE INVESTMENT UNIVERSE",
     marketTitle: "Market assumptions",
     marketDescription: "Define up to 10 assets and how they move together.",
@@ -172,9 +172,9 @@ export const setupMessages: Record<Language, SetupMessages> = {
     investor: "Person & Sterblichkeit",
     reviewFit: "Anpassung prüfen",
     calibrationNote: "HINWEIS ZUR KALIBRIERUNG",
-    calibrationHeadline: "Gute Eingaben ermöglichen bessere Fragen.",
+    calibrationHeadline: "Historische Renditen sind keine Prognose.",
     calibrationDescription:
-      "Historische Schätzungen sind ein Ausgangspunkt. Prüfen Sie Zeitraum, Währung und Annahmen vor ihrer Verwendung.",
+      "Geben Sie eigene Marktannahmen ein oder schätzen Sie diese anhand historischer Kurse. Die Ergebnisse hängen von Ihren Eingaben ab.",
     investmentEyebrow: "DAS ANLAGEUNIVERSUM",
     marketTitle: "Marktannahmen",
     marketDescription:
