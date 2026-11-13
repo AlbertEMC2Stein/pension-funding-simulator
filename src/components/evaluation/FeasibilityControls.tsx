@@ -1,3 +1,6 @@
+import { useLanguage } from "../LanguageContext";
+import { feasibilityMessages } from "../../lib/i18n/feasibility";
+import { validationMessage } from "../../lib/i18n/validation";
 import { TermLink } from "../common";
 import type { FeasibilityResult } from "./global-feasibility";
 import type { FeasibilityThreshold } from "./feasibility-threshold";
@@ -24,29 +27,29 @@ export function FeasibilityControls({
   threshold,
   onApply,
 }: FeasibilityControlsProps) {
+  const { language } = useLanguage();
+  const text = feasibilityMessages[language];
   const status = projected ? "feasible" : feasibility.status;
   const label =
     status === "feasible"
-      ? "Feasible"
+      ? text.feasible
       : status === "unavailable"
-        ? "Not available"
-        : "Not feasible";
+        ? text.unavailable
+        : text.notFeasible;
   const message = projected
-    ? "The projected policy is globally feasible by construction: it is long-only and does not borrow."
-    : feasibility.message;
+    ? text.projectedMessage
+    : validationMessage(feasibility.message, language);
 
   return (
     <>
       <div className="feasibility-status" data-status={status} role="status">
         <strong>
-          <TermLink term="global-feasibility">Global feasibility</TermLink>{" "}
+          <TermLink term="global-feasibility">{text.title}</TermLink>{" "}
           <span>{label}</span>
         </strong>
         <p>{message}</p>
         <small>
-          {projected
-            ? "The projected allocation stays within the simplex for all wealth levels."
-            : "For the unconstrained CE policy. The Merton vector must be componentwise non-negative, with at least one positive entry."}
+          {projected ? text.projectedDetails : text.unconstrainedDetails}
         </small>
       </div>
       <div className="feasibility-action">
@@ -58,14 +61,20 @@ export function FeasibilityControls({
             if (!projected && "value" in threshold) onApply(threshold.value);
           }}
         >
-          Make globally feasible (ζ = 1)
+          {text.makeFeasible}
         </button>
         <small>
           {projected
-            ? "This action only applies to the unconstrained policy; the projected policy is already feasible by construction."
+            ? text.projectedAction
             : "message" in threshold
-              ? threshold.message
-              : `Changes your impoverishment level to €${threshold.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, rounded up to preserve feasibility; ${custom ? "the target withdrawal stays fixed and the model-derived risk may change" : "the target risk stays fixed and the model-derived withdrawal may change"}.`}
+              ? validationMessage(threshold.message, language)
+              : text.thresholdApplied(
+                  threshold.amount.toLocaleString(
+                    language === "de" ? "de-DE" : "en-US",
+                    { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                  ),
+                  custom,
+                )}
         </small>
       </div>
     </>

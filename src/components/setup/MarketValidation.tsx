@@ -1,3 +1,5 @@
+import { useLanguage } from "../LanguageContext";
+import { validationMessage } from "../../lib/i18n/validation";
 import {
   marketValidationErrors,
   type MarketCalibrationDraft,
@@ -13,6 +15,7 @@ export function MarketValidation({
   market: MarketCalibrationDraft;
 }) {
   const errors = marketValidationErrors(market);
+  const { language } = useLanguage();
 
   return (
     <div
@@ -23,19 +26,30 @@ export function MarketValidation({
       aria-live="polite"
     >
       <strong>
-        Market input validation{" "}
-        <span>{errors.length ? "Needs attention" : "Valid"}</span>
+        {language === "de"
+          ? "Prüfung der Markteingaben"
+          : "Market input validation"}{" "}
+        <span>
+          {errors.length
+            ? language === "de"
+              ? "Prüfen"
+              : "Needs attention"
+            : language === "de"
+              ? "Gültig"
+              : "Valid"}
+        </span>
       </strong>
       {errors.length > 0 && (
         <ul>
           {errors.map((error) => (
-            <li key={error}>{error}</li>
+            <li key={error}>{validationMessage(error, language)}</li>
           ))}
         </ul>
       )}
       <small>
-        Valid inputs can be used for market calibration; model assumptions are
-        checked separately below.
+        {language === "de"
+          ? "Gültige Eingaben können zur Marktkalibrierung verwendet werden; Modellannahmen werden unten separat geprüft."
+          : "Valid inputs can be used for market calibration; model assumptions are checked separately below."}
       </small>
     </div>
   );

@@ -1,5 +1,10 @@
 "use client";
 
+import { useLanguage } from "../LanguageContext";
+import { riskDetailMessages } from "../../lib/i18n/risk-details";
+import { validationMessage } from "../../lib/i18n/validation";
+import { evaluationCardMessages } from "../../lib/i18n/evaluation-cards";
+import { evaluationMessages } from "../../lib/i18n/evaluation";
 import { PanelHelp } from "../PanelHelp";
 
 import { useMemo, useState } from "react";
@@ -96,6 +101,9 @@ export function GmRiskCard({
   stale: boolean;
   custom: boolean;
 }) {
+  const { language } = useLanguage();
+  const copy = evaluationCardMessages[language];
+  const detail = riskDetailMessages[language];
   const running =
     run?.phase === "starting" ||
     run?.phase === "running" ||
@@ -136,145 +144,120 @@ export function GmRiskCard({
     <article className="chart-card diagnostic-card">
       <div className="card-top">
         <div>
-          <span className="tiny-label">
-            REFERENCE MORTALITY · SIMULATION RESULT
-          </span>
+          <span className="tiny-label">{copy.referenceMortality}</span>
           <div className="panel-help-heading">
-            <h3>Risk under Gompertz–Makeham mortality</h3>
+            <h3>{copy.gmTitle}</h3>
             <PanelHelp panel="gm" />
           </div>
           <p className="timing-intro">
-            Compare the CE-model reference with the estimated risk under the
-            fitted <TermLink term="gm-risk">GM model</TermLink>.
+            {detail.gmIntroBefore}{" "}
+            <TermLink term="gm-risk">{detail.gmLink}</TermLink>.
           </p>
         </div>
         <StatusBadge status={status} />
       </div>
-      {stale && (
-        <p role="status">
-          Settings changed since this run started. Its results belong to the
-          earlier settings.
-        </p>
-      )}
+      {stale && <p role="status">{detail.stale}</p>}
       <div className="diagnostic-metrics">
         <div>
           <span>
             {targetMode ? (
-              <TermLink term="target-risk">Target risk α</TermLink>
+              <TermLink term="target-risk">{copy.targetRisk}</TermLink>
             ) : (
-              "CE-model risk"
+              copy.ceRisk
             )}
           </span>
           <strong>
             {risk ? `${(risk.ceBenchmark * 100).toFixed(3)}%` : "—"}
           </strong>
-          <small>Unconstrained CE policy · full CE horizon</small>
+          <small>{copy.ceNote}</small>
         </div>
         <div>
-          <span>Estimated GM risk</span>
+          <span>{copy.estimatedGM}</span>
           <strong>
             {risk ? `${(risk.gm.estimate * 100).toFixed(3)}%` : "—"}
           </strong>
-          <small>Unconstrained policy · Monte Carlo estimate</small>
+          <small>{copy.unconstrainedEstimate}</small>
         </div>
         <div>
-          <span>
-            {targetMode ? "Difference from target" : "Difference from CE risk"}
-          </span>
+          <span>{targetMode ? copy.differenceTarget : copy.differenceCe}</span>
           <strong>
             {difference === null
               ? "—"
               : `${difference > 0 ? "+" : ""}${difference.toFixed(3)} pp`}
           </strong>
-          <small>GM estimate minus CE reference</small>
+          <small>{copy.differenceNote}</small>
         </div>
       </div>
       {risk && (
         <>
           <p className="chart-disclaimer">
-            Approximate 95%{" "}
-            <TermLink term="monte-carlo">Monte Carlo interval</TermLink>:{" "}
+            {detail.approximate}
+            {language === "en" ? " " : ""}
+            <TermLink term="monte-carlo">{detail.mcInterval}</TermLink>:{" "}
             {risk.gm.interval95
               ? `${(risk.gm.interval95.lower * 100).toFixed(3)}% – ${(risk.gm.interval95.upper * 100).toFixed(3)}%`
-              : "not available for this sample"}
-            . The estimate includes hits within {risk.horizonYears.toFixed(2)}{" "}
-            years; GM mortality may extend beyond the CE endpoint. Bridge,
-            time-step and horizon errors are not included in the interval.
+              : detail.sampleUnavailable}
+            . {detail.gmHorizon(risk.horizonYears.toFixed(2))}
           </p>
         </>
       )}
       {projected && (
         <div className="projection-risk-result">
           <div className="result-subheading">
-            <span className="tiny-label">
-              PROJECTED POLICY · PAIRED COMPARISON
-            </span>
+            <span className="tiny-label">{copy.projectedComparison}</span>
             <StatusBadge status={projectedStatus} />
           </div>
           <div className="diagnostic-metrics">
             <div>
-              <span>Estimated projected GM risk</span>
+              <span>{copy.projectedGM}</span>
               <strong>
                 {projectedRisk
                   ? `${(projectedRisk.gm.estimate * 100).toFixed(3)}%`
                   : "—"}
               </strong>
-              <small>Projected policy · Monte Carlo estimate</small>
+              <small>{copy.projectedEstimate}</small>
             </div>
             <div>
-              <span>Projection contribution</span>
+              <span>{copy.projectionContribution}</span>
               <strong>
                 {projectedRisk
                   ? `${projectedRisk.gmDifference.estimate > 0 ? "+" : ""}${(projectedRisk.gmDifference.estimate * 100).toFixed(3)} pp`
                   : "—"}
               </strong>
               <small>
-                Projected minus unconstrained GM risk (
+                {copy.projectedMinus} (
                 <TermLink term="percentage-points">pp</TermLink>)
               </small>
             </div>
             <div>
-              <span>
-                {targetMode
-                  ? "Total difference from target"
-                  : "Total difference from CE risk"}
-              </span>
+              <span>{targetMode ? copy.totalTarget : copy.totalCe}</span>
               <strong>
                 {projectedDifference === null
                   ? "—"
                   : `${projectedDifference > 0 ? "+" : ""}${projectedDifference.toFixed(3)} pp`}
               </strong>
-              <small>Projected GM risk minus unconstrained CE reference</small>
+              <small>{copy.projectedReference}</small>
             </div>
           </div>
           {projectedRisk ? (
             <p className="chart-disclaimer">
-              Approximate 95% Monte Carlo intervals: projected GM risk{" "}
+              {detail.projectedIntervals} {detail.projectedRisk}{" "}
               {projectedRisk.gm.interval95
                 ? `${(projectedRisk.gm.interval95.lower * 100).toFixed(3)}% – ${(projectedRisk.gm.interval95.upper * 100).toFixed(3)}%`
-                : "not available for this sample"}
-              ; paired difference{" "}
+                : detail.sampleUnavailable}
+              ; {detail.pairedDifference}{" "}
               {projectedRisk.gmDifference.interval95
                 ? `${(projectedRisk.gmDifference.interval95.lower * 100).toFixed(3)} pp – ${(projectedRisk.gmDifference.interval95.upper * 100).toFixed(3)} pp`
-                : "not available for this sample"}
-              . The projected policy uses Euler steps and a frozen-variance
-              bridge; time-step and bridge errors are not included in the
-              intervals.
+                : detail.sampleUnavailable}
+              . {detail.projectedMethod}
             </p>
           ) : (
-            <p className="chart-disclaimer">
-              Paired estimates and their uncertainty will be shown after a
-              projected-policy run.
-            </p>
+            <p className="chart-disclaimer">{detail.awaitingProjected}</p>
           )}
         </div>
       )}
       {!projected && (
-        <p className="chart-disclaimer">
-          When projection is selected, a paired policy comparison will also
-          appear here. Estimates depend on the model and are not known future
-          risks.
-        </p>
+        <p className="chart-disclaimer">{detail.offerProjected}</p>
       )}
     </article>
   );
@@ -282,6 +265,9 @@ export function GmRiskCard({
 
 /** Show capital needed at nearby CE risk levels for the same withdrawal. */
 export function CapitalCard({ comparison }: { comparison: CapitalComparison }) {
+  const { language } = useLanguage();
+  const copy = evaluationCardMessages[language];
+  const detail = riskDetailMessages[language];
   const available = "rows" in comparison;
   const relief = available
     ? comparison.zeroRisk
@@ -298,51 +284,50 @@ export function CapitalCard({ comparison }: { comparison: CapitalComparison }) {
     <article className="chart-card capital-card">
       <div className="card-top">
         <div>
-          <span className="tiny-label">
-            THE VALUE OF RISK-TAKING · UNCONSTRAINED POLICY
-          </span>
+          <span className="tiny-label">{copy.valueRisk}</span>
           <div className="panel-help-heading">
-            <h3>What does accepting risk change?</h3>
+            <h3>{copy.valueRiskTitle}</h3>
             <PanelHelp panel="capital" />
           </div>
           <p className="timing-intro">
-            Compare your starting capital with the amount needed without
-            investment risk for your setup&apos;s{" "}
-            <TermLink term="withdrawal">annual withdrawal</TermLink>. Learn
-            about <TermLink term="capital-relief">capital relief</TermLink>.
+            {detail.capitalIntro}{" "}
+            <TermLink term="withdrawal">{detail.withdrawalLink}</TermLink>.{" "}
+            {detail.capitalLearn}{" "}
+            <TermLink term="capital-relief">{detail.reliefLink}</TermLink>.
           </p>
         </div>
         <StatusBadge status={available ? "calculated" : "not-available"} />
       </div>
       {!available ? (
-        <p role="status">{comparison.message}</p>
+        <p role="status">{validationMessage(comparison.message, language)}</p>
       ) : (
         <>
           <p className="timing-intro">
-            Annual withdrawal used: {euros(comparison.annualWithdrawal)} / year
+            {copy.withdrawalUsed} {euros(comparison.annualWithdrawal)} /{" "}
+            {copy.year}
           </p>
           <div className="capital-summary">
             <div>
-              <span>Capital needed without risk-taking</span>
+              <span>{copy.riskFreeCapital}</span>
               <strong>{euros(comparison.safeCapital)}</strong>
               <small>
-                <TermLink term="safe-boundary">Safe boundary</TermLink> at
-                retirement
+                <TermLink term="safe-boundary">{copy.safeBoundary}</TermLink>{" "}
+                {copy.atRetirement}
               </small>
             </div>
             <div>
-              <span>Starting capital</span>
+              <span>{copy.capital}</span>
               <strong>{euros(comparison.initialCapital)}</strong>
-              <small>The initial capital in your setup</small>
+              <small>{copy.initialNote}</small>
             </div>
             <div>
               <span>
-                {comparison.zeroRisk ? "Capital surplus" : "Capital relief"}
+                {comparison.zeroRisk ? copy.capitalSurplus : copy.capitalRelief}
               </span>
               <strong>{euros(relief!)}</strong>
               <small>
-                {((relief! / comparison.safeCapital) * 100).toFixed(2)}% of
-                capital needed without risk-taking
+                {((relief! / comparison.safeCapital) * 100).toFixed(2)}%{" "}
+                {copy.fractionOfSafe}
               </small>
             </div>
           </div>
@@ -350,20 +335,21 @@ export function CapitalCard({ comparison }: { comparison: CapitalComparison }) {
             <table className="capital-table">
               <thead>
                 <tr>
-                  <th>CE lifetime risk</th>
-                  <th>Capital required</th>
-                  <th>Change from starting capital</th>
+                  <th>{copy.lifetimeCe}</th>
+                  <th>{copy.capitalRequired}</th>
+                  <th>{copy.changeFromCapital}</th>
                 </tr>
               </thead>
               <tbody key={comparison.zeroRisk ? "zero-risk" : "positive-risk"}>
                 {comparison.rows.map((row) => (
                   <tr key={`${row.label}/${row.risk}`}>
                     <td>
-                      {row.label} <span>({(row.risk * 100).toFixed(2)}%)</span>
+                      {detail.capitalRows[row.label] ?? row.label}{" "}
+                      <span>({(row.risk * 100).toFixed(2)}%)</span>
                     </td>
                     <td>
                       {row.capital === null
-                        ? "Not available"
+                        ? copy.unavailable
                         : euros(row.capital)}
                     </td>
                     <td>
@@ -379,11 +365,8 @@ export function CapitalCard({ comparison }: { comparison: CapitalComparison }) {
             </table>
           </div>
           <p className="chart-disclaimer">
-            Unconstrained CE model · annual withdrawal is held fixed. Changes
-            are relative to your starting capital; a target at or above 100% is
-            outside the supported range.
-            {comparison.zeroRisk &&
-              " Your starting capital may exceed the minimum without risk-taking."}
+            {detail.capitalNote}
+            {comparison.zeroRisk && ` ${detail.capitalZeroNote}`}
           </p>
         </>
       )}
@@ -405,6 +388,9 @@ export function BorrowingCard({
   stale: boolean;
   diagnostics: BorrowingDiagnostics;
 }) {
+  const { language } = useLanguage();
+  const copy = evaluationCardMessages[language];
+  const detail = riskDetailMessages[language];
   const hasNegativeMerton = feasibility.status === "negative-merton";
   const analyticalZero = feasibility.status === "feasible";
   const occupation = analyticalZero ? undefined : run?.borrowingOccupation;
@@ -434,37 +420,28 @@ export function BorrowingCard({
     <article className="chart-card borrowing-card">
       <div className="card-top">
         <div>
-          <span className="tiny-label">UNCONSTRAINED POLICY</span>
+          <span className="tiny-label">{copy.unconstrained}</span>
           <div className="panel-help-heading">
-            <h3>Borrowing exposure</h3>
+            <h3>{copy.borrowing}</h3>
             <PanelHelp panel="borrowing" />
           </div>
           <p className="timing-intro">
-            Explore the chance that your portfolio{" "}
-            <TermLink term="borrowing">borrows</TermLink> and how long borrowing
-            may last.
+            {detail.borrowIntro}{" "}
+            <TermLink term="borrowing">{detail.borrowLink}</TermLink>{" "}
+            {detail.borrowIntroEnd}
           </p>
         </div>
         <StatusBadge status={status} />
       </div>
       {projected ? (
-        <p role="status">
-          This diagnostic is available for the unconstrained policy only. Turn
-          off projection to view it. The projected policy prevents borrowing by
-          keeping allocations within the simplex.
-        </p>
+        <p role="status">{detail.projectedUnavailable}</p>
       ) : hasNegativeMerton ? (
-        <p role="status">
-          This diagnostic is unavailable because a Merton-vector component is
-          negative. The unconstrained strategy requires short selling whenever
-          wealth is below the safe boundary, so it is not globally
-          simplex-feasible.
-        </p>
+        <p role="status">{detail.negativeUnavailable}</p>
       ) : (
         <>
           <div className="borrowing-metrics">
             <Metric
-              label="Probability of ever borrowing"
+              label={copy.borrowingProbability}
               value={
                 analyticalZero
                   ? "0%"
@@ -472,77 +449,77 @@ export function BorrowingCard({
                     ? `${(100 * probability.estimate).toFixed(2)}%`
                     : "—"
               }
-              note="While alive and before impoverishment or the run horizon"
+              note={copy.borrowingProbabilityNote}
             />
             <Metric
-              label="Expected time borrowing"
+              label={copy.borrowingTime}
               value={
                 analyticalZero
-                  ? "0 years"
+                  ? `0 ${detail.years}`
                   : occupation
-                    ? `${occupation.estimateYears.toFixed(2)} years`
+                    ? `${occupation.estimateYears.toFixed(2)} ${detail.years}`
                     : "—"
               }
-              note="Average time alive while borrowing before impoverishment or the run horizon"
+              note={copy.borrowingTimeNote}
             />
           </div>
           <details className="borrowing-details">
-            <summary>View borrowing diagnostics</summary>
+            <summary>{copy.borrowingDetails}</summary>
             <dl>
               {[
                 [
-                  "Global simplex feasibility",
+                  detail.global,
                   feasibility.status === "feasible"
-                    ? "Feasible"
+                    ? detail.feasible
                     : feasibility.status === "unavailable"
-                      ? "Not available"
-                      : "Not feasible",
+                      ? detail.unavailable
+                      : detail.notFeasible,
                 ],
                 [
-                  "Relative bandwidth multiplier ζ",
+                  detail.relativeBandwidth,
                   "zeta" in feasibility
                     ? `${feasibility.zeta.toPrecision(6)} (${feasibility.zeta <= 1 ? "≤" : ">"} 1)`
                     : "—",
                 ],
                 [
-                  "Ever-borrowing MC standard error",
+                  detail.probabilitySE,
                   probability?.standardError != null
                     ? `${(100 * probability.standardError).toFixed(3)}%`
                     : "—",
                 ],
                 [
-                  "Ever-borrowing 95% MC interval",
+                  detail.probabilityInterval,
                   probability?.interval95
                     ? `${(100 * probability.interval95.lower).toFixed(3)}% – ${(100 * probability.interval95.upper).toFixed(3)}%`
                     : "—",
                 ],
                 [
-                  "Borrowing time MC standard error",
+                  detail.timeSE,
                   occupation?.standardErrorYears != null
-                    ? `${occupation.standardErrorYears.toFixed(3)} years`
+                    ? `${occupation.standardErrorYears.toFixed(3)} ${detail.years}`
                     : "—",
                 ],
                 [
-                  "Borrowing time 95% MC interval",
+                  detail.timeInterval,
                   occupation?.interval95Years
-                    ? `${occupation.interval95Years.lower.toFixed(3)} – ${occupation.interval95Years.upper.toFixed(3)} years`
+                    ? `${occupation.interval95Years.lower.toFixed(3)} – ${occupation.interval95Years.upper.toFixed(3)} ${detail.years}`
                     : "—",
                 ],
                 [
-                  "Borrowing at retirement",
+                  detail.atRetirement,
                   diagnostics.available
                     ? diagnostics.borrowingAtRetirement
-                      ? "Yes"
-                      : "No"
-                    : "Not available",
+                      ? detail.yes
+                      : detail.no
+                    : detail.unavailable,
                 ],
                 [
-                  "Last possible borrowing time",
+                  detail.lastTime,
                   diagnostics.available
                     ? diagnostics.lastPossibleTimeYears === null
-                      ? "Not possible"
-                      : `${diagnostics.lastPossibleTimeYears.toFixed(2)} years after retirement`
-                    : "Not available",
+                      ? detail.notPossible
+                      : `${diagnostics.lastPossibleTimeYears.toFixed(2)} ${detail.yearsAfter}`
+                    : detail.unavailable,
                 ],
               ].map(([a, b]) => (
                 <div key={a}>
@@ -551,35 +528,26 @@ export function BorrowingCard({
                 </div>
               ))}
             </dl>
-            <p>{feasibility.message}</p>
+            <p>{validationMessage(feasibility.message, language)}</p>
             <p>
-              Where the model assumptions apply,{" "}
-              <TermLink term="global-feasibility">ζ</TermLink> &gt; 1 indicates
-              that the relative bandwidth exceeds the global no-borrowing
-              threshold. Possibility does not imply borrowing on a particular
-              path. The last possible time is a model boundary, not a predicted
-              borrowing time.{" "}
-              {stale &&
-                occupation &&
-                "These analytical checks use your current inputs; the simulated results use the previous run."}
+              {detail.bandwidthBefore}{" "}
+              <TermLink term="global-feasibility">ζ</TermLink>{" "}
+              {detail.bandwidthAfter}{" "}
+              {stale && occupation && detail.staleChecks}
             </p>
             <p>
               {analyticalZero
-                ? "Both zeros follow analytically from global feasibility, so Monte Carlo uncertainty does not apply."
-                : "Monte Carlo intervals describe sampling uncertainty only; they do not cover numerical approximation or horizon effects."}
+                ? detail.analyticalZeros
+                : detail.simulationIntervals}
             </p>
           </details>
           <p className="chart-disclaimer">
             {analyticalZero ? (
-              "The globally feasible unconstrained policy does not borrow. Both values are analytical and do not require a simulation."
+              detail.noBorrow
             ) : (
               <>
-                {occupation
-                  ? "Borrowing time uses interpolated crossings and GM survival; short excursions can be missed. Monte Carlo uncertainty does not include time-step or bridge error."
-                  : "Borrowing time has not been calculated. The global feasibility diagnostic is analytical when available."}{" "}
-                {probability
-                  ? "First borrowing uses a single-boundary bridge that does not condition on impoverishment or use a first-passage bridge."
-                  : "The probability of ever borrowing is not calculated yet."}
+                {occupation ? detail.timeEstimate : detail.timePending}{" "}
+                {probability ? detail.firstEstimate : detail.firstPending}
               </>
             )}
           </p>
@@ -594,6 +562,23 @@ export function BorrowingCard({
  * current inputs; simulation views retain their captured run and mark it stale.
  */
 export function Evaluation() {
+  const { language } = useLanguage();
+  const text = evaluationMessages[language];
+  const translatedVisuals: Record<Visual, string> = {
+    withdrawal: text.withdrawal,
+    gm: text.estimatedGM,
+    capital: text.valueRisk,
+    allocation: text.allocation,
+    timing: text.timing,
+    borrowing: text.borrowing,
+    trajectories: text.illustrative,
+  };
+  const groupTitles: Record<string, string> = {
+    "Withdrawal & risk": text.withdrawal,
+    "Portfolio & policies": text.portfolioPolicies,
+    "Impoverishment & borrowing": text.impoverishmentBorrowing,
+    "Wealth trajectories": text.trajectories,
+  };
   const { navigate } = useDraft();
   const { draft, setDraft, setupName, initialMortalityFit } =
     useSimulationDraft();
@@ -647,39 +632,37 @@ export function Evaluation() {
       aria-expanded={pickerOpen}
       onClick={() => setPickerOpen(!pickerOpen)}
     >
-      ◫ &nbsp; Customize visuals
+      ◫ &nbsp; {text.customize}
     </button>
   );
 
   return (
     <section className="view active">
       <PageHeading
-        eyebrow="YOUR RETIREMENT, EXPLORED"
-        title="See the bigger picture"
-        description="Explore how your choices shape the path ahead."
+        eyebrow={text.eyebrow}
+        title={text.title}
+        description={text.description}
       />
       <PreviewBanner>
-        <strong>You&apos;re exploring a design draft.</strong> The CE withdrawal
-        chart, allocation, capital comparison and feasibility diagnostic use
-        your current inputs. Simulation results use the latest completed run.
+        <strong>{text.previewTitle}</strong> {text.preview}
       </PreviewBanner>
       {initialMortalityFit.phase === "checking-storage" && (
         <p className="initial-fit-status" role="status">
-          Checking for a saved setup…
+          {text.checkingStorage}
         </p>
       )}
       {(initialMortalityFit.phase === "loading" ||
         initialMortalityFit.phase === "running") && (
         <p className="initial-fit-status" role="status">
           {initialMortalityFit.phase === "loading"
-            ? "Preparing mortality data…"
-            : `Fitting mortality models · ${initialMortalityFit.model}: ${initialMortalityFit.completed} / ${initialMortalityFit.total} starts`}
+            ? text.preparingMortality
+            : `${text.fitting} · ${initialMortalityFit.model}: ${initialMortalityFit.completed} / ${initialMortalityFit.total} ${text.starts}`}
         </p>
       )}
       {initialMortalityFit.phase === "error" && (
         <p className="initial-fit-status initial-fit-error" role="alert">
-          {initialMortalityFit.message} Open Investor &amp; mortality to review
-          and fit the models.
+          {validationMessage(initialMortalityFit.message, language)}{" "}
+          {text.reviewMortality}
         </p>
       )}
       <div
@@ -687,32 +670,32 @@ export function Evaluation() {
       >
         <div className="scenario-strip">
           <div className="scenario-intro">
-            <span className="tiny-label">YOUR SETUP</span>
+            <span className="tiny-label">{text.yourSetup}</span>
             <strong>
               {setupName.trim() || DEFAULT_SETUP_NAME} <span>✳</span>
             </strong>
           </div>
           <div className="scenario-item">
-            <span>Retirement age</span>
+            <span>{text.retirementAge}</span>
             <strong>
               {/^\d{4}$/.test(draft.investor.birthYear) &&
               /^\d{4}$/.test(draft.investor.retirementYear)
                 ? Number(draft.investor.retirementYear) -
                   Number(draft.investor.birthYear)
                 : "—"}{" "}
-              <small>years</small>
+              <small>{text.years}</small>
             </strong>
           </div>
           <div className="scenario-item">
-            <span>Starting capital</span>
+            <span>{text.capital}</span>
             <strong>€{draft.investor.initialCapital || "—"}</strong>
           </div>
           <div className="scenario-item">
-            <span>Impoverishment level</span>
+            <span>{text.impoverishment}</span>
             <strong>€{draft.investor.impoverishmentLevel || "—"}</strong>
           </div>
           <div className="scenario-item">
-            <span>{custom ? "Annual withdrawal" : "Target risk"}</span>
+            <span>{custom ? text.annualWithdrawal : text.targetRisk}</span>
             <strong>
               {custom
                 ? `€${withdrawal.toLocaleString("en-US")}`
@@ -724,7 +707,7 @@ export function Evaluation() {
             type="button"
             onClick={() => navigate("setup")}
           >
-            Edit setup
+            {text.editSetup}
           </button>
           <SimulationRunControl
             run={run}
@@ -741,16 +724,13 @@ export function Evaluation() {
           {pickerOpen && (
             <div className="visual-options visual-picker">
               <div className="visual-picker-heading">
-                <strong>Choose your visuals</strong>
-                <p>
-                  Show the views you want to explore. Enable trajectories before
-                  a run to retain a sample for that chart.
-                </p>
+                <strong>{text.chooseVisuals}</strong>
+                <p>{text.chooseDescription}</p>
               </div>
               <div className="visual-picker-groups">
                 {visualGroups.map((group) => (
                   <fieldset key={group.title}>
-                    <legend>{group.title}</legend>
+                    <legend>{groupTitles[group.title]}</legend>
                     {group.entries.map((entry) => (
                       <label key={entry.id}>
                         <input
@@ -763,26 +743,20 @@ export function Evaluation() {
                             })
                           }
                         />{" "}
-                        {entry.label}
+                        {translatedVisuals[entry.id]}
                       </label>
                     ))}
                   </fieldset>
                 ))}
               </div>
-              <p className="visual-picker-note">
-                Mortality fit is shown in Investor & mortality. The CE chart,
-                allocation, capital comparison and global feasibility are
-                calculated when available. GM risk is estimated when a
-                simulation completes. The timing and trajectory views use the
-                same run.
-              </p>
+              <p className="visual-picker-note">{text.visualNote}</p>
             </div>
           )}
           {showWithdrawalSection && (
             <SectionHeading
-              eyebrow="01 / THE DECISION"
-              title="Withdrawal & risk"
-              description="Find a balance that feels right for your retirement."
+              eyebrow={text.decisionEyebrow}
+              title={text.withdrawal}
+              description={text.decisionDescription}
             />
           )}
           {visuals.withdrawal && <RiskWithdrawalChart result={ceResult} />}
@@ -802,9 +776,9 @@ export function Evaluation() {
           {visuals.allocation && (
             <section className="risk-section">
               <SectionHeading
-                eyebrow="02 / PORTFOLIO"
-                title="Portfolio & policies"
-                description="See how the selected policy allocates your portfolio."
+                eyebrow={text.portfolioEyebrow}
+                title={text.portfolioPolicies}
+                description={text.portfolioDescription}
               />
               <AllocationCard
                 result={ceResult}
@@ -816,12 +790,12 @@ export function Evaluation() {
           {(visuals.timing || visuals.borrowing) && (
             <section className="risk-section">
               <SectionHeading
-                eyebrow="03 / UNDERSTANDING EXPOSURE"
-                title="Impoverishment & borrowing"
+                eyebrow={text.exposureEyebrow}
+                title={text.impoverishmentBorrowing}
                 description={
                   projected
-                    ? "Explore possible outcomes for the selected policy."
-                    : "Explore possible outcomes and the borrowing exposure of the unconstrained policy."
+                    ? text.projectedExposure
+                    : text.unconstrainedExposure
                 }
               />
               <div className="risk-section-grid">
@@ -846,9 +820,9 @@ export function Evaluation() {
           {visuals.trajectories && (
             <section className="risk-section">
               <SectionHeading
-                eyebrow="04 / ILLUSTRATIVE PATHS"
-                title="Wealth trajectories"
-                description="Explore example paths of wealth over time."
+                eyebrow={text.pathsEyebrow}
+                title={text.trajectories}
+                description={text.pathsDescription}
               />
               <TrajectoryCard run={run} stale={stale} />
             </section>
@@ -858,24 +832,22 @@ export function Evaluation() {
           <aside id="evaluation-settings" className="settings-panel">
             <div className="settings-heading">
               <div>
-                <span className="tiny-label">MAKE IT YOURS</span>
-                <h2>Simulation settings</h2>
+                <span className="tiny-label">{text.customizeEyebrow}</span>
+                <h2>{text.settings}</h2>
               </div>
               <button
                 type="button"
                 className="close-settings"
-                aria-label="Close simulation settings"
+                aria-label={text.close}
                 onClick={() => setSettingsOpen(false)}
               >
                 ×
               </button>
             </div>
-            <p className="settings-lead">
-              Adjust the details behind your view.
-            </p>
+            <p className="settings-lead">{text.settingsLead}</p>
             <div className="settings-group">
               <div className="group-title">
-                <span>01</span> Withdrawal approach
+                <span>01</span> {text.withdrawalApproach}
               </div>
               <div className="segmented">
                 <button
@@ -886,7 +858,7 @@ export function Evaluation() {
                     updateSimulation({ withdrawalMode: "targetRisk" })
                   }
                 >
-                  Target risk
+                  {text.targetRisk}
                 </button>
                 <button
                   type="button"
@@ -896,11 +868,11 @@ export function Evaluation() {
                     updateSimulation({ withdrawalMode: "customAmount" })
                   }
                 >
-                  Custom amount
+                  {text.customAmount}
                 </button>
               </div>
               <label className="field-label" htmlFor="withdrawal-slider">
-                {custom ? "Annual withdrawal" : "Target lifetime risk"}{" "}
+                {custom ? text.annualWithdrawal : text.targetLifetime}{" "}
                 <b>
                   {custom
                     ? `€${withdrawal.toLocaleString("en-US")}`
@@ -925,14 +897,14 @@ export function Evaluation() {
                 }
               />
               <div className="range-ends">
-                <span>Lower {custom ? "withdrawal" : "risk"}</span>
-                <span>Higher {custom ? "withdrawal" : "risk"}</span>
+                <span>{custom ? text.lowerWithdrawal : text.lowerRisk}</span>
+                <span>{custom ? text.higherWithdrawal : text.higherRisk}</span>
               </div>
               <div className="setting-callout withdrawal-callout">
                 <span aria-hidden="true">✳</span>
                 <div>
                   <strong>
-                    {custom ? "Model-implied risk" : "Model-derived withdrawal"}
+                    {custom ? text.impliedRisk : text.derivedWithdrawal}
                   </strong>
                   <div className="withdrawal-value">
                     {"data" in ceResult
@@ -940,19 +912,19 @@ export function Evaluation() {
                         ? (ceResult.data.selectedRisk * 100).toFixed(2)
                         : `€${Math.round(ceResult.data.selectedWithdrawal).toLocaleString("en-US")}`
                       : "—"}{" "}
-                    <small>{custom ? "%" : "/ year"}</small>
+                    <small>{custom ? "%" : text.perYear}</small>
                   </div>
                   <span className="withdrawal-status" role="status">
                     {"data" in ceResult
-                      ? "Unconstrained CE model"
-                      : ceResult.message}
+                      ? text.ceModel
+                      : validationMessage(ceResult.message, language)}
                   </span>
                 </div>
               </div>
             </div>
             <div className="settings-group">
               <div className="group-title">
-                <span>02</span> Portfolio policy
+                <span>02</span> {text.portfolioPolicy}
               </div>
               <label className="check-card">
                 <input
@@ -963,13 +935,14 @@ export function Evaluation() {
                   }
                 />
                 <span>
-                  <strong>Apply projected policy</strong>
-                  <small>Keep allocations long-only and avoid borrowing.</small>
+                  <strong>{text.applyProjection}</strong>
+                  <small>{text.projectionNote}</small>
                 </span>
               </label>
               <div className="info-line">
-                ⓘ &nbsp; <TermLink term="projection">Projection</TermLink> is a
-                feasible comparison policy.
+                ⓘ &nbsp;{" "}
+                <TermLink term="projection">{text.projection}</TermLink>{" "}
+                {text.projectionInfo}
               </div>
               <FeasibilityControls
                 projected={projected}
@@ -989,7 +962,7 @@ export function Evaluation() {
             </div>
             <div className="settings-group">
               <div className="group-title">
-                <span>03</span> Simulation detail
+                <span>03</span> {text.simulationDetail}
               </div>
               <SimulationDetailFields
                 simulation={simulation}

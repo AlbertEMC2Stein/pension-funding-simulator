@@ -1,3 +1,5 @@
+import { useLanguage } from "../LanguageContext";
+import { importDiagnosticsMessages } from "../../lib/i18n/import-diagnostics";
 import { TermLink } from "../common";
 import type { HistoricalMarketEstimate } from "../../lib/market/historical-market";
 
@@ -11,41 +13,40 @@ export function ImportedMarketDiagnostics({
   estimate: HistoricalMarketEstimate;
   current: boolean;
 }) {
+  const { language } = useLanguage();
+  const text = importDiagnosticsMessages[language];
+
   return (
     <details className="borrowing-details diagnostic-details market-import-diagnostics">
       <summary>
-        <span>Imported data &amp; estimation uncertainty</span>
+        <span>{text.title}</span>
         <span className="market-import-status">
-          {current ? "Matches inputs" : "Inputs changed"}
+          {current ? text.matches : text.changed}
         </span>
       </summary>
       <p>
-        {name} · {estimate.firstDate} to {estimate.lastDate} · {estimate.rows}{" "}
-        dated rows · {estimate.missingCells} missing price cells.
+        {name} · {estimate.firstDate} {text.dateTo} {estimate.lastDate} ·{" "}
+        {estimate.rows} {text.datedRows} · {estimate.missingCells}{" "}
+        {text.missing}
       </p>
-      {!current && (
-        <p role="status">
-          These diagnostics describe the original CSV import. The market inputs
-          have since been edited and may no longer match the imported estimates.
-        </p>
-      )}
-      <h4 className="market-import-subheading">Assets</h4>
+      {!current && <p role="status">{text.stale}</p>}
+      <h4 className="market-import-subheading">{text.assets}</h4>
       <div className="capital-table-wrap">
         <table className="capital-table">
           <thead>
             <tr>
-              <th rowSpan={2}>Asset</th>
-              <th rowSpan={2}>Intervals</th>
-              <th rowSpan={2}>Coverage</th>
-              <th rowSpan={2}>Longest gap</th>
-              <th colSpan={2}>95% interval for annual growth</th>
-              <th colSpan={2}>95% interval for volatility</th>
+              <th rowSpan={2}>{text.asset}</th>
+              <th rowSpan={2}>{text.intervals}</th>
+              <th rowSpan={2}>{text.coverage}</th>
+              <th rowSpan={2}>{text.gap}</th>
+              <th colSpan={2}>{text.growth}</th>
+              <th colSpan={2}>{text.volatility}</th>
             </tr>
             <tr>
-              <th>Lower bound</th>
-              <th>Upper bound</th>
-              <th>Lower bound</th>
-              <th>Upper bound</th>
+              <th>{text.lower}</th>
+              <th>{text.upper}</th>
+              <th>{text.lower}</th>
+              <th>{text.upper}</th>
             </tr>
           </thead>
           <tbody>
@@ -53,8 +54,12 @@ export function ImportedMarketDiagnostics({
               <tr key={asset.name}>
                 <td>{asset.name}</td>
                 <td>{asset.intervals}</td>
-                <td>{asset.years.toFixed(2)} years</td>
-                <td>{Math.round(asset.maxGapDays)} days</td>
+                <td>
+                  {asset.years.toFixed(2)} {text.years}
+                </td>
+                <td>
+                  {Math.round(asset.maxGapDays)} {text.days}
+                </td>
                 <td>{(100 * asset.growthInterval.lower).toFixed(2)}%</td>
                 <td>{(100 * asset.growthInterval.upper).toFixed(2)}%</td>
                 <td>{(100 * asset.volatilityInterval.lower).toFixed(2)}%</td>
@@ -64,23 +69,23 @@ export function ImportedMarketDiagnostics({
           </tbody>
         </table>
       </div>
-      <h4 className="market-import-subheading">Asset pairs</h4>
+      <h4 className="market-import-subheading">{text.pairs}</h4>
       {estimate.pairs.length === 0 ? (
-        <p>Pairwise diagnostics require at least two assets.</p>
+        <p>{text.noPairs}</p>
       ) : (
         <div className="capital-table-wrap">
           <table className="capital-table">
             <thead>
               <tr>
-                <th rowSpan={2}>Asset pair</th>
-                <th rowSpan={2}>Intervals</th>
-                <th rowSpan={2}>Coverage</th>
-                <th rowSpan={2}>Longest gap</th>
-                <th colSpan={2}>95% interval for correlation</th>
+                <th rowSpan={2}>{text.pair}</th>
+                <th rowSpan={2}>{text.intervals}</th>
+                <th rowSpan={2}>{text.coverage}</th>
+                <th rowSpan={2}>{text.gap}</th>
+                <th colSpan={2}>{text.correlation}</th>
               </tr>
               <tr>
-                <th>Lower bound</th>
-                <th>Upper bound</th>
+                <th>{text.lower}</th>
+                <th>{text.upper}</th>
               </tr>
             </thead>
             <tbody>
@@ -90,8 +95,12 @@ export function ImportedMarketDiagnostics({
                     {pair.first} / {pair.second}
                   </td>
                   <td>{pair.intervals}</td>
-                  <td>{pair.years.toFixed(2)} years</td>
-                  <td>{Math.round(pair.maxGapDays)} days</td>
+                  <td>
+                    {pair.years.toFixed(2)} {text.years}
+                  </td>
+                  <td>
+                    {Math.round(pair.maxGapDays)} {text.days}
+                  </td>
                   <td>{pair.correlationInterval?.lower.toFixed(2) ?? "—"}</td>
                   <td>{pair.correlationInterval?.upper.toFixed(2) ?? "—"}</td>
                 </tr>
@@ -101,21 +110,13 @@ export function ImportedMarketDiagnostics({
         </div>
       )}
       <p>
-        These intervals describe{" "}
+        {text.uncertaintyBefore}{" "}
         <TermLink term="historical-uncertainty">
-          historical estimation uncertainty
+          {text.uncertaintyLink}
         </TermLink>{" "}
-        under a constant-parameter Gaussian log-return model. Growth intervals
-        apply to annualized log growth converted to a compounded rate;
-        correlation intervals use an approximate Fisher transformation. A dash
-        means there are too few paired intervals or perfect correlation.
-        Imported values are rounded to two decimals for subsequent calculations.
+        {text.uncertaintyAfter}
       </p>
-      <p>
-        Durations use calendar days / 365.25; no missing prices are filled.
-        Growth and volatility use each asset’s observed intervals, while
-        correlations use matching dates for each pair.
-      </p>
+      <p>{text.coverageNote}</p>
     </details>
   );
 }

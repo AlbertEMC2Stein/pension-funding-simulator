@@ -1,5 +1,10 @@
 "use client";
 
+import { useLanguage } from "../LanguageContext";
+import { validationMessage } from "../../lib/i18n/validation";
+import { mortalityFitMessages } from "../../lib/i18n/mortality-fit";
+import { chartMessages } from "../../lib/i18n/charts";
+
 import { TermLink } from "../common";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -43,6 +48,8 @@ function Plot({
   ce: CeFit | null;
   view: string;
 }) {
+  const { language } = useLanguage();
+  const copy = chartMessages[language];
   const element = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState("light");
   const [plotError, setPlotError] = useState(false);
@@ -84,10 +91,10 @@ function Plot({
           y: curve.map((point) => point.survival),
           type: "scatter",
           mode: "lines+markers",
-          name: "Cohort",
+          name: copy.cohort,
           line: { color: accent, width: 3 },
           marker: { size: 4 },
-          hovertemplate: "Age %{x}<br>Survival %{y:.1%}<extra>Cohort</extra>",
+          hovertemplate: `${copy.attainedAge} %{x}<br>${copy.survival} %{y:.1%}<extra>${copy.cohort}</extra>`,
         },
       ];
 
@@ -97,9 +104,9 @@ function Plot({
           y: gm.fittedSurvival,
           type: "scatter",
           mode: "lines",
-          name: "GM fit",
+          name: copy.gmFit,
           line: { color: blue, width: 2, dash: "dash" },
-          hovertemplate: "Age %{x}<br>Survival %{y:.1%}<extra>GM fit</extra>",
+          hovertemplate: `${copy.attainedAge} %{x}<br>${copy.survival} %{y:.1%}<extra>${copy.gmFit}</extra>`,
         });
       if (ce)
         traces.push({
@@ -107,9 +114,9 @@ function Plot({
           y: ce.fittedSurvival,
           type: "scatter",
           mode: "lines",
-          name: "CE fit",
+          name: copy.ceFit,
           line: { color: coral, width: 2, dash: "dot" },
-          hovertemplate: "Age %{x}<br>Survival %{y:.1%}<extra>CE fit</extra>",
+          hovertemplate: `${copy.attainedAge} %{x}<br>${copy.survival} %{y:.1%}<extra>${copy.ceFit}</extra>`,
         });
 
       await plotly.react(
@@ -123,12 +130,12 @@ function Plot({
           plot_bgcolor: "rgba(0,0,0,0)",
           font: { color: text },
           xaxis: {
-            title: { text: "Attained age" },
+            title: { text: copy.attainedAge },
             gridcolor: grid,
             fixedrange: false,
           },
           yaxis: {
-            title: { text: "Survival probability", standoff: 8 },
+            title: { text: copy.survival, standoff: 8 },
             tickformat: ".0%",
             ticklabelstandoff: 8,
             range: [0, 1.05],
@@ -170,22 +177,19 @@ function Plot({
       disposed = true;
       cleanup?.();
     };
-  }, [curve, gm, ce, theme]);
+  }, [curve, gm, ce, theme, language]);
 
   return (
     <>
-      {plotError && <p role="alert">The chart could not be displayed.</p>}
-      <div
-        ref={element}
-        aria-label="Cohort survival probability by attained age"
-      />
+      {plotError && <p role="alert">{copy.plotError}</p>}
+      <div ref={element} aria-label={copy.cohortAria} />
       <ChartExport
         element={element}
         filename="mortality-survival"
         context={{
-          title: "Cohort survival and mortality fits",
-          xUnit: "attained age in years",
-          yUnit: "survival probability",
+          title: copy.cohortTitle,
+          xUnit: copy.attainedAgeUnit,
+          yUnit: copy.survivalUnit,
           view,
         }}
       />
@@ -211,6 +215,8 @@ export function CohortChart({
   active: boolean;
   onCeFitStatusChange: (status: CeFitStatus) => void;
 }) {
+  const { language } = useLanguage();
+  const fitText = mortalityFitMessages[language];
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const {
     draft,
@@ -353,7 +359,10 @@ export function CohortChart({
     if (
       workerRef.current &&
       !window.confirm(
-        "A mortality fit is still running. Interrupt it and start a new fit with the current settings?",
+        validationMessage(
+          "A mortality fit is still running. Interrupt it and start a new fit with the current settings?",
+          language,
+        ),
       )
     )
       return;
@@ -522,31 +531,29 @@ export function CohortChart({
   if (!valid)
     return (
       <p role="status">
-        Enter a birth year from 1926 to 2026 and a retirement year giving an age
-        from 0 to 99.{" "}
-        {running && "The current fit continues with its original settings."}
+        {fitText.invalidYears} {running && fitText.continues}
       </p>
     );
   if (!active || !loaded || loaded.key !== key)
     return (
       <p role="status">
-        Loading cohort data…{" "}
-        {running && "The current fit continues with its original settings."}
+        {fitText.loading} {running && fitText.continues}
       </p>
     );
-  if ("error" in loaded) return <p role="alert">{loaded.error}</p>;
+  if ("error" in loaded)
+    return <p role="alert">{validationMessage(loaded.error, language)}</p>;
   if (!curve) return null;
 
   return (
     <>
       <div className="mortality-fit-toolbar">
-        <strong>Survival by age</strong>
+        <strong>{fitText.survivalByAge}</strong>
         <button
           type="button"
           className="button button-primary"
           onClick={() => startFit()}
         >
-          {running ? "Update fits" : "Fit mortality models"}
+          {running ? fitText.update : fitText.fit}
         </button>
       </div>
       <Plot
@@ -554,50 +561,49 @@ export function CohortChart({
         curve={curve}
         gm={gm}
         ce={ce}
-        view={`Cohort ${birthYear}; retirement ${retirementYear}; ${mortality}${mortality === "custom" ? `; male weight ${maleWeight}` : ""}; ${longevity} longevity`}
+        view={
+          language === "de"
+            ? `Kohorte ${birthYear}; Ruhestand ${retirementYear}; ${{ female: "weiblich", male: "männlich", custom: "Mischung" }[mortality]}${mortality === "custom" ? `; Gewicht Männer ${maleWeight}` : ""}; Langlebigkeit ${{ low: "niedrig", medium: "mittel", high: "hoch" }[longevity]}`
+            : `Cohort ${birthYear}; retirement ${retirementYear}; ${mortality}${mortality === "custom" ? `; male weight ${maleWeight}` : ""}; ${longevity} longevity`
+        }
       />
-      <p className="chart-disclaimer">
-        Cohort survival conditional on reaching age {age}. Annual points are
-        connected by straight lines. Data end at age 100; the remaining survival
-        probability is not forced to zero.
-      </p>
+      <p className="chart-disclaimer">{fitText.cohortNote(age)}</p>
       {!running && !gm && !ce && !fitErrors.gm && !fitErrors.ce && (
-        <p>Mortality models have not been fitted for these inputs.</p>
+        <p>{fitText.notFitted}</p>
       )}
       {running && (
         <p role="status">
-          Fitting {running.stage}: {running.completed} / {running.total} starts.{" "}
-          {oldRun
-            ? "This run uses earlier settings; update fits to use your current inputs."
-            : ""}
+          {fitText.fitting} {running.stage}: {running.completed} /{" "}
+          {running.total} {fitText.starts}. {oldRun ? fitText.staleRun : ""}
         </p>
       )}
-      {!market && (
-        <p>
-          CE fitting requires valid market assumptions and positive rho. The GM
-          fit remains available.
-        </p>
-      )}
+      {!market && <p>{fitText.invalidMarket}</p>}
       {((gmResult && !gm) || (ceResult && !ce)) && (
-        <p role="status">
-          Some previous fits need updating after input changes.
+        <p role="status">{fitText.staleFits}</p>
+      )}
+      {fitErrors.gm && (
+        <p role="alert">
+          {fitText.gmFit}: {validationMessage(fitErrors.gm, language)}
         </p>
       )}
-      {fitErrors.gm && <p role="alert">GM fit: {fitErrors.gm}</p>}
-      {fitErrors.ce && <p role="alert">CE fit: {fitErrors.ce}</p>}
+      {fitErrors.ce && (
+        <p role="alert">
+          {fitText.ceFit}: {validationMessage(fitErrors.ce, language)}
+        </p>
+      )}
       {(gm || ce) && (
         <details className="borrowing-details diagnostic-details mortality-fit-details">
-          <summary>View fit diagnostics and model parameters</summary>
+          <summary>{fitText.viewDiagnostics}</summary>
           <section className="mortality-fit-section">
-            <h4>Fit diagnostics</h4>
+            <h4>{fitText.diagnostics}</h4>
             <div className="capital-table-wrap">
               <table className="capital-table">
                 <thead>
                   <tr>
-                    <th>Model</th>
-                    <th>KL divergence</th>
-                    <th>Largest difference</th>
-                    <th>Optimizer</th>
+                    <th>{fitText.model}</th>
+                    <th>{fitText.kl}</th>
+                    <th>{fitText.largestDifference}</th>
+                    <th>{fitText.optimizer}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -616,7 +622,9 @@ export function CohortChart({
                             {(fit.maxSurvivalDifference * 100).toFixed(2)} pp
                           </td>
                           <td>
-                            {fit.converged ? "Converged" : "Iteration limit"}
+                            {fit.converged
+                              ? fitText.converged
+                              : fitText.iterationLimit}
                           </td>
                         </tr>
                       ),
@@ -625,14 +633,12 @@ export function CohortChart({
               </table>
             </div>
             <p className="chart-disclaimer">
-              <TermLink term="mortality-diagnostics">KL divergence</TermLink>{" "}
-              compares annual death bins and the final survival tail. Largest
-              difference is measured on the annual grid. Fits are numerical
-              estimates; a convergence status is not a quality grade.
+              <TermLink term="mortality-diagnostics">{fitText.kl}</TermLink>{" "}
+              {fitText.klDescription}
             </p>
           </section>
           <section className="mortality-fit-section">
-            <h4>Model parameters and optimization</h4>
+            <h4>{fitText.parameters}</h4>
             <dl>
               {gm && (
                 <>
@@ -649,7 +655,7 @@ export function CohortChart({
                     <dd>{gm.parameters.lambda.toPrecision(5)} yr⁻¹</dd>
                   </div>
                   <div>
-                    <dt>GM starts converged</dt>
+                    <dt>{fitText.convergedGm}</dt>
                     <dd>
                       {gm.convergedStarts} / {gm.starts}
                     </dd>
@@ -659,8 +665,10 @@ export function CohortChart({
               {ce && (
                 <>
                   <div>
-                    <dt>CE T · remaining lifetime endpoint</dt>
-                    <dd>{ce.parameters.tau.toFixed(3)} years</dd>
+                    <dt>{fitText.endpoint}</dt>
+                    <dd>
+                      {ce.parameters.tau.toFixed(3)} {fitText.years}
+                    </dd>
                   </div>
                   <div>
                     <dt>CE δ</dt>
@@ -668,12 +676,12 @@ export function CohortChart({
                   </div>
                   <div>
                     <dt>
-                      CE λ<sub>∞</sub> · derived
+                      CE λ<sub>∞</sub> · {fitText.derived}
                     </dt>
                     <dd>{ce.parameters.lambda.toPrecision(5)} yr⁻¹</dd>
                   </div>
                   <div>
-                    <dt>CE starts converged</dt>
+                    <dt>{fitText.convergedCe}</dt>
                     <dd>
                       {ce.convergedStarts} / {ce.starts}
                     </dd>
@@ -681,14 +689,11 @@ export function CohortChart({
                 </>
               )}
               <div>
-                <dt>Fitting horizon · years after retirement</dt>
+                <dt>{fitText.fittingHorizon}</dt>
                 <dd>{100 - age}</dd>
               </div>
             </dl>
-            <p>
-              The CE fit uses the current real risk-free rate and rho. A low KL
-              value is not a guarantee of predictive accuracy.
-            </p>
+            <p>{fitText.ceExplanation}</p>
           </section>
         </details>
       )}

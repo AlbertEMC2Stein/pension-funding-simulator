@@ -1,5 +1,10 @@
 "use client";
 
+import { useLanguage } from "../LanguageContext";
+import { validationMessage } from "../../lib/i18n/validation";
+import { visualMessages } from "../../lib/i18n/visuals";
+import { chartMessages } from "../../lib/i18n/charts";
+
 import { PanelHelp } from "../PanelHelp";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -110,6 +115,8 @@ export function makeChartData(
 
 /** Render the CE relationship as a responsive, static Plotly chart. */
 function Plot({ data }: { data: ChartData }) {
+  const { language } = useLanguage();
+  const copy = chartMessages[language];
   const element = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState("light");
   const [plotError, setPlotError] = useState(false);
@@ -163,7 +170,7 @@ function Plot({ data }: { data: ChartData }) {
           y: data.withdrawals,
           type: "scatter",
           mode: "lines",
-          name: "CE withdrawal curve",
+          name: copy.ceCurve,
           line: { color: accent, width: 3 },
           hoverinfo: "skip",
         },
@@ -172,7 +179,7 @@ function Plot({ data }: { data: ChartData }) {
           y: [data.selectedWithdrawal],
           type: "scatter",
           mode: "markers",
-          name: "Selected risk and withdrawal",
+          name: copy.selectedRisk,
           marker: { color: accent, size: 11 },
           hoverinfo: "skip",
         },
@@ -187,7 +194,7 @@ function Plot({ data }: { data: ChartData }) {
           y: [data.selectedWithdrawal, data.safeWithdrawal],
           type: "scatter",
           mode: "lines",
-          name: "Zero-risk withdrawal range",
+          name: copy.zeroRisk,
           line: { color: accent, width: 2 },
           hoverinfo: "skip",
         });
@@ -203,7 +210,7 @@ function Plot({ data }: { data: ChartData }) {
           plot_bgcolor: "rgba(0,0,0,0)",
           font: { color: text },
           xaxis: {
-            title: { text: "CE lifetime impoverishment risk", standoff: 12 },
+            title: { text: copy.ceLifetimeRisk, standoff: 12 },
             tickformat: ".0%",
             gridcolor: grid,
             range: [lowerRisk, maximumRisk * 1.02],
@@ -213,7 +220,7 @@ function Plot({ data }: { data: ChartData }) {
             automargin: true,
           },
           yaxis: {
-            title: { text: "Annual withdrawal (€)", standoff: 10 },
+            title: { text: copy.annualWithdrawal, standoff: 10 },
             tickprefix: "€",
             ticklabelstandoff: 8,
             separatethousands: true,
@@ -279,24 +286,20 @@ function Plot({ data }: { data: ChartData }) {
       disposed = true;
       cleanup?.();
     };
-  }, [data, theme]);
+  }, [data, theme, language]);
 
   return (
     <>
-      {plotError && <p role="alert">The chart could not be displayed.</p>}
-      <div
-        ref={element}
-        role="img"
-        aria-label="Unconstrained CE model annual withdrawal against lifetime impoverishment risk"
-      />
+      {plotError && <p role="alert">{copy.plotError}</p>}
+      <div ref={element} role="img" aria-label={copy.withdrawalAria} />
       <ChartExport
         element={element}
         filename="withdrawal-and-risk"
         context={{
-          title: "Withdrawal and CE risk",
-          xUnit: "probability",
-          yUnit: "EUR per year",
-          view: "Unconstrained CE policy",
+          title: copy.withdrawalTitle,
+          xUnit: copy.probability,
+          yUnit: copy.eurosPerYear,
+          view: copy.cePolicy,
         }}
       />
     </>
@@ -395,12 +398,15 @@ export function RiskWithdrawalChart({
 }: {
   result: RiskWithdrawalResult;
 }) {
+  const { language } = useLanguage();
+  const text = visualMessages[language];
+
   return (
     <div className="chart-card">
       <div className="card-top">
         <div>
           <div className="panel-help-heading">
-            <span className="tiny-label">UNCONSTRAINED CE BENCHMARK</span>
+            <span className="tiny-label">{text.ceBenchmark}</span>
             <PanelHelp panel="withdrawal" />
           </div>
           <div className="big-value">
@@ -410,15 +416,19 @@ export function RiskWithdrawalChart({
                 : `€${Math.round(result.data.selectedWithdrawal).toLocaleString("en-US")}`
               : "—"}{" "}
             <span>
-              {"data" in result && !result.data.custom ? "/ year" : ""}
+              {"data" in result && !result.data.custom
+                ? language === "de"
+                  ? "/ Jahr"
+                  : "/ year"
+                : ""}
             </span>
           </div>
           <div className="value-note">
             {"data" in result
               ? result.data.custom
-                ? "CE risk for the selected withdrawal"
-                : "Annual withdrawal for the selected CE risk"
-              : "CE withdrawal and risk"}
+                ? text.ceRiskForWithdrawal
+                : text.withdrawalForRisk
+              : text.ceWithdrawalRisk}
           </div>
         </div>
         <StatusBadge
@@ -428,14 +438,10 @@ export function RiskWithdrawalChart({
       {"data" in result ? (
         <>
           <Plot data={result.data} />
-          <p className="chart-disclaimer">
-            Analytical CE-model relationship for the unconstrained policy. The
-            marker shows your selection; it does not represent projected-policy
-            or GM-model risk.
-          </p>
+          <p className="chart-disclaimer">{text.ceExplanation}</p>
         </>
       ) : (
-        <p role="status">{result.message}</p>
+        <p role="status">{validationMessage(result.message, language)}</p>
       )}
     </div>
   );

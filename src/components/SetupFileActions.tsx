@@ -11,11 +11,15 @@ import {
   useSimulationDraft,
 } from "./SimulationDraftContext";
 import { useDraft } from "./common";
+import { useLanguage } from "./LanguageContext";
+import { setupActionMessages, setupFileError } from "../lib/i18n/setup-actions";
 
 /** Import and export the same versioned, input-only setup from either panel. */
 export function SetupFileActions() {
   const { draft, setupName, tables, importSetup } = useSimulationDraft();
   const { notice } = useDraft();
+  const { language } = useLanguage();
+  const text = setupActionMessages[language];
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState("");
 
@@ -41,10 +45,12 @@ export function SetupFileActions() {
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       setError("");
-      notice("Setup exported. Results are not included.");
+      notice(text.exported);
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : "Could not export the setup.",
+        cause instanceof Error
+          ? setupFileError(cause.message, language)
+          : text.exportFailed,
       );
     }
   }
@@ -56,26 +62,27 @@ export function SetupFileActions() {
     if (!file) return;
 
     try {
-      if (file.size > 2_000_000)
-        throw new Error("The setup file is too large (maximum 2 MB).");
+      if (file.size > 2_000_000) throw new Error(text.tooLarge);
       const setup = parseSetupFile(await file.text());
       if (importSetup(setup))
         notice(
           setup.metadata.model !== SETUP_METADATA.model ||
             setup.metadata.mortalityData !== SETUP_METADATA.mortalityData
-            ? "Setup imported from a different model or cohort-data version. Review it before recalculating."
-            : "Setup imported. Fit mortality and run simulations to calculate results.",
+            ? text.versionMismatch
+            : text.imported,
         );
       setError("");
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : "Could not import the setup.",
+        cause instanceof Error
+          ? setupFileError(cause.message, language)
+          : text.importFailed,
       );
     }
   }
 
   return (
-    <div className="setup-file-actions">
+    <div className="setup-file-actions" lang={language}>
       <div className="setup-file-buttons">
         <input
           ref={inputRef}
@@ -89,14 +96,14 @@ export function SetupFileActions() {
           className="button button-light"
           onClick={() => inputRef.current?.click()}
         >
-          ↥ &nbsp; Import setup
+          ↥ &nbsp; {text.import}
         </button>
         <button
           type="button"
           className="button button-light"
           onClick={exportSetup}
         >
-          ↓ &nbsp; Export setup
+          ↓ &nbsp; {text.export}
         </button>
       </div>
       {error && (

@@ -1,5 +1,6 @@
 "use client";
 
+import { validationMessage } from "../../lib/i18n/validation";
 import { useLanguage } from "../LanguageContext";
 import {
   simulationRunMessages,
@@ -118,16 +119,16 @@ export function SimulationRunControl({
       {errors.length > 0 && (
         <div className="simulation-run-message" role="alert">
           <strong>{text.checkInputs}</strong>
-          <ul lang="en">
+          <ul>
             {errors.map((error) => (
-              <li key={error}>{error}</li>
+              <li key={error}>{validationMessage(error, language)}</li>
             ))}
           </ul>
         </div>
       )}
       {run?.phase === "error" && run.message && (
-        <p className="simulation-run-message" role="alert" lang="en">
-          {run.message}
+        <p className="simulation-run-message" role="alert">
+          {validationMessage(run.message, language)}
         </p>
       )}
       {run?.phase === "cancelled" && (

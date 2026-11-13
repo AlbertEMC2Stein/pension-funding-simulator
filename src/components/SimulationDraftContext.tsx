@@ -21,6 +21,8 @@ import {
   type SetupFile,
   type SetupTables,
 } from "../lib/options/setup-file";
+import { useLanguage } from "./LanguageContext";
+import { validationMessage } from "../lib/i18n/validation";
 import { readSavedDraft, writeSavedDraft } from "../lib/options/saved-draft";
 
 /** Name used for an unnamed setup throughout the interface. */
@@ -90,6 +92,7 @@ const Context = createContext<{
 
 /** Provide shared inputs and restore editable drafts locally before starting the mortality fit. */
 export function SimulationDraftProvider({ children }: { children: ReactNode }) {
+  const { language } = useLanguage();
   const [draft, setDraft] = useState(initialSimulationDraft);
   const [setupName, setSetupName] = useState(DEFAULT_SETUP_NAME);
   const [tables, setTables] = useState(() =>
@@ -176,7 +179,10 @@ export function SimulationDraftProvider({ children }: { children: ReactNode }) {
     if (
       [...runGuards.current].some((isRunning) => isRunning()) &&
       !window.confirm(
-        "A simulation or mortality fit is running. Interrupt it and import this setup?",
+        validationMessage(
+          "A simulation or mortality fit is running. Interrupt it and import this setup?",
+          language,
+        ),
       )
     )
       return false;

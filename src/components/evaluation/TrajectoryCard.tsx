@@ -1,5 +1,9 @@
 "use client";
 
+import { useLanguage } from "../LanguageContext";
+import { visualMessages } from "../../lib/i18n/visuals";
+import { chartMessages } from "../../lib/i18n/charts";
+
 import { TermLink } from "../common";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -73,6 +77,9 @@ export function TrajectoryCard({
   run: EvaluationRun | null;
   stale: boolean;
 }) {
+  const { language } = useLanguage();
+  const copy = chartMessages[language];
+  const text = visualMessages[language];
   const samples = run?.trajectories;
   const threshold = run?.options.investor.impoverishmentLevel;
   const [count, setCount] = useState(20);
@@ -144,7 +151,7 @@ export function TrajectoryCard({
           ],
           type: "scatter",
           mode: "lines",
-          name: "Borrowing region",
+          name: copy.borrowingRegion,
           fill: "toself",
           fillcolor: colors.getPropertyValue("--chart-borrowing-fill").trim(),
           line: { width: 0 },
@@ -160,7 +167,7 @@ export function TrajectoryCard({
             y: points.wealth,
             type: "scatter",
             mode: "lines",
-            name: `Sample path ${index + 1}`,
+            name: `${copy.samplePath} ${index + 1}`,
             line: { color, width: 1.5 },
             opacity: trajectoryOpacity(selected.length),
             hoverinfo: "skip",
@@ -172,7 +179,7 @@ export function TrajectoryCard({
         y: samples.safeBoundary,
         type: "scatter",
         mode: "lines",
-        name: "Safe boundary",
+        name: copy.safeBoundary,
         line: { color: text, width: 2, dash: "dash" },
         hoverinfo: "skip",
       });
@@ -188,12 +195,12 @@ export function TrajectoryCard({
           plot_bgcolor: "rgba(0,0,0,0)",
           font: { color: text },
           xaxis: {
-            title: { text: "Years after retirement", standoff: 10 },
+            title: { text: copy.yearsAfterRetirement, standoff: 10 },
             gridcolor: grid,
             automargin: true,
           },
           yaxis: {
-            title: { text: "Wealth (€)", standoff: 6 },
+            title: { text: copy.wealth, standoff: 6 },
             tickprefix: "€",
             ticklabelstandoff: 8,
             gridcolor: grid,
@@ -242,7 +249,7 @@ export function TrajectoryCard({
       disposed = true;
       cleanup?.();
     };
-  }, [samples, threshold, selected, theme]);
+  }, [samples, threshold, selected, theme, language]);
 
   return (
     <article className="chart-card trajectory-card">
@@ -251,25 +258,35 @@ export function TrajectoryCard({
           <span className="tiny-label">
             {samples
               ? samples.projected
-                ? "PROJECTED POLICY"
-                : "UNCONSTRAINED POLICY"
-              : "SELECTED POLICY"}
+                ? text.projectedPolicy
+                : text.unconstrainedPolicy
+              : text.selectedPolicy}
           </span>
-          <h3>Illustrative trajectories</h3>
+          <h3>{text.trajectories}</h3>
         </div>
         <StatusBadge status={status} />
       </div>
       <p>
-        These <TermLink term="trajectories">example paths</TermLink> assume you
-        remain alive. Each ends at impoverishment or the policy horizon; they
-        are not predictions.
+        {language === "de" ? (
+          <>
+            Diese <TermLink term="trajectories">Beispielpfade</TermLink> setzen
+            voraus, dass Sie am Leben bleiben. Sie enden bei Verarmung oder am
+            Strategiehorizont und sind keine Vorhersagen.
+          </>
+        ) : (
+          <>
+            These <TermLink term="trajectories">example paths</TermLink> assume
+            you remain alive. Each ends at impoverishment or the policy horizon;
+            they are not predictions.
+          </>
+        )}
       </p>
       {samples ? (
         <>
           <div className="trajectory-controls">
             <div className="trajectory-count-control">
               <label className="field-label" htmlFor="trajectory-count">
-                Number of paths
+                {text.paths}
               </label>
               <div className="allocation-time-control">
                 <input
@@ -292,37 +309,33 @@ export function TrajectoryCard({
               onClick={() => setOrder(shuffledIndices(samples.count))}
               disabled={samples.count <= displayed}
             >
-              Shuffle paths
+              {text.shuffle}
             </button>
           </div>
-          <div
-            ref={element}
-            role="img"
-            aria-label="Sample wealth trajectories"
-          />
+          <div ref={element} role="img" aria-label={copy.trajectories} />
           <ul
             className="allocation-legend trajectory-legend"
-            aria-label="Wealth trajectory legend"
+            aria-label={copy.trajectoryLegend}
           >
             <li>
               <span className="trajectory-path-key" aria-hidden="true" />
-              Sample paths
+              {copy.samplePaths}
             </li>
             <li>
               <span className="allocation-risk-free" aria-hidden="true" />
-              Safe boundary
+              {copy.safeBoundary}
             </li>
             <li>
               <span
                 className="allocation-starting-capital"
                 aria-hidden="true"
               />
-              Impoverishment level
+              {copy.impoverishmentLevel}
             </li>
             {samples.borrowingBoundary && (
               <li>
                 <span className="trajectory-borrow-key" aria-hidden="true" />
-                Borrowing region
+                {copy.borrowingRegion}
               </li>
             )}
           </ul>
@@ -330,49 +343,41 @@ export function TrajectoryCard({
             element={element}
             filename="wealth-trajectories"
             context={{
-              title: "Illustrative wealth trajectories",
-              xUnit: "years after retirement",
-              yUnit: "EUR wealth",
-              view: `${samples.projected ? "Projected" : "Unconstrained"} policy; ${displayed} sample paths; impoverishment level EUR ${threshold}${stale ? "; previous settings" : ""}`,
+              title: copy.trajectories,
+              xUnit: copy.yearsAfterRetirement,
+              yUnit: copy.euroWealth,
+              view: `${samples.projected ? copy.projected : copy.unconstrained} ${copy.policy}; ${displayed} ${copy.samplePaths}; ${copy.impoverishmentLevel} EUR ${threshold}${stale ? `; ${copy.previousSettings}` : ""}`,
             }}
             imageLegend={[
-              { name: "Sample paths", colorVariable: "--chart-asset-1" },
+              { name: copy.samplePaths, colorVariable: "--chart-asset-1" },
               {
-                name: "Safe boundary",
+                name: copy.safeBoundary,
                 colorVariable: "--text-secondary",
                 dash: "dash",
               },
               {
-                name: "Impoverishment level",
+                name: copy.impoverishmentLevel,
                 colorVariable: "--text-secondary",
                 dash: "dot",
               },
               ...(samples.borrowingBoundary
                 ? [
                     {
-                      name: "Borrowing region",
+                      name: copy.borrowingRegion,
                       colorVariable: "--chart-borrowing-fill",
                     },
                   ]
                 : []),
             ]}
           />
-          {plotError && (
-            <p role="alert">The trajectory chart could not be displayed.</p>
-          )}
+          {plotError && <p role="alert">{copy.trajectoryError}</p>}
           <p className="chart-disclaimer">
-            Lines use a reduced time grid and may omit short-lived fluctuations.
-            {samples.borrowingBoundary &&
-              "The shaded region indicates where the unconstrained policy borrows. "}
-            Shuffle selects from {samples.count} retained paths without
-            rerunning the simulation.
+            {text.reducedGrid} {samples.borrowingBoundary && `${text.shade} `}
+            {text.shuffled(samples.count)}
           </p>
         </>
       ) : (
-        <p className="chart-disclaimer">
-          Enable this visual before starting a simulation to retain example
-          paths.
-        </p>
+        <p className="chart-disclaimer">{text.enableVisual}</p>
       )}
     </article>
   );

@@ -17,6 +17,8 @@ import type {
   SimulationWorkerRequest,
   SimulationWorkerResponse,
 } from "../../lib/model/simulation/worker-protocol";
+import { useLanguage } from "../LanguageContext";
+import { validationMessage } from "../../lib/i18n/validation";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import { prepareEvaluationRun } from "./evaluation-run-input";
 
@@ -65,6 +67,7 @@ export interface EvaluationRun {
  * Late messages are ignored and the worker is disposed when this view unmounts.
  */
 export function useEvaluationRun() {
+  const { language } = useLanguage();
   const {
     draft,
     mortalityFits,
@@ -117,7 +120,10 @@ export function useEvaluationRun() {
     if (
       workerRef.current &&
       !window.confirm(
-        "A simulation is still running. Interrupt it and start a new run with the current settings?",
+        validationMessage(
+          "A simulation is still running. Interrupt it and start a new run with the current settings?",
+          language,
+        ),
       )
     )
       return;

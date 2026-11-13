@@ -79,11 +79,15 @@ export function TermLink({
 
 /** Prominent reminder that the displayed content is an interface preview. */
 export function PreviewBanner({ children }: { children: React.ReactNode }) {
+  const { language } = useLanguage();
+
   return (
     <div className="preview-banner">
       <span className="preview-icon">✳</span>
       <div>{children}</div>
-      <span className="preview-tag">PREVIEW MODE</span>
+      <span className="preview-tag">
+        {language === "de" ? "VORSCHAU" : "PREVIEW MODE"}
+      </span>
     </div>
   );
 }

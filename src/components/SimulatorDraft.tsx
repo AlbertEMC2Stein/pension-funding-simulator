@@ -9,7 +9,8 @@ import {
   useState,
 } from "react";
 import { DraftContext, type View } from "./common";
-import { LanguageProvider } from "./LanguageContext";
+import { LanguageProvider, useLanguage } from "./LanguageContext";
+import { validationMessage } from "../lib/i18n/validation";
 import { shellMessages } from "../lib/i18n/messages";
 import {
   DEFAULT_DISPLAY_PREFERENCES,
@@ -74,9 +75,11 @@ function WorkspacePanels({ view, term }: { view: View; term: string | null }) {
 /** Explain when browser storage could not recover or save the editable setup. */
 function DraftStorageNotice() {
   const { storageWarning } = useSimulationDraft();
+  const { language } = useLanguage();
+
   return storageWarning ? (
     <p className="draft-storage-warning" role="alert">
-      {storageWarning}
+      {validationMessage(storageWarning, language)}
     </p>
   ) : null;
 }
@@ -111,7 +114,7 @@ export function SimulatorDraft() {
     try {
       setDisplay(readDisplayPreferences(window.localStorage));
     } catch {
-      notice("Display preferences could not be restored from this browser.");
+      notice(shellMessages.en.preferenceReadError);
     }
   }, [notice]);
 
@@ -137,6 +140,15 @@ export function SimulatorDraft() {
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
   }, [dark]);
+
+  // The document and metadata follow the selected language after hydration.
+  useEffect(() => {
+    document.documentElement.lang = display.language;
+    document.title = text.documentTitle;
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute("content", text.documentDescription);
+  }, [display.language, text]);
 
   /** Switch the visible panel; `nextTerm` optionally targets a help entry. */
   const navigate = useCallback((next: View, nextTerm?: string) => {
@@ -245,8 +257,7 @@ export function SimulatorDraft() {
                       onChange={(event) => {
                         const language =
                           event.target.value === "de" ? "de" : "en";
-                        if (updateDisplay({ ...display, language }))
-                          notice(shellMessages[language].languagePartial);
+                        updateDisplay({ ...display, language });
                       }}
                     >
                       <option value="en">EN</option>

@@ -3,6 +3,9 @@
 import { PanelHelp } from "./PanelHelp";
 
 import { Fragment, useMemo, useState } from "react";
+import { useLanguage } from "./LanguageContext";
+import { validationMessage } from "../lib/i18n/validation";
+import { tableMessages, type TableMessages } from "../lib/i18n/tables";
 import { useSimulationDraft } from "./SimulationDraftContext";
 import { SimulationDetailFields } from "./SimulationDetailFields";
 import { useComparisonSimulation } from "./comparison/useComparisonSimulation";
@@ -36,11 +39,14 @@ type TableType = "withdrawal" | "feasibility";
 type ExampleRow = SetupTableRow;
 
 /** Format a batch-based ETA without implying sub-second precision. */
-function formatComparisonEta(milliseconds: number): string {
+function formatComparisonEta(
+  milliseconds: number,
+  text: TableMessages,
+): string {
   const seconds = Math.max(1, Math.ceil(milliseconds / 1000));
   return seconds < 60
-    ? `About ${seconds} s left`
-    : `About ${Math.floor(seconds / 60)} min ${seconds % 60} s left`;
+    ? `${text.etaAbout} ${seconds} s ${text.etaLeft}`
+    : `${text.etaAbout} ${Math.floor(seconds / 60)} min ${seconds % 60} s ${text.etaLeft}`;
 }
 
 /** Format an approximate Monte Carlo interval in the displayed units. */
@@ -48,21 +54,17 @@ function formatInterval(
   interval: { lower: number; upper: number } | null,
   scale: number,
   unit: string,
+  unavailable: string,
 ): string {
   return interval
     ? `${(interval.lower * scale).toFixed(2)}${unit} – ${(interval.upper * scale).toFixed(2)}${unit}`
-    : "Unavailable";
+    : unavailable;
 }
-
-const tableDescriptions: Record<TableType, string> = {
-  withdrawal:
-    "Compare withdrawals and risk across unconstrained and projected policies.",
-  feasibility:
-    "Vary risk or withdrawal and the impoverishment level for the unconstrained policy.",
-};
 
 /** Compare editable rows against the shared setup; exports and other tables are previews. */
 export function DataView() {
+  const { language } = useLanguage();
+  const text = tableMessages[language];
   const {
     draft,
     setDraft,
@@ -85,9 +87,9 @@ export function DataView() {
     [draft.market],
   );
   const feasibilityUnavailable = draft.simulation.projected
-    ? "This comparison is available for the unconstrained policy only. Turn off projection to view it. The projected policy prevents borrowing and short selling by keeping allocations within the simplex."
+    ? text.projectedUnavailable
     : marketFeasibility.status === "negative-merton"
-      ? "This comparison is unavailable because a Merton-vector component is negative. The unconstrained policy requires short selling whenever wealth is below the safe boundary."
+      ? text.shortUnavailable
       : null;
   const withdrawalSimulation = useComparisonSimulation(draft, mortalityFits);
   const feasibilitySimulation = useComparisonSimulation(
@@ -131,12 +133,12 @@ export function DataView() {
   );
   const resultHeading =
     rows.length === 0
-      ? "CE RESULT"
+      ? text.ceResult
       : rows.every((row) => row.type === "Target risk")
-        ? "ANNUAL WITHDRAWAL"
+        ? text.annualWithdrawal
         : rows.every((row) => row.type === "Withdrawal")
-          ? "CE LIFETIME RISK"
-          : "WITHDRAWAL / CE RISK";
+          ? text.ceRisk
+          : text.withdrawalOrRisk;
   // Keep IDs stable after deletion so editing one row does not affect another.
   const [nextId, setNextId] = useState(
     () =>
@@ -199,18 +201,17 @@ export function DataView() {
   return (
     <section className="view active">
       <PageHeading
-        eyebrow="EXPLORE THE DETAILS"
-        title="Make room for questions"
-        description="Compare variations of your setup and save your work."
+        eyebrow={text.eyebrow}
+        title={text.title}
+        description={text.intro}
       />
       <PreviewBanner>
-        <strong>In progress.</strong> CE values update analytically; GM risk is
-        estimated by simulation.
+        <strong>{text.previewTitle}</strong> {text.preview}
       </PreviewBanner>
       <SectionHeading
-        eyebrow="YOUR COMPARISON"
-        title="Comparison table"
-        description="Compare variations using the same market and investor settings. Export only the current table."
+        eyebrow={text.comparison}
+        title={text.comparisonTitle}
+        description={text.comparisonDescription}
       >
         <div className="heading-actions">
           <button
@@ -222,14 +223,14 @@ export function DataView() {
             }
             onClick={() => setSettingsOpen(!settingsOpen)}
           >
-            ☷ &nbsp; Simulation settings
+            ☷ &nbsp; {text.settings}
           </button>
           <button
             type="button"
             className="button button-light"
             onClick={exportTable}
           >
-            ↓ &nbsp; Export table
+            ↓ &nbsp; {text.exportTable}
           </button>
         </div>
       </SectionHeading>
@@ -240,24 +241,21 @@ export function DataView() {
         >
           <div className="settings-heading">
             <div>
-              <span className="tiny-label">MAKE IT YOURS</span>
-              <h2>Simulation settings</h2>
+              <span className="tiny-label">{text.customize}</span>
+              <h2>{text.settings}</h2>
             </div>
             <button
               type="button"
               className="close-settings"
-              aria-label="Close simulation settings"
+              aria-label={text.closeSettings}
               onClick={() => setSettingsOpen(false)}
             >
               ×
             </button>
           </div>
-          <p className="settings-lead">
-            These settings are shared with Evaluation and apply to future
-            simulation runs.
-          </p>
+          <p className="settings-lead">{text.settingsLead}</p>
           <div className="settings-group">
-            <div className="group-title">Simulation detail</div>
+            <div className="group-title">{text.detail}</div>
             <SimulationDetailFields
               simulation={draft.simulation}
               idPrefix="table"
@@ -275,7 +273,7 @@ export function DataView() {
       <div className="form-card table-card">
         <div className="table-toolbar">
           <label>
-            TABLE TYPE
+            {text.tableType}
             <select
               value={tableType}
               disabled={running}
@@ -283,8 +281,8 @@ export function DataView() {
                 setTableType(event.target.value as TableType)
               }
             >
-              <option value="withdrawal">Withdrawal, risk & policy</option>
-              <option value="feasibility">Feasibility sensitivity</option>
+              <option value="withdrawal">{text.withdrawalTable}</option>
+              <option value="feasibility">{text.feasibilityTable}</option>
             </select>
           </label>
           <button
@@ -309,12 +307,15 @@ export function DataView() {
               setNextId((current) => current + 1);
             }}
           >
-            + &nbsp; Add row
+            + &nbsp; {text.add}
           </button>
         </div>
         <div className="panel-help-heading table-help-heading">
           <p className="table-description">
-            {tableDescriptions[tableType]} All other settings are shared.
+            {tableType === "withdrawal"
+              ? text.withdrawalDescription
+              : text.feasibilityDescription}{" "}
+            {text.otherShared}
           </p>
           <PanelHelp
             panel={
@@ -331,22 +332,17 @@ export function DataView() {
               className="table-description table-description-note"
               role="status"
             >
-              {withdrawalContext.message}
+              {validationMessage(withdrawalContext.message, language)}
             </p>
           )}
         {tableType === "withdrawal" && (
           <p className="table-description table-description-note">
-            The CE value uses the unconstrained policy, including for projected
-            rows. GM risk is for the selected policy, through the CE horizon.
+            {text.withdrawalNote}
           </p>
         )}
         {tableType === "feasibility" && (
           <p className="table-description table-description-note">
-            ζ ≤ 1 indicates global feasibility when all Merton-vector components
-            are non-negative and at least one is positive. Negative components
-            require short selling in the risky region. Borrowing probability and
-            time use GM mortality; row-specific impoverishment levels start from
-            the shared setup.
+            {text.feasibilityNote}
           </p>
         )}
         {tableType === "feasibility" && feasibilityUnavailable && (
@@ -358,24 +354,26 @@ export function DataView() {
           <table>
             <thead>
               <tr>
-                <th>VARIATION</th>
-                <th>RISK OR WITHDRAWAL</th>
+                <th>{text.variation}</th>
+                <th>{text.riskOrWithdrawal}</th>
                 {tableType === "withdrawal" && (
                   <>
-                    <th>POLICY</th>
+                    <th>{text.policy}</th>
                     <th>{resultHeading}</th>
-                    <th>ESTIMATED GM RISK</th>
+                    <th>{text.gmRisk}</th>
                   </>
                 )}
                 {tableType === "feasibility" && (
                   <>
-                    <th>IMPOVERISHMENT LEVEL</th>
-                    <th>RELATIVE BANDWIDTH ζ</th>
-                    <th>EVER BORROWING (GM)</th>
-                    <th>EXPECTED BORROWING TIME (GM)</th>
+                    <th>{text.impoverishment}</th>
+                    <th>{text.bandwidth}</th>
+                    <th>{text.everBorrow}</th>
+                    <th>{text.borrowingTime}</th>
                   </>
                 )}
-                <th>{tableType === "withdrawal" ? "GM STATUS" : "STATUS"}</th>
+                <th>
+                  {tableType === "withdrawal" ? text.gmStatus : text.status}
+                </th>
                 <th />
               </tr>
             </thead>
@@ -428,7 +426,10 @@ export function DataView() {
                 const inputValue = (
                   <div className="input-suffix table-input-suffix">
                     <input
-                      aria-label={`Input value for variation ${row.id}, ${row.type === "Target risk" ? "percent" : "euros per year"}`}
+                      aria-label={text.valueLabel(
+                        row.id,
+                        row.type === "Target risk",
+                      )}
                       value={row.value}
                       disabled={running}
                       onChange={(event) =>
@@ -436,7 +437,7 @@ export function DataView() {
                       }
                     />
                     <span aria-hidden="true">
-                      {row.type === "Target risk" ? "%" : "€ / year"}
+                      {row.type === "Target risk" ? "%" : text.yearUnit}
                     </span>
                   </div>
                 );
@@ -447,8 +448,8 @@ export function DataView() {
                       <td>
                         <input
                           className="comparison-name"
-                          aria-label={`Name for variation ${row.id}`}
-                          title="Edit variation name"
+                          aria-label={text.nameLabel(row.id)}
+                          title={text.editName}
                           value={row.name}
                           maxLength={20}
                           onChange={(event) =>
@@ -481,14 +482,14 @@ export function DataView() {
                                 );
                               }}
                             >
-                              {expanded ? "Hide details" : "View details"}
+                              {expanded ? text.hideDetails : text.viewDetails}
                             </summary>
                           </details>
                         )}
                       </td>
                       <td className="table-combined-input">
                         <select
-                          aria-label={`Input type for variation ${row.id}`}
+                          aria-label={text.typeLabel(row.id)}
                           value={row.type}
                           disabled={running}
                           onChange={(event) =>
@@ -501,8 +502,8 @@ export function DataView() {
                             })
                           }
                         >
-                          <option>Target risk</option>
-                          <option>Withdrawal</option>
+                          <option value="Target risk">{text.targetRisk}</option>
+                          <option value="Withdrawal">{text.withdrawal}</option>
                         </select>
                         {inputValue}
                       </td>
@@ -510,7 +511,7 @@ export function DataView() {
                         <td>
                           <div className="input-suffix table-input-suffix">
                             <input
-                              aria-label={`Impoverishment level for variation ${row.id}, euros`}
+                              aria-label={text.thresholdLabel(row.id)}
                               value={row.impoverishmentLevel}
                               disabled={running}
                               onChange={(event) =>
@@ -526,7 +527,7 @@ export function DataView() {
                       {tableType === "withdrawal" && (
                         <td>
                           <select
-                            aria-label={`Policy for variation ${row.id}`}
+                            aria-label={text.policyLabel(row.id)}
                             value={row.policy}
                             disabled={running}
                             onChange={(event) =>
@@ -536,8 +537,10 @@ export function DataView() {
                               })
                             }
                           >
-                            <option>Unconstrained</option>
-                            <option>Projected</option>
+                            <option value="Unconstrained">
+                              {text.unconstrained}
+                            </option>
+                            <option value="Projected">{text.projected}</option>
                           </select>
                         </td>
                       )}
@@ -546,7 +549,7 @@ export function DataView() {
                           <td>
                             {result?.ok
                               ? row.type === "Target risk"
-                                ? `€${result.annualWithdrawal.toLocaleString("en-US", { maximumFractionDigits: 2 })} / year`
+                                ? `€${result.annualWithdrawal.toLocaleString(language === "de" ? "de-DE" : "en-US", { maximumFractionDigits: 2 })} ${text.perYear}`
                                 : `${(result.ceRisk * 100).toFixed(2)}%`
                               : "—"}
                           </td>
@@ -558,22 +561,22 @@ export function DataView() {
                                 </span>
                                 {rowStale && !running && (
                                   <small className="table-result-detail">
-                                    Previous setup or row inputs
+                                    {text.previous}
                                   </small>
                                 )}
                                 <small className="table-result-detail">
                                   {captured.analytical
-                                    ? "Analytical zero"
+                                    ? text.analyticalZero
                                     : captured.gm.interval95
                                       ? `95% MC: ${(captured.gm.interval95.lower * 100).toFixed(3)}% – ${(captured.gm.interval95.upper * 100).toFixed(3)}%`
-                                      : "MC interval unavailable"}
+                                      : text.mcUnavailable}
                                 </small>
                               </>
                             ) : captured?.status === "running" ? (
                               <span
                                 className="table-cell-spinner"
                                 role="status"
-                                aria-label="Calculating GM risk"
+                                aria-label={text.calculatingGM}
                               />
                             ) : (
                               "—"
@@ -590,7 +593,7 @@ export function DataView() {
                           </td>
                           <td>
                             {borrowing?.occupation
-                              ? `${borrowing.occupation.estimateYears.toFixed(2)} years`
+                              ? `${borrowing.occupation.estimateYears.toFixed(2)} ${text.years}`
                               : "—"}
                           </td>
                         </>
@@ -600,31 +603,31 @@ export function DataView() {
                         {captured?.status === "running" && (
                           <small className="table-result-detail">
                             {run?.cancelling
-                              ? "Stopping after current batch…"
+                              ? text.stopBatch
                               : rowEta === null
-                                ? "ETA after first batch"
+                                ? text.etaBatch
                                 : rowEta > 0
-                                  ? formatComparisonEta(rowEta)
-                                  : "Finishing…"}
+                                  ? formatComparisonEta(rowEta, text)
+                                  : text.finishing}
                           </small>
                         )}
                         {captured?.message && (
                           <small className="table-row-error" role="status">
-                            {captured.message}
+                            {validationMessage(captured.message, language)}
                           </small>
                         )}
                         {rowStale &&
                           !running &&
                           tableType === "feasibility" && (
                             <small className="table-result-detail">
-                              Previous setup or row inputs
+                              {text.previous}
                             </small>
                           )}
                         {result &&
                           !result.ok &&
                           result.message !== captured?.message && (
                             <small className="table-row-error" role="status">
-                              {result.message}
+                              {validationMessage(result.message, language)}
                             </small>
                           )}
                       </td>
@@ -632,16 +635,14 @@ export function DataView() {
                         <button
                           className="row-remove"
                           type="button"
-                          aria-label={`Remove variation ${row.id}`}
+                          aria-label={text.removeLabel(row.id)}
                           disabled={running}
                           onClick={() => {
                             if (
                               (captured?.gm ||
                                 captured?.borrowing ||
                                 result?.ok) &&
-                              !window.confirm(
-                                "Delete this variation and its calculated values?",
-                              )
+                              !window.confirm(text.deleteConfirm)
                             )
                               return;
                             setTables((current) => ({
@@ -664,62 +665,64 @@ export function DataView() {
                               <span>
                                 {(captured?.inputType ?? row.type) ===
                                 "Target risk"
-                                  ? "Annual withdrawal"
-                                  : "CE lifetime risk"}
+                                  ? text.annualWithdrawal
+                                  : text.ceRisk}
                               </span>
                               <strong>
                                 {!feasibilityUnavailable && captured?.ce
                                   ? (captured.inputType ?? row.type) ===
                                     "Target risk"
-                                    ? `€${captured.ce.annualWithdrawal.toLocaleString("en-US", { maximumFractionDigits: 2 })} / year`
+                                    ? `€${captured.ce.annualWithdrawal.toLocaleString(language === "de" ? "de-DE" : "en-US", { maximumFractionDigits: 2 })} ${text.perYear}`
                                     : `${(captured.ce.ceRisk * 100).toFixed(2)}%`
                                   : "—"}
                               </strong>
                             </div>
                             <div>
-                              <span>Borrowing at retirement</span>
+                              <span>{text.borrowingAtRetirement}</span>
                               <strong>
                                 {borrowing
                                   ? borrowing.borrowingAtRetirement
-                                    ? "Yes"
-                                    : "No"
+                                    ? text.yes
+                                    : text.no
                                   : "—"}
                               </strong>
                             </div>
                             <div>
-                              <span>Last possible borrowing time</span>
+                              <span>{text.lastBorrow}</span>
                               <strong>
                                 {borrowing
                                   ? borrowing.lastPossibleTimeYears === null
-                                    ? "Never"
-                                    : `${borrowing.lastPossibleTimeYears.toFixed(2)} years after retirement`
+                                    ? text.never
+                                    : `${borrowing.lastPossibleTimeYears.toFixed(2)} ${text.yearsAfter}`
                                   : "—"}
                               </strong>
                             </div>
                             <div>
-                              <span>95% MC interval · ever borrowing</span>
+                              <span>{text.probabilityInterval}</span>
                               <strong>
                                 {borrowing?.probability
                                   ? captured?.analytical
-                                    ? "Analytical zero"
+                                    ? text.analyticalZero
                                     : formatInterval(
                                         borrowing.probability.interval95,
                                         100,
                                         "%",
+                                        text.unavailable,
                                       )
                                   : "—"}
                               </strong>
                             </div>
                             <div>
-                              <span>95% MC interval · time borrowing</span>
+                              <span>{text.timeInterval}</span>
                               <strong>
                                 {borrowing?.occupation
                                   ? captured?.analytical
-                                    ? "Analytical zero"
+                                    ? text.analyticalZero
                                     : formatInterval(
                                         borrowing.occupation.interval95Years,
                                         1,
-                                        " years",
+                                        ` ${text.years}`,
+                                        text.unavailable,
                                       )
                                   : "—"}
                               </strong>
@@ -727,8 +730,8 @@ export function DataView() {
                           </div>
                           <p>
                             {captured?.analytical
-                              ? "Borrowing is analytically impossible when ζ ≤ 1."
-                              : "Intervals cover Monte Carlo uncertainty only. Borrowing estimates also depend on the time step and crossing approximations."}
+                              ? text.zeroNote
+                              : text.intervalNote}
                           </p>
                         </td>
                       </tr>
@@ -746,40 +749,38 @@ export function DataView() {
                 <>
                   <span>
                     {run?.cancelling
-                      ? "Stopping after the current batches…"
+                      ? text.stopBatches
                       : overallEta === null
-                        ? "Estimating overall time…"
-                        : formatComparisonEta(overallEta)}
+                        ? text.estimateOverall
+                        : formatComparisonEta(overallEta, text)}
                   </span>
                   {batchProgress && batchProgress.total > 0 && (
                     <>
                       <progress
-                        aria-label="Table simulation progress"
+                        aria-label={text.progress}
                         max={batchProgress.total}
                         value={batchProgress.completed}
                       />
                       <small>
                         {batchProgress.completed.toLocaleString("en-US")} /{" "}
-                        {batchProgress.total.toLocaleString("en-US")} batches
+                        {batchProgress.total.toLocaleString("en-US")}{" "}
+                        {text.batches}
                       </small>
                     </>
                   )}
-                  {sharedStale && (
-                    <small>
-                      Settings changed; this run continues with its captured
-                      setup.
-                    </small>
-                  )}
+                  {sharedStale && <small>{text.changed}</small>}
                 </>
               ) : (
                 <span>
                   {tableType === "withdrawal"
-                    ? "CE values are analytical; GM risk is estimated through the CE horizon."
-                    : "Borrowing estimates use GM mortality through the CE horizon."}
+                    ? text.withdrawalFooter
+                    : text.feasibilityFooter}
                 </span>
               )}
               {simulation.error && (
-                <span className="table-row-error">{simulation.error}</span>
+                <span className="table-row-error">
+                  {validationMessage(simulation.error, language)}
+                </span>
               )}
             </div>
             <button
@@ -798,43 +799,39 @@ export function DataView() {
                     (tableType === "feasibility" && !!feasibilityUnavailable)
               }
             >
-              {running ? "Cancel rows" : "▶  Compute rows"}
+              {running ? text.cancelRows : text.computeRows}
             </button>
           </>
         </div>
       </div>
       <SectionHeading
-        eyebrow="SAVE AND RESTORE"
-        title="Import & export"
-        description="Keep your setup and your results separately."
+        eyebrow={text.save}
+        title={text.importExport}
+        description={text.saveDescription}
       />
       <div className="data-cards">
         <div className="small-card">
-          <span className="tiny-label">RECREATE YOUR SETUP</span>
-          <h3>Import or export setup</h3>
+          <span className="tiny-label">{text.recreate}</span>
+          <h3>{text.importSetup}</h3>
           <p>
-            Save or restore your inputs, table variations and run settings. Fits
-            and results are not included. Learn about{" "}
-            <TermLink term="setup-results">setups and results</TermLink>.
+            {text.setupDescription}{" "}
+            <TermLink term="setup-results">{text.setupLink}</TermLink>.
           </p>
           <div className="heading-actions">
             <SetupFileActions />
           </div>
         </div>
         <div className="small-card">
-          <span className="tiny-label">KEEP YOUR OUTPUTS</span>
-          <h3>Export results</h3>
-          <p>
-            Save the computed tables and diagnostics, linked to the setup and
-            run that produced them.
-          </p>
+          <span className="tiny-label">{text.output}</span>
+          <h3>{text.exportResults}</h3>
+          <p>{text.resultsDescription}</p>
           <button
             type="button"
             className="button button-light"
             onClick={exportResults}
             disabled={!evaluationResult && !hasTableResults}
           >
-            ↓ &nbsp; Export results
+            ↓ &nbsp; {text.exportResults}
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { renderToStaticMarkup } from "react-dom/server";
+import { renderWithDictionary as renderToStaticMarkup } from "./dictionary-render";
 import { MortalityDataInfo } from "../src/components/setup/MortalityDataInfo";
 import manifest from "../public/data/mortality/manifest.json";
 

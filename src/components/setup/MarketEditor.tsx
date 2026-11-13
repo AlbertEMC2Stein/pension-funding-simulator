@@ -1,5 +1,8 @@
 "use client";
 
+import { useLanguage } from "../LanguageContext";
+import { validationMessage } from "../../lib/i18n/validation";
+import { assetEditorMessages } from "../../lib/i18n/asset-editor";
 import { TermLink } from "../common";
 
 import { useRef, useState } from "react";
@@ -35,18 +38,18 @@ export function CorrelationMatrix({
   market,
   onChange,
 }: Omit<MarketEditorProps, "onImport">) {
+  const { language } = useLanguage();
+  const text = assetEditorMessages[language];
+
   return (
     <div className="correlation-scroll">
-      <table
-        className="correlation-table"
-        aria-label="Asset correlation matrix"
-      >
+      <table className="correlation-table" aria-label={text.matrix}>
         <thead>
           <tr>
-            <th scope="col">Asset</th>
+            <th scope="col">{text.asset}</th>
             {market.assets.map((asset, i) => (
               <th key={asset.id} scope="col">
-                {asset.name.trim() || `Asset ${i + 1}`}
+                {asset.name.trim() || `${text.asset} ${i + 1}`}
               </th>
             ))}
           </tr>
@@ -54,13 +57,18 @@ export function CorrelationMatrix({
         <tbody>
           {market.assets.map((asset, i) => (
             <tr key={asset.id}>
-              <th scope="row">{asset.name.trim() || `Asset ${i + 1}`}</th>
+              <th scope="row">
+                {asset.name.trim() || `${text.asset} ${i + 1}`}
+              </th>
               {market.assets.map((other, j) => (
                 <td key={other.id}>
                   {i === j ? (
                     <span
                       className="correlation-diagonal"
-                      aria-label={`Correlation of asset ${i + 1} with itself, fixed at 1, current value ${market.correlations[i][j] || "empty"}`}
+                      aria-label={text.diagonal(
+                        i + 1,
+                        market.correlations[i][j] || text.empty,
+                      )}
                     >
                       {market.correlations[i][j] || "—"}
                     </span>
@@ -68,7 +76,7 @@ export function CorrelationMatrix({
                     <input
                       type="text"
                       inputMode="decimal"
-                      aria-label={`Correlation of asset ${i + 1} with asset ${j + 1}`}
+                      aria-label={text.pair(i + 1, j + 1)}
                       value={market.correlations[i][j]}
                       onChange={(event) => {
                         if (isEditableDecimal(event.target.value))
@@ -80,7 +88,11 @@ export function CorrelationMatrix({
                   ) : (
                     <span
                       className="correlation-mirrored"
-                      aria-label={`Mirrored correlation of asset ${i + 1} with asset ${j + 1}: ${market.correlations[i][j] || "empty"}`}
+                      aria-label={text.mirrored(
+                        i + 1,
+                        j + 1,
+                        market.correlations[i][j] || text.empty,
+                      )}
                     >
                       {market.correlations[i][j] || "—"}
                     </span>
@@ -105,6 +117,9 @@ export function MarketEditor({
   onChange,
   onImport,
 }: MarketEditorProps) {
+  const { language } = useLanguage();
+  const text = assetEditorMessages[language];
+
   // Expansion is a display preference; closing the matrix preserves its data.
   const [matrixOpen, setMatrixOpen] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -171,9 +186,9 @@ export function MarketEditor({
       <div className="card-heading">
         <div>
           <span className="tiny-label">
-            {market.assets.length} OF {MAX_ASSETS} ASSETS
+            {text.count(market.assets.length, MAX_ASSETS)}
           </span>
-          <h3>Asset universe</h3>
+          <h3>{text.title}</h3>
         </div>
         <div className="asset-actions">
           <input
@@ -182,7 +197,7 @@ export function MarketEditor({
             accept=".csv,text/csv"
             className="visually-hidden"
             tabIndex={-1}
-            aria-label="Choose a price CSV"
+            aria-label={text.chooseCsv}
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = "";
@@ -195,7 +210,7 @@ export function MarketEditor({
             className="button button-light"
             onClick={() => fileInput.current?.click()}
           >
-            ↥ &nbsp; Import price data
+            ↥ &nbsp; {text.importPrices}
           </button>
           <button
             type="button"
@@ -203,18 +218,19 @@ export function MarketEditor({
             onClick={() => onChange(addAsset(market))}
             disabled={market.assets.length >= MAX_ASSETS}
           >
-            + &nbsp; Add asset
+            + &nbsp; {text.add}
           </button>
         </div>
       </div>
       <p>
-        Enter expected annual <TermLink term="growth">nominal growth</TermLink>{" "}
-        and <TermLink term="volatility">volatility</TermLink> as percentages.
-        Growth is an annualized compounded rate. Import{" "}
-        <TermLink term="adjusted-prices">adjusted EUR closing prices</TermLink>{" "}
-        or edit assumptions directly; enter the{" "}
-        <TermLink term="risk-free-rate">risk-free rate</TermLink> and{" "}
-        <TermLink term="nominal-real">inflation</TermLink> separately above.
+        {text.introStart} <TermLink term="growth">{text.growthLink}</TermLink>{" "}
+        {text.and} <TermLink term="volatility">{text.volatilityLink}</TermLink>{" "}
+        {text.introMiddle}{" "}
+        <TermLink term="adjusted-prices">{text.pricesLink}</TermLink>{" "}
+        {text.introEnd}{" "}
+        <TermLink term="risk-free-rate">{text.riskFreeLink}</TermLink>{" "}
+        {text.and} <TermLink term="nominal-real">{text.inflationLink}</TermLink>{" "}
+        {text.introLast}
       </p>
       {importError && (
         <div
@@ -222,16 +238,17 @@ export function MarketEditor({
           data-status="invalid"
           role="alert"
         >
-          Import failed: {importError} Your current inputs have been kept.
+          {text.importFailed} {validationMessage(importError, language)}{" "}
+          {text.importKept}
         </div>
       )}
       <div className="market-asset-list">
         {market.assets.map((asset, index) => (
           <div className="market-asset-row" key={asset.id}>
             <label>
-              Asset name
+              {text.name}
               <input
-                aria-label={`Asset ${index + 1} name`}
+                aria-label={text.assetName(index + 1)}
                 value={asset.name}
                 onChange={(event) =>
                   updateAsset(index, { name: event.target.value })
@@ -239,10 +256,10 @@ export function MarketEditor({
               />
             </label>
             <label>
-              Expected annual growth
+              {text.growth}
               <span className="input-suffix">
                 <input
-                  aria-label={`Expected annual nominal growth for asset ${index + 1}, percent per year`}
+                  aria-label={text.growthLabel(index + 1)}
                   type="text"
                   inputMode="decimal"
                   value={asset.nominalReturnPercent}
@@ -253,14 +270,14 @@ export function MarketEditor({
                       });
                   }}
                 />
-                <span aria-hidden="true">% / year</span>
+                <span aria-hidden="true">{text.perYear}</span>
               </span>
             </label>
             <label>
-              Volatility
+              {text.volatility}
               <span className="input-suffix">
                 <input
-                  aria-label={`Annual volatility for asset ${index + 1}, percent per year`}
+                  aria-label={text.volatilityLabel(index + 1)}
                   type="text"
                   inputMode="decimal"
                   value={asset.volatilityPercent}
@@ -271,13 +288,13 @@ export function MarketEditor({
                       });
                   }}
                 />
-                <span aria-hidden="true">% / year</span>
+                <span aria-hidden="true">{text.perYear}</span>
               </span>
             </label>
             <button
               type="button"
               className="row-remove market-remove"
-              aria-label={`Remove asset ${index + 1}: ${asset.name || "unnamed"}`}
+              aria-label={text.remove(index + 1, asset.name || text.unnamed)}
               onClick={() => onChange(removeAsset(market, index))}
               disabled={market.assets.length === 1}
             >
@@ -287,7 +304,7 @@ export function MarketEditor({
         ))}
       </div>
       {market.assets.length >= MAX_ASSETS && (
-        <p>Maximum of {MAX_ASSETS} assets reached.</p>
+        <p>{text.maxAssets(MAX_ASSETS)}</p>
       )}
       <button
         type="button"
@@ -296,15 +313,14 @@ export function MarketEditor({
         aria-controls="correlation-editor"
         onClick={() => setMatrixOpen(!matrixOpen)}
       >
-        {matrixOpen ? "Hide" : "Show / edit"} correlation matrix
+        {matrixOpen ? text.hideMatrix : text.showMatrix}
       </button>
       {matrixOpen && (
         <div id="correlation-editor" className="correlation-editor">
           <p>
-            Enter <TermLink term="correlation">correlations</TermLink> from −1
-            to 1 below the diagonal. The diagonal is fixed at 1, and values
-            above it are mirrored automatically. Zero is an initial assumption,
-            not an estimate.
+            {text.matrixStart}{" "}
+            <TermLink term="correlation">{text.correlationLink}</TermLink>{" "}
+            {text.matrixEnd}
           </p>
           <CorrelationMatrix market={market} onChange={onChange} />
         </div>

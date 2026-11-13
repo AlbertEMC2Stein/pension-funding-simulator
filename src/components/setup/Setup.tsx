@@ -1,5 +1,9 @@
 "use client";
 
+import { useLanguage } from "../LanguageContext";
+import { validationMessage } from "../../lib/i18n/validation";
+import { marketPlaceholderMessages } from "../../lib/i18n/market-placeholders";
+import { setupMessages } from "../../lib/i18n/setup";
 import { PanelHelp } from "../PanelHelp";
 
 import { useState } from "react";
@@ -50,6 +54,9 @@ import {
  * shared draft. The historical stress-test display remains a placeholder.
  */
 function MarketSetup() {
+  const { language } = useLanguage();
+  const text = setupMessages[language];
+  const placeholder = marketPlaceholderMessages[language];
   const [undo, setUndo] = useState<MarketCalibrationDraft | null>(null);
   const [stress, setStress] = useState(false);
   const { draft, setDraft } = useSimulationDraft();
@@ -89,21 +96,18 @@ function MarketSetup() {
           <div className="orbit one" />
           <div className="orbit two" />
         </div>
-        <span className="tiny-label">A NOTE ON CALIBRATION</span>
-        <h3>Good inputs make better questions.</h3>
-        <p>
-          Historical estimates are a starting point. Review the period,
-          currency, and assumptions before using them.
-        </p>
+        <span className="tiny-label">{text.calibrationNote}</span>
+        <h3>{text.calibrationHeadline}</h3>
+        <p>{text.calibrationDescription}</p>
         <div className="insight-divider" />
         <MarketDataInfo />
       </aside>
       <div>
         <div className="market-heading">
           <SectionHeading
-            eyebrow="THE INVESTMENT UNIVERSE"
-            title="Market assumptions"
-            description="Define up to 10 assets and how they move together."
+            eyebrow={text.investmentEyebrow}
+            title={text.marketTitle}
+            description={text.marketDescription}
           >
             <div className="market-actions">
               <button
@@ -112,7 +116,7 @@ function MarketSetup() {
                 onClick={() => applyMarketAction({ type: "reset" })}
                 disabled={isExample}
               >
-                ↺ &nbsp; Reset to example
+                ↺ &nbsp; {text.reset}
               </button>
               <button
                 type="button"
@@ -120,7 +124,7 @@ function MarketSetup() {
                 onClick={() => applyMarketAction({ type: "undo" })}
                 disabled={!undo}
               >
-                Undo reset
+                {text.undo}
               </button>
             </div>
           </SectionHeading>
@@ -128,25 +132,25 @@ function MarketSetup() {
         <div className="form-card market-input-card">
           <div className="card-heading">
             <div>
-              <span className="tiny-label">YOUR MARKET</span>
-              <h3>Market inputs</h3>
+              <span className="tiny-label">{text.yourMarket}</span>
+              <h3>{text.marketInputs}</h3>
             </div>
           </div>
           <p>
-            Market assumptions can affect the fitted{" "}
-            <TermLink term="mortality-fit">mortality model</TermLink>. After
-            changing them, check the fit under Investor &amp; mortality. The
-            underlying cohort data do not change.
+            {text.marketFitBefore}{" "}
+            <TermLink term="mortality-fit">{text.mortalityModel}</TermLink>
+            {language === "en" ? ". " : " "}
+            {text.marketFitAfter}
           </p>
           <div className="input-grid market-input-grid">
             <label>
-              Base currency
+              {text.currency}
               <select defaultValue="EUR">
                 <option value="EUR">EUR — Euro</option>
               </select>
             </label>
             <label>
-              Nominal risk-free rate
+              {text.riskFree}
               <div
                 className={`input-suffix${riskFreeError ? " input-suffix-invalid" : ""}`}
               >
@@ -163,16 +167,21 @@ function MarketSetup() {
                   }}
                   inputMode="decimal"
                 />
-                <span>% / year</span>
+                <span>{text.perYear}</span>
               </div>
               <small id="risk-free-rate-hint" className="cohort-input-hint">
                 {realRate === null
-                  ? "Enter a valid rate and inflation assumption."
-                  : `Real rate after inflation: ${Number((realRate * 100).toPrecision(4))}% / year (continuously compounded).`}
+                  ? text.invalidRates
+                  : text.realRateLabel(
+                      Number((realRate * 100).toPrecision(4)).toLocaleString(
+                        language === "de" ? "de-DE" : "en-US",
+                        { maximumSignificantDigits: 4 },
+                      ),
+                    )}
               </small>
             </label>
             <label>
-              Inflation assumption
+              {text.inflation}
               <div
                 className={`input-suffix${inflationError ? " input-suffix-invalid" : ""}`}
               >
@@ -189,14 +198,14 @@ function MarketSetup() {
                   }}
                   inputMode="decimal"
                 />
-                <span>% / year</span>
+                <span>{text.perYear}</span>
               </div>
               <small
                 id="inflation-error"
                 className="field-error"
                 aria-live="polite"
               >
-                {inflationError}
+                {inflationError && validationMessage(inflationError, language)}
               </small>
             </label>
           </div>
@@ -212,23 +221,14 @@ function MarketSetup() {
           <div className="form-card diagnostic-card">
             <div className="card-heading">
               <div>
-                <span className="tiny-label">HISTORICAL CALIBRATION</span>
-                <h3>Estimation uncertainty</h3>
-                <p>
-                  Available after calibration from historical API or uploaded
-                  data.
-                </p>
+                <span className="tiny-label">{placeholder.historical}</span>
+                <h3>{placeholder.uncertainty}</h3>
+                <p>{placeholder.available}</p>
               </div>
               <StatusBadge status="not-calculated" />
             </div>
             <div className="diagnostic-meta">
-              {[
-                "Period",
-                "Frequency",
-                "Currency",
-                "Observations",
-                "Method",
-              ].map((label) => (
+              {placeholder.meta.map((label) => (
                 <span key={label}>
                   {label} <b>—</b>
                 </span>
@@ -238,16 +238,19 @@ function MarketSetup() {
               <table className="capital-table">
                 <thead>
                   <tr>
-                    <th>Asset</th>
-                    <th>Annual return</th>
-                    <th>95% confidence interval</th>
-                    <th>Volatility</th>
+                    <th>{placeholder.asset}</th>
+                    <th>{placeholder.annualReturn}</th>
+                    <th>{placeholder.confidence}</th>
+                    <th>{placeholder.volatility}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {market.assets.map((asset, index) => (
                     <tr key={asset.id}>
-                      <td>{asset.name.trim() || `Asset ${index + 1}`}</td>
+                      <td>
+                        {asset.name.trim() ||
+                          `${placeholder.assetFallback} ${index + 1}`}
+                      </td>
                       <td>—</td>
                       <td>—</td>
                       <td>—</td>
@@ -257,43 +260,33 @@ function MarketSetup() {
               </table>
             </div>
             <details className="borrowing-details diagnostic-details">
-              <summary>Covariance & correlation details</summary>
+              <summary>{placeholder.covariance}</summary>
               <dl>
                 <div>
-                  <dt>Widest individual covariance interval</dt>
+                  <dt>{placeholder.widest}</dt>
                   <dd>—</dd>
                 </div>
                 <div>
-                  <dt>Asset pair</dt>
+                  <dt>{placeholder.pair}</dt>
                   <dd>—</dd>
                 </div>
                 <div>
-                  <dt>Matrix conditioning</dt>
-                  <dd>Not evaluated</dd>
+                  <dt>{placeholder.conditioning}</dt>
+                  <dd>{placeholder.notEvaluated}</dd>
                 </div>
               </dl>
-              <p>
-                The widest individual interval is not a confidence bound for the
-                whole matrix. A near-singular covariance warning will appear
-                when applicable.
-              </p>
+              <p>{placeholder.widestNote}</p>
             </details>
-            <p className="chart-disclaimer">
-              Intervals describe historical-parameter estimation uncertainty,
-              not guaranteed future return ranges.
-            </p>
+            <p className="chart-disclaimer">{placeholder.intervalNote}</p>
           </div>
         )}
         {hasHistoricalCsvCalibration && (
           <div className="form-card diagnostic-card">
             <div className="card-heading">
               <div>
-                <span className="tiny-label">SCENARIO COMPARISON</span>
-                <h3>Recalibrated market scenarios</h3>
-                <p>
-                  Compare estimated return assumptions with covariance held
-                  fixed.
-                </p>
+                <span className="tiny-label">{placeholder.comparison}</span>
+                <h3>{placeholder.scenarios}</h3>
+                <p>{placeholder.scenarioIntro}</p>
               </div>
               <StatusBadge status="not-calculated" />
             </div>
@@ -304,11 +297,8 @@ function MarketSetup() {
                 onChange={(event) => setStress(event.target.checked)}
               />
               <span>
-                <strong>Explore return scenarios</strong>
-                <small>
-                  Recalculate the policy and compatible mortality calibration
-                  for each scenario.
-                </small>
+                <strong>{placeholder.explore}</strong>
+                <small>{placeholder.recalculate}</small>
               </span>
             </label>
             {stress && (
@@ -317,30 +307,23 @@ function MarketSetup() {
                   <table className="capital-table">
                     <thead>
                       <tr>
-                        <th>Scenario</th>
-                        <th>Return assumptions</th>
-                        <th>Diagnostics</th>
+                        <th>{placeholder.scenario}</th>
+                        <th>{placeholder.assumptions}</th>
+                        <th>{placeholder.diagnostics}</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {[
-                        ["Baseline", "Historical estimates"],
-                        ["Lower returns", "Individual lower bounds"],
-                        ["Higher returns", "Individual upper bounds"],
-                      ].map(([name, assumption]) => (
+                      {placeholder.rows.map(([name, assumption]) => (
                         <tr key={name}>
                           <td>{name}</td>
                           <td>{assumption}</td>
-                          <td>Not evaluated</td>
+                          <td>{placeholder.notEvaluated}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-                <p className="chart-disclaimer">
-                  Individual interval endpoints are not a joint confidence
-                  region or guaranteed worst- and best-case outcomes.
-                </p>
+                <p className="chart-disclaimer">{placeholder.scenarioNote}</p>
               </>
             )}
           </div>
@@ -365,6 +348,8 @@ function InvestorSetup({
   onCeFitStatusChange: (status: CeFitStatus) => void;
   active: boolean;
 }) {
+  const { language } = useLanguage();
+  const text = setupMessages[language];
   const { draft, setDraft } = useSimulationDraft();
   const { investor } = draft;
   const [undoInvestor, setUndoInvestor] = useState<
@@ -419,20 +404,17 @@ function InvestorSetup({
           <div className="orbit one" />
           <div className="orbit two" />
         </div>
-        <span className="tiny-label">MORTALITY DATA</span>
-        <h3>Built around your cohort.</h3>
-        <p>
-          Your birth year, retirement age, and selected longevity scenario
-          determine the cohort survival data used for calibration.
-        </p>
+        <span className="tiny-label">{text.mortalityData}</span>
+        <h3>{text.cohortHeadline}</h3>
+        <p>{text.cohortDescription}</p>
         <div className="insight-divider" />
         <MortalityDataInfo />
       </aside>
       <div>
         <SectionHeading
-          eyebrow="YOUR RETIREMENT PROFILE"
-          title="Investor & mortality"
-          description="Set the person and retirement context for your setup."
+          eyebrow={text.retirementProfile}
+          title={text.investorTitle}
+          description={text.investorDescription}
         >
           <div className="market-actions">
             <button
@@ -441,7 +423,7 @@ function InvestorSetup({
               onClick={resetInvestor}
               disabled={isExample}
             >
-              ↺ &nbsp; Reset to example
+              ↺ &nbsp; {text.reset}
             </button>
             <button
               type="button"
@@ -449,20 +431,20 @@ function InvestorSetup({
               onClick={undoInvestorReset}
               disabled={!undoInvestor}
             >
-              Undo reset
+              {text.undo}
             </button>
           </div>
         </SectionHeading>
         <div className="form-card">
           <div className="card-heading">
             <div>
-              <span className="tiny-label">RETIREMENT PROFILE</span>
-              <h3>A few details about you</h3>
+              <span className="tiny-label">{text.retirementProfile}</span>
+              <h3>{text.details}</h3>
             </div>
           </div>
           <div className="input-grid">
             <label>
-              Birth year
+              {text.birthYear}
               <input
                 type="number"
                 min={FIRST_COHORT_YEAR}
@@ -476,12 +458,13 @@ function InvestorSetup({
                 }
               />
               <small id="birth-year-hint" className="cohort-input-hint">
-                {cohortYears.birthError ??
-                  `Available cohorts: ${FIRST_COHORT_YEAR}–${LAST_COHORT_YEAR}.`}
+                {cohortYears.birthError
+                  ? validationMessage(cohortYears.birthError, language)
+                  : `${text.availableCohorts}: ${FIRST_COHORT_YEAR}–${LAST_COHORT_YEAR}.`}
               </small>
             </label>
             <label>
-              Expected retirement year
+              {text.retirementYear}
               <input
                 type="number"
                 min={cohortYears.birthError ? undefined : cohortYears.birthYear}
@@ -499,12 +482,13 @@ function InvestorSetup({
                 }
               />
               <small id="retirement-year-hint" className="cohort-input-hint">
-                {cohortYears.retirementError ??
-                  "Supported retirement ages: 0–99."}
+                {cohortYears.retirementError
+                  ? validationMessage(cohortYears.retirementError, language)
+                  : text.supportedAges}
               </small>
             </label>
             <label>
-              Mortality table
+              {text.mortalityTable}
               <select
                 value={mortality}
                 onChange={(event) =>
@@ -513,13 +497,13 @@ function InvestorSetup({
                   })
                 }
               >
-                <option value="female">Female</option>
-                <option value="male">Male</option>
-                <option value="custom">Custom mixture</option>
+                <option value="female">{text.female}</option>
+                <option value="male">{text.male}</option>
+                <option value="custom">{text.mixture}</option>
               </select>
             </label>
             <label>
-              Longevity scenario
+              {text.longevity}
               <select
                 value={investor.longevity}
                 onChange={(event) =>
@@ -528,13 +512,13 @@ function InvestorSetup({
                   })
                 }
               >
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-                <option value="high">High</option>
+                <option value="medium">{text.medium}</option>
+                <option value="low">{text.low}</option>
+                <option value="high">{text.high}</option>
               </select>
             </label>
             <label>
-              Initial capital
+              {text.initialCapital}
               <div className="input-suffix">
                 <input
                   value={investor.initialCapital}
@@ -548,7 +532,7 @@ function InvestorSetup({
             <div className="input-with-help">
               <div className="input-label-row">
                 <label htmlFor="impoverishment-input">
-                  Impoverishment level
+                  {text.impoverishment}
                 </label>
                 <TermLink term="impoverishment">?</TermLink>
               </div>
@@ -565,15 +549,15 @@ function InvestorSetup({
               </div>
               <small id="impoverishment-percentage" className="input-hint">
                 {thresholdPercent === null
-                  ? "Enter at least €1 and less than your initial capital."
-                  : `${thresholdPercent < 0.01 ? "Less than 0.01" : new Intl.NumberFormat("en", { maximumFractionDigits: 2 }).format(thresholdPercent)}% of initial capital`}
+                  ? text.thresholdError
+                  : `${thresholdPercent < 0.01 ? text.lessThan : new Intl.NumberFormat(language === "de" ? "de-DE" : "en-US", { maximumFractionDigits: 2 }).format(thresholdPercent)}% ${text.ofCapital}`}
               </small>
             </div>
           </div>
           {mortality === "custom" && (
             <div className="mortality-mixture">
               <label className="field-label" htmlFor="mortality-mix">
-                Male weight <b>{mix.toFixed(2)}</b>
+                {text.maleWeight} <b>{mix.toFixed(2)}</b>
               </label>
               <input
                 id="mortality-mix"
@@ -588,36 +572,42 @@ function InvestorSetup({
                 aria-describedby="mix-description"
               />
               <div className="range-ends">
-                <span>0 · Female</span>
-                <span>1 · Male</span>
+                <span>0 · {text.female}</span>
+                <span>1 · {text.male}</span>
               </div>
-              <p id="mix-description">
-                Weights the female and male survival curves; 0.50 gives an equal
-                mixture.
-              </p>
+              <p id="mix-description">{text.mixtureDescription}</p>
             </div>
           )}
         </div>
         <div className="form-card mortality-card">
           <div className="card-heading">
             <div>
-              <span className="tiny-label">MORTALITY CALIBRATION</span>
+              <span className="tiny-label">{text.mortalityCalibration}</span>
               <div className="panel-help-heading">
-                <h3>Survival curve & model fit</h3>
+                <h3>{text.survivalFit}</h3>
                 <PanelHelp panel="mortality" />
               </div>
             </div>
           </div>
           <p>
-            Explore <TermLink term="cohort">cohort</TermLink>{" "}
-            <TermLink term="survival">survival</TermLink> from your expected
-            retirement age and fit{" "}
-            <TermLink term="mortality-models">mortality models</TermLink>.{" "}
+            {language === "de" ? (
+              <>
+                {text.cohortIntro}{" "}
+                <TermLink term="survival">{text.survivalLink}</TermLink> Ihrer{" "}
+                <TermLink term="cohort">{text.cohortLink}</TermLink>{" "}
+              </>
+            ) : (
+              <>
+                {text.cohortIntro}{" "}
+                <TermLink term="cohort">{text.cohortLink}</TermLink>{" "}
+                <TermLink term="survival">{text.survivalLink}</TermLink>{" "}
+              </>
+            )}
+            {text.fitModelsIntro}{" "}
+            <TermLink term="mortality-models">{text.modelsLink}</TermLink>.{" "}
             <span role="status">
-              {ceFitStatus === "needs-update"
-                ? "The compatible CE fit needs updating after an input change."
-                : "The compatible CE fit depends on market assumptions. Check the fit again after changing them."}{" "}
-              The cohort data themselves do not change.
+              {ceFitStatus === "needs-update" ? text.fitStale : text.fitReview}{" "}
+              {text.cohortUnchanged}
             </span>
           </p>
           <CohortChart
@@ -636,10 +626,12 @@ function InvestorSetup({
 }
 
 /**
- * Switch between market and investor tabs. Both remain mounted so locally
- * edited values survive tab changes, but they do not survive a page reload.
+ * Switch between market and investor tabs. Both remain mounted across tab
+ * changes; the shared draft separately restores editable values on reload.
  */
 export function Setup() {
+  const { language } = useLanguage();
+  const text = setupMessages[language];
   const [tab, setTab] = useState<"market" | "investor">("market");
   const [ceFitStatus, setCeFitStatus] = useState<CeFitStatus>("not-fitted");
   const { setupName, setSetupName } = useSimulationDraft();
@@ -647,32 +639,28 @@ export function Setup() {
   return (
     <section className="view active">
       <PageHeading
-        eyebrow="BUILD YOUR SETUP"
-        title="The foundations"
-        description="Set the market and investor assumptions behind your analysis."
+        eyebrow={text.eyebrow}
+        title={text.title}
+        description={text.description}
       >
         <div className="heading-actions">
           <SetupFileActions />
         </div>
       </PageHeading>
       <PreviewBanner>
-        <strong>Design preview.</strong> Explore the market and mortality inputs
-        used by the simulator. Export your setup to save it for later.
+        <strong>{text.preview}</strong> {text.previewDescription}
       </PreviewBanner>
       <div className="form-card setup-name-card">
         <div className="card-heading">
           <div>
-            <span className="tiny-label">YOUR SETUP</span>
-            <h3>Name your setup</h3>
-            <p>
-              Your inputs are saved locally in this browser. Fits and results
-              are not saved automatically.
-            </p>
+            <span className="tiny-label">{text.yourSetup}</span>
+            <h3>{text.nameSetup}</h3>
+            <p>{text.savedNote}</p>
           </div>
         </div>
         <div className="input-grid">
           <label>
-            Setup name
+            {text.setupName}
             <input
               type="text"
               value={setupName}
@@ -685,7 +673,7 @@ export function Setup() {
           </label>
         </div>
       </div>
-      <div className="tabs" role="tablist" aria-label="Setup sections">
+      <div className="tabs" role="tablist" aria-label={text.tabs}>
         <button
           type="button"
           className={`tab ${tab === "market" ? "active" : ""}`}
@@ -693,7 +681,7 @@ export function Setup() {
           aria-selected={tab === "market"}
           onClick={() => setTab("market")}
         >
-          01 &nbsp; Market
+          01 &nbsp; {text.market}
         </button>
         <button
           type="button"
@@ -702,8 +690,8 @@ export function Setup() {
           aria-selected={tab === "investor"}
           onClick={() => setTab("investor")}
         >
-          02 &nbsp; Investor & mortality
-          {ceFitStatus === "needs-update" && " · Review fit"}
+          02 &nbsp; {text.investor}
+          {ceFitStatus === "needs-update" && ` · ${text.reviewFit}`}
         </button>
       </div>
       <div hidden={tab !== "market"}>

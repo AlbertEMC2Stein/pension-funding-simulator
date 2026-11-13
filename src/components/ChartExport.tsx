@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, type RefObject } from "react";
+import { useLanguage } from "./LanguageContext";
+import { chartMessages } from "../lib/i18n/charts";
 import { downloadText, makeCsv, type CsvCell } from "../lib/export/csv";
 
 /** Trace properties used by the currently supported Plotly charts. */
@@ -83,6 +85,8 @@ export function ChartExport({
   imageLegend?: readonly ChartExportLegendItem[];
 }) {
   const [error, setError] = useState("");
+  const { language } = useLanguage();
+  const text = chartMessages[language];
 
   /** Download either the visible traces or an image of the current graph. */
   async function download(format: "png" | "svg" | "csv") {
@@ -93,7 +97,7 @@ export function ChartExport({
         })
       | null;
     if (!graph?.data?.length || graph.dataset.exportReady !== "true") {
-      setError("The chart is not ready to export yet.");
+      setError(text.notReady);
       return;
     }
 
@@ -175,14 +179,14 @@ export function ChartExport({
       }
       setError("");
     } catch {
-      setError("The chart could not be exported. Please try again.");
+      setError(text.exportError);
     }
   }
 
   return (
-    <div className="chart-export">
+    <div className="chart-export" lang={language}>
       <details>
-        <summary>Export chart</summary>
+        <summary>{text.exportChart}</summary>
         <div className="chart-export-actions">
           <button
             type="button"
@@ -203,7 +207,7 @@ export function ChartExport({
             className="button button-light"
             onClick={() => void download("csv")}
           >
-            CSV data
+            {text.csvData}
           </button>
         </div>
       </details>

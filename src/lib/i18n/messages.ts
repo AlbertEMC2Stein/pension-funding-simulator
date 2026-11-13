@@ -19,7 +19,8 @@ export interface ShellMessages {
   switchToLight: string;
   switchToDark: string;
   languageLabel: string;
-  languagePartial: string;
+  documentTitle: string;
+  documentDescription: string;
   preferenceReadError: string;
   preferenceWriteError: string;
   footer: string;
@@ -45,9 +46,10 @@ export const shellMessages: Record<Language, ShellMessages> = {
     themeDark: "Dark mode",
     switchToLight: "Switch to light theme",
     switchToDark: "Switch to dark theme",
-    languageLabel: "Language (translation in progress)",
-    languagePartial:
-      "The navigation is translated; panel content is still being translated.",
+    languageLabel: "Language",
+    documentTitle: "Stillwell — Pension funding simulator · Design draft",
+    documentDescription:
+      "An illustrative interface draft for a pension funding simulator.",
     preferenceReadError:
       "Display preferences could not be restored from this browser.",
     preferenceWriteError:
@@ -73,9 +75,11 @@ export const shellMessages: Record<Language, ShellMessages> = {
     themeDark: "Dunkler Modus",
     switchToLight: "Zum hellen Design wechseln",
     switchToDark: "Zum dunklen Design wechseln",
-    languageLabel: "Sprache (Übersetzung in Arbeit)",
-    languagePartial:
-      "Die Navigation ist übersetzt; die Übersetzung der Inhalte folgt noch.",
+    languageLabel: "Sprache",
+    documentTitle:
+      "Stillwell — Ruhestandsfinanzierungssimulator · Designentwurf",
+    documentDescription:
+      "Ein beispielhafter Oberflächenentwurf für einen Simulator zur Ruhestandsfinanzierung.",
     preferenceReadError:
       "Die Anzeigeeinstellungen konnten nicht aus diesem Browser geladen werden.",
     preferenceWriteError:

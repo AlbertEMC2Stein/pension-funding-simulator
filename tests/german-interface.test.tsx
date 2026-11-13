@@ -73,3 +73,81 @@ test("German dictionary renders translated content and unchanged formulas", () =
   assert.match(html, /Technische Details/);
   assert.match(html, /katex/);
 });
+
+test("German setup and comparison controls preserve internal option values", async () => {
+  const { Setup } = await import("../src/components/setup/Setup");
+  const { DataView } = await import("../src/components/DataView");
+  const { SimulationDraftProvider } =
+    await import("../src/components/SimulationDraftContext");
+  const setup = renderGerman(
+    <SimulationDraftProvider>
+      <Setup />
+    </SimulationDraftProvider>,
+  );
+  const table = renderGerman(
+    <SimulationDraftProvider>
+      <DataView />
+    </SimulationDraftProvider>,
+  );
+
+  assert.match(setup, /Marktannahmen/);
+  assert.match(setup, /Geburtsjahr/);
+  assert.match(setup, /value="female"/);
+  assert.match(table, /Vergleichstabelle/);
+  assert.match(table, /value="Target risk"/);
+  assert.match(table, /value="Unconstrained"/);
+});
+
+test("German chart and validation labels retain data and error details", async () => {
+  const { ChartExport, chartTracesCsv } =
+    await import("../src/components/ChartExport");
+  const { validationMessage } = await import("../src/lib/i18n/validation");
+  const { setupFileError } = await import("../src/lib/i18n/setup-actions");
+  const html = renderGerman(
+    <ChartExport
+      element={{ current: null }}
+      filename="example"
+      context={{ title: "Test", xUnit: "years", yUnit: "probability" }}
+    />,
+  );
+  const csv = chartTracesCsv([{ name: "Serie", x: [1], y: [0.2] }], {
+    title: "Test",
+    xUnit: "years",
+    yUnit: "probability",
+  });
+
+  assert.match(html, /Diagramm exportieren/);
+  assert.match(
+    csv,
+    /chart,view,series,point,x,x_unit,y,y_unit,bar_width_x_units/,
+  );
+  assert.match(
+    validationMessage("Enter a positive initial capital in euros.", "de"),
+    /positives Anfangskapital/,
+  );
+  assert.match(
+    validationMessage("Invalid price for TEST on 2020-01-01.", "de"),
+    /TEST.*2020-01-01/,
+  );
+  assert.match(
+    setupFileError("The file is not valid JSON.", "de"),
+    /gültiges JSON/,
+  );
+});
+
+test("German Evaluation retains numerical selection semantics", async () => {
+  const { Evaluation } =
+    await import("../src/components/evaluation/Evaluation");
+  const { SimulationDraftProvider } =
+    await import("../src/components/SimulationDraftContext");
+  const html = renderGerman(
+    <SimulationDraftProvider>
+      <Evaluation />
+    </SimulationDraftProvider>,
+  );
+
+  assert.match(html, /Das Gesamtbild/);
+  assert.match(html, /Verarmungsgrenze/);
+  assert.match(html, /Simulation starten/);
+  assert.match(html, /Globale Zulässigkeit/);
+});

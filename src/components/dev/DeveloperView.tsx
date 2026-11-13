@@ -30,7 +30,7 @@ export default function DeveloperView() {
   const captured = source === "evaluation" ? prepared : row?.input;
 
   return (
-    <section className="view active">
+    <section className="view active" lang="en">
       <PageHeading
         eyebrow="DEVELOPMENT ONLY"
         title="Developer tools"

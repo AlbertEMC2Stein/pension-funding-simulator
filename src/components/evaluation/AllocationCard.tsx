@@ -1,5 +1,10 @@
 "use client";
 
+import { useLanguage } from "../LanguageContext";
+import { validationMessage } from "../../lib/i18n/validation";
+import { visualMessages } from "../../lib/i18n/visuals";
+import { chartMessages } from "../../lib/i18n/charts";
+
 import { PanelHelp } from "../PanelHelp";
 
 import { TermLink } from "../common";
@@ -34,6 +39,8 @@ function AllocationPlot({
   /** Selected time after retirement, in years. */
   selectedTime: number;
 }) {
+  const { language } = useLanguage();
+  const copy = chartMessages[language];
   const element = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState("light");
   const [plotError, setPlotError] = useState(false);
@@ -84,7 +91,7 @@ function AllocationPlot({
         y: data.riskFreeFractions,
         type: "scatter",
         mode: "lines",
-        name: "Risk-free asset",
+        name: copy.riskFreeAsset,
         line: { color: text, width: 2, dash: "dash" },
         hoverinfo: "skip",
       });
@@ -100,14 +107,14 @@ function AllocationPlot({
           plot_bgcolor: "rgba(0,0,0,0)",
           font: { color: text },
           xaxis: {
-            title: { text: "Wealth (€)", standoff: 10 },
+            title: { text: copy.wealth, standoff: 10 },
             tickprefix: "€",
             gridcolor: grid,
             range: [data.impoverishmentLevel, data.safeLevel],
             automargin: true,
           },
           yaxis: {
-            title: { text: "Portfolio allocation", standoff: 6 },
+            title: { text: copy.allocation, standoff: 6 },
             tickformat: ".0%",
             ticklabelstandoff: 8,
             gridcolor: grid,
@@ -162,22 +169,21 @@ function AllocationPlot({
       disposed = true;
       cleanup?.();
     };
-  }, [data, assetNames, startingCapital, theme]);
+  }, [data, assetNames, startingCapital, theme, language]);
 
   return (
     <>
-      {plotError && (
-        <p role="alert">The allocation chart could not be displayed.</p>
-      )}
+      {plotError && <p role="alert">{copy.allocationError}</p>}
       <div
         ref={element}
         role="img"
-        aria-label={`${projected ? "Projected" : "Unconstrained"} CE portfolio allocation by wealth`}
+        aria-label={
+          language === "en"
+            ? `${projected ? "Projected" : "Unconstrained"} CE portfolio allocation by wealth`
+            : `${projected ? copy.projected : copy.unconstrained} CE ${copy.allocation} nach Vermögensstand`
+        }
       />
-      <ul
-        className="allocation-legend"
-        aria-label="Portfolio allocation legend"
-      >
+      <ul className="allocation-legend" aria-label={copy.allocationLegend}>
         {assetNames.map((name, index) => (
           <li key={index}>
             <span
@@ -189,12 +195,12 @@ function AllocationPlot({
         ))}
         <li>
           <span className="allocation-risk-free" aria-hidden="true" />
-          Risk-free asset
+          {copy.riskFreeAsset}
         </li>
         {startingCapital !== null && (
           <li>
             <span className="allocation-starting-capital" aria-hidden="true" />
-            Starting capital (t = 0)
+            {copy.startingCapital}
           </li>
         )}
       </ul>
@@ -202,10 +208,10 @@ function AllocationPlot({
         element={element}
         filename="portfolio-allocation"
         context={{
-          title: "Portfolio allocation",
-          xUnit: "EUR wealth",
-          yUnit: "portfolio fraction",
-          view: `${projected ? "Projected" : "Unconstrained"} CE policy; ${selectedTime} years after retirement${startingCapital === null ? "" : `; starting capital EUR ${startingCapital}`}`,
+          title: copy.allocation,
+          xUnit: copy.euroWealth,
+          yUnit: copy.portfolioFraction,
+          view: `${projected ? copy.projected : copy.unconstrained} CE ${copy.policy}; ${selectedTime} ${copy.yearsAfterRetirement}${startingCapital === null ? "" : `; ${copy.capital} EUR ${startingCapital}`}`,
         }}
         imageLegend={[
           ...assetNames.map((name, index) => ({
@@ -213,7 +219,7 @@ function AllocationPlot({
             colorVariable: `--chart-asset-${index + 1}`,
           })),
           {
-            name: "Risk-free asset",
+            name: copy.riskFreeAsset,
             colorVariable: "--text-secondary",
             dash: "dash",
           },
@@ -221,7 +227,7 @@ function AllocationPlot({
             ? []
             : [
                 {
-                  name: "Starting capital (t = 0)",
+                  name: copy.startingCapital,
                   colorVariable: "--text-secondary",
                   dash: "dot" as const,
                 },
@@ -242,6 +248,8 @@ export function AllocationCard({
   projected: boolean;
   assetNames: readonly string[];
 }) {
+  const { language } = useLanguage();
+  const text = visualMessages[language];
   const [timePercent, setTimePercent] = useState(0);
   const prepared = useMemo<
     { projection?: ProjectionCurve } | { message: string }
@@ -313,10 +321,10 @@ export function AllocationCard({
       <div className="card-heading">
         <div>
           <span className="tiny-label">
-            {projected ? "PROJECTED CE POLICY" : "UNCONSTRAINED CE POLICY"}
+            {projected ? text.projectedCE : text.unconstrainedCE}
           </span>
           <div className="panel-help-heading">
-            <h3>Portfolio allocation</h3>
+            <h3>{text.allocation}</h3>
             <PanelHelp panel="allocation" />
           </div>
         </div>
@@ -325,12 +333,22 @@ export function AllocationCard({
         />
       </div>
       <p>
-        <TermLink term="policy">Allocation</TermLink> by wealth between the{" "}
-        <TermLink term="impoverishment">impoverishment</TermLink> and{" "}
-        <TermLink term="safe-boundary">safe levels</TermLink>.
+        {language === "de" ? (
+          <>
+            <TermLink term="policy">Aufteilung</TermLink> nach Vermögen zwischen
+            der <TermLink term="impoverishment">Verarmungsgrenze</TermLink> und
+            der <TermLink term="safe-boundary">sicheren Grenze</TermLink>.
+          </>
+        ) : (
+          <>
+            <TermLink term="policy">Allocation</TermLink> by wealth between the{" "}
+            <TermLink term="impoverishment">impoverishment</TermLink> and{" "}
+            <TermLink term="safe-boundary">safe levels</TermLink>.
+          </>
+        )}
       </p>
       <label className="field-label" htmlFor="allocation-time">
-        Time after retirement
+        {text.time}
       </label>
       <div className="allocation-time-control">
         <input
@@ -350,7 +368,7 @@ export function AllocationCard({
         <output htmlFor="allocation-time">
           {selectedTime === null
             ? "—"
-            : `${selectedTime.toFixed(2)} / ${timeLimit!.toFixed(2)} years`}
+            : `${selectedTime.toFixed(2)} / ${timeLimit!.toFixed(2)} ${text.years}`}
         </output>
       </div>
       {"data" in chart ? (
@@ -363,22 +381,17 @@ export function AllocationCard({
             startingCapital={startingCapitalVisible ? startingCapital : null}
           />
           {startingCapital !== null && !startingCapitalVisible && (
-            <p className="chart-disclaimer">
-              Starting capital is outside the displayed wealth interval.
-            </p>
+            <p className="chart-disclaimer">{text.capitalOutside}</p>
           )}
           <p className="chart-disclaimer">
-            The policy stops when the impoverishment level is reached.{" "}
-            {projected
-              ? "The projected allocation prevents short positions and borrowing."
-              : "Negative fractions indicate short positions or borrowing."}{" "}
-            The slider ends one day before the CE endpoint.
-            {timeLimit === 0 &&
-              " The endpoint is at most one day away, so the slider is disabled."}
+            {text.stopped}{" "}
+            {projected ? text.projectedNote : text.unconstrainedNote}{" "}
+            {text.sliderEnd}
+            {timeLimit === 0 && ` ${text.sliderDisabled}`}
           </p>
         </>
       ) : (
-        <p role="status">{chart.message}</p>
+        <p role="status">{validationMessage(chart.message, language)}</p>
       )}
     </article>
   );

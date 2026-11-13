@@ -230,13 +230,9 @@ setup or results exports. Exported results are not currently re-importable.
 
 ## Next work
 
-1. **Quick Start and dictionary:** A workflow guide is available in Help &
-   dictionary. Review it with users, then audit the interface for technical
-   terms such as `pp`, GM, CE, projection, safe boundary and random seed; add
-   explanations and links in small reviewable groups. Explain that numerical
-   intervals describe Monte Carlo sampling only. Include an explanation of
-   reproducibility and how the seed, batch size and numerical backend affect
-   repeatability.
+1. **Quick Start and dictionary:** The workflow guide, glossary, contextual
+   links and panel help are available in English and German. Continue reviewing
+   mathematical terminology and explanations as the model and interface evolve.
 2. **Refresh supporting documentation:** Review the analytical and simulation
    READMEs for stale statements about UI connections and worker availability.
    Keep the codebase guide and export documentation aligned with actual behavior.
@@ -247,8 +243,10 @@ setup or results exports. Exported results are not currently re-importable.
 4. **Developer panel:** Review the captured worker-input inspector as the worker
    interface evolves. Its numerical worker-check controls are independent of
    Evaluation and Data & tables.
-5. **Localization:** Implement the English/German language switch using
-   maintainable translations, and check both languages in the responsive UI.
+5. **Localization:** The main interface supports English and German with a
+   persisted language preference. Review both languages in a browser, including
+   narrow layouts, charts, exports and unusual error states; the developer-only
+   panel remains English. Machine-readable export identifiers remain stable.
 6. **Further numerical features:** Specify historical stress scenarios before
    implementing them. Evaluate antithetic sampling as a separate experiment,
    including its effect on uncertainty estimates and paired comparisons.

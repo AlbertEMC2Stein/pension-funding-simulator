@@ -1,5 +1,10 @@
 "use client";
 
+import { useLanguage } from "../LanguageContext";
+import { validationMessage } from "../../lib/i18n/validation";
+import { visualMessages } from "../../lib/i18n/visuals";
+import { chartMessages } from "../../lib/i18n/charts";
+
 import { PanelHelp } from "../PanelHelp";
 
 import { TermLink } from "../common";
@@ -53,6 +58,8 @@ function TimingPlot({
   projected: boolean;
   stale: boolean;
 }) {
+  const { language } = useLanguage();
+  const copy = chartMessages[language];
   const element = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState("light");
   const [plotError, setPlotError] = useState(false);
@@ -138,7 +145,7 @@ function TimingPlot({
                   y: bins.map((bin) => bin.density),
                   width: bins.map((bin) => bin.endTime - bin.startTime),
                   type: "bar",
-                  name: "Simulation",
+                  name: copy.simulation,
                   marker: { color: accent },
                   opacity: 0.65,
                   hoverinfo: "skip",
@@ -152,7 +159,7 @@ function TimingPlot({
                   y: displayPoints.map((point) => point.cumulativeRisk),
                   type: "scatter",
                   mode: "lines",
-                  name: "Simulation",
+                  name: copy.simulation,
                   line: { color: accent, width: 2.5, shape: "hv" },
                   hoverinfo: "skip",
                 },
@@ -168,7 +175,7 @@ function TimingPlot({
                   ),
                   type: "scatter",
                   mode: "lines",
-                  name: "Durbin approximation",
+                  name: copy.durbin,
                   line: { color: approximationColor, width: 2, dash: "dash" },
                   hoverinfo: "skip",
                 },
@@ -179,7 +186,7 @@ function TimingPlot({
             y: [selectedRisk],
             type: "scatter",
             mode: "markers",
-            name: "Selected age",
+            name: copy.selectedAge,
             marker: { color: accent, size: 9 },
             cliponaxis: false,
             showlegend: false,
@@ -194,7 +201,7 @@ function TimingPlot({
           plot_bgcolor: "rgba(0,0,0,0)",
           font: { color: text },
           xaxis: {
-            title: { text: "Attained age", standoff: 10 },
+            title: { text: copy.attainedAge, standoff: 10 },
             range: [
               conditional ? chosenAge : retirementAge,
               retirementAge + horizon,
@@ -206,7 +213,7 @@ function TimingPlot({
           },
           yaxis: {
             title: {
-              text: density ? "Risk density / year" : "Risk after age",
+              text: density ? copy.riskDensity : copy.riskAfterAge,
               standoff: 6,
             },
             tickformat: ".1%",
@@ -305,28 +312,29 @@ function TimingPlot({
     horizon,
     conditional,
     theme,
+    language,
   ]);
 
   return (
     <>
-      {plotError && (
-        <p role="alert">The timing chart could not be displayed.</p>
-      )}
+      {plotError && <p role="alert">{copy.timingError}</p>}
       <div
         ref={element}
         role="img"
-        aria-label={`${conditional ? "Conditional" : "Forecast"} ${density ? "impoverishment risk density" : "remaining impoverishment risk"} by attained age`}
+        aria-label={
+          language === "en"
+            ? `${conditional ? "Conditional" : "Forecast"} ${density ? "impoverishment risk density" : "remaining impoverishment risk"} by attained age`
+            : `${conditional ? copy.conditional : copy.forecast}: ${density ? copy.densityTitle : copy.remainingRisk} · ${copy.attainedAge}`
+        }
       />
       <ChartExport
         element={element}
         filename="impoverishment-timing"
         context={{
-          title: density
-            ? "Impoverishment risk density"
-            : "Remaining impoverishment risk",
-          xUnit: "attained age in years",
-          yUnit: density ? "probability per year" : "probability",
-          view: `${projected ? "Projected" : "Unconstrained"} policy; ${conditional ? "Conditional update" : "Forecast"}; selected age ${retirementAge + selectedTime}${stale ? "; previous settings" : ""}`,
+          title: density ? copy.densityTitle : copy.remainingRisk,
+          xUnit: copy.attainedAgeUnit,
+          yUnit: density ? copy.probabilityPerYear : copy.probability,
+          view: `${projected ? copy.projected : copy.unconstrained} ${copy.policy}; ${conditional ? copy.conditional : copy.forecast}; ${copy.selectedAge} ${retirementAge + selectedTime}${stale ? `; ${copy.previousSettings}` : ""}`,
         }}
       />
     </>
@@ -343,6 +351,8 @@ export function TimingCard({
   stale: boolean;
   projected: boolean;
 }) {
+  const { language } = useLanguage();
+  const text = visualMessages[language];
   const [conditional, setConditional] = useState(false);
   const [density, setDensity] = useState(false);
   const [showDurbin, setShowDurbin] = useState(false);
@@ -470,32 +480,26 @@ export function TimingCard({
       <div className="card-top">
         <div>
           <span className="tiny-label">
-            {projected ? "PROJECTED POLICY" : "UNCONSTRAINED POLICY"} · GM
-            MORTALITY
+            {projected ? text.projectedPolicy : text.unconstrainedPolicy} ·{" "}
+            {text.gmMortality}
           </span>
           <div className="panel-help-heading">
-            <h3>When might impoverishment occur?</h3>
+            <h3>{text.timingTitle}</h3>
             <PanelHelp panel="timing" />
           </div>
           <p className="timing-intro">
-            Explore{" "}
-            <TermLink term="timing">forecast and conditional risk</TermLink>{" "}
-            across attained ages under the selected policy and fitted mortality
-            model. Learn about{" "}
-            <TermLink term="density">remaining risk and density</TermLink>.
+            {text.timingIntroStart}{" "}
+            <TermLink term="timing">{text.timingLink}</TermLink>{" "}
+            {text.timingIntroMiddle}{" "}
+            <TermLink term="density">{text.densityLink}</TermLink>.
           </p>
         </div>
         <StatusBadge status={status} />
       </div>
-      {stale && hits && (
-        <p role="status">
-          Settings changed since this run started. This chart uses the earlier
-          settings.
-        </p>
-      )}
+      {stale && hits && <p role="status">{text.stale}</p>}
       <div className="timing-controls">
         <fieldset>
-          <legend>Perspective</legend>
+          <legend>{text.perspective}</legend>
           <div className="segmented timing-switch">
             <button
               type="button"
@@ -503,7 +507,7 @@ export function TimingCard({
               aria-pressed={!conditional}
               onClick={() => setConditional(false)}
             >
-              Forecast
+              {text.forecast}
             </button>
             <button
               type="button"
@@ -511,12 +515,12 @@ export function TimingCard({
               aria-pressed={conditional}
               onClick={() => setConditional(true)}
             >
-              Conditional update
+              {text.conditional}
             </button>
           </div>
         </fieldset>
         <fieldset>
-          <legend>Chart</legend>
+          <legend>{text.chart}</legend>
           <div className="segmented timing-switch">
             <button
               type="button"
@@ -524,7 +528,7 @@ export function TimingCard({
               aria-pressed={density}
               onClick={() => setDensity(true)}
             >
-              Density
+              {text.density}
             </button>
             <button
               type="button"
@@ -532,21 +536,15 @@ export function TimingCard({
               aria-pressed={!density}
               onClick={() => setDensity(false)}
             >
-              Remaining risk
+              {text.remainingRisk}
             </button>
           </div>
         </fieldset>
       </div>
-      {running && (
-        <p role="status">
-          Simulation running; timing results appear after the run completes.
-        </p>
-      )}
+      {running && <p role="status">{text.running}</p>}
       {!running && !hits && (
         <p role="status">
-          {projected && run?.timing
-            ? "Run a projected-policy simulation to see this chart."
-            : "Run a simulation to see this chart."}
+          {projected && run?.timing ? text.runProjected : text.runSimulation}
         </p>
       )}
       {!running && prepared && retirementAge !== null && (
@@ -573,7 +571,10 @@ export function TimingCard({
             </div>
           )}
           <label className="field-label timing-age-label" htmlFor="timing-age">
-            Selected age <b>{(retirementAge + time).toFixed(1)} years</b>
+            {text.selectedAge}{" "}
+            <b>
+              {(retirementAge + time).toFixed(1)} {text.years}
+            </b>
           </label>
           <input
             id="timing-age"
@@ -589,17 +590,14 @@ export function TimingCard({
           {!running && hits && conditional && update && !update.available && (
             <p role="status">
               {update.reason === "no-eligible-paths"
-                ? "No simulated paths remain without impoverishment at this age."
+                ? text.noPaths
                 : update.reason === "no-mortality-survival"
-                  ? "Mortality survival at this age is numerically zero."
-                  : "Select an age before the end of the simulation."}
+                  ? text.noSurvival
+                  : text.selectEarlier}
             </p>
           )}
           <p className="timing-explanation">
-            {conditional
-              ? "Remaining risk through the run horizon, given survival without impoverishment to the selected age"
-              : "Risk from the selected age through the run horizon, assessed at retirement"}
-            :{" "}
+            {conditional ? text.conditionalRisk : text.forecastRisk}:{" "}
             <strong>
               {remainingRisk === null
                 ? "—"
@@ -608,19 +606,16 @@ export function TimingCard({
             .
           </p>
           <p className="chart-disclaimer">
-            <TermLink term="gm-risk">GM mortality</TermLink> ·{" "}
-            {projected ? "projected" : "unconstrained"} policy · events through
-            age {(retirementAge + horizon).toFixed(1)}. GM mortality may extend
-            beyond this horizon. The curve is an estimate; time-step, bridge and
-            Monte Carlo errors apply.{" "}
+            <TermLink term="gm-risk">{text.gmLink}</TermLink> ·{" "}
+            {text.timingNote(projected, (retirementAge + horizon).toFixed(1))}{" "}
             {density
               ? conditional
-                ? "Bars show average risk density across 30 intervals; their areas represent risk. Results can be noisy when few paths remain."
-                : "Bars show average risk density per year; their areas represent risk. The last interval may be shorter than one year."
-              : "The curve reaches zero at the end of the simulated horizon."}
+                ? text.conditionalDensityNote
+                : text.densityNote
+              : text.cumulativeNote}
           </p>
           <details className="borrowing-details timing-diagnostics">
-            <summary>Approximation error &amp; diagnostics</summary>
+            <summary>{text.timingDetails}</summary>
             {!projected && (
               <>
                 <label className="timing-approximation">
@@ -630,7 +625,7 @@ export function TimingCard({
                     disabled={running || !run?.timing?.durbin || !run?.risk}
                     onChange={(event) => setShowDurbin(event.target.checked)}
                   />
-                  <span>Show Durbin approximation</span>
+                  <span>{text.showDurbin}</span>
                 </label>
                 {showDurbin &&
                   !projected &&
@@ -638,84 +633,82 @@ export function TimingCard({
                   ("message" in durbinView || !durbinView.available) && (
                     <p role="status">
                       {"message" in durbinView
-                        ? durbinView.message
+                        ? validationMessage(durbinView.message, language)
                         : durbinView.reason === "unstable-conditioning"
-                          ? "The approximation is unavailable at this age because its estimated probability of avoiding an earlier hit is not positive."
+                          ? text.unstable
                           : durbinView.reason === "invalid-probability"
-                            ? "The approximation is unavailable here because it produced an invalid risk."
-                            : "Select an age before the end of the simulation."}
+                            ? text.invalidRisk
+                            : text.selectEarlier}
                     </p>
                   )}
-                {!run?.timing?.durbin && (
-                  <p>
-                    Run a new simulation to enable the Durbin approximation.
-                  </p>
-                )}
+                {!run?.timing?.durbin && <p>{text.newSimulation}</p>}
               </>
             )}
             <dl>
               <div>
-                <dt>Simulated paths</dt>
+                <dt>{text.pathsSimulated}</dt>
                 <dd>{hits?.length.toLocaleString("en-US")}</dd>
               </div>
               {conditional && update?.available && (
                 <div>
-                  <dt>Paths without an earlier hit</dt>
+                  <dt>{text.noEarlierHit}</dt>
                   <dd>{update.eligiblePaths.toLocaleString("en-US")}</dd>
                 </div>
               )}
               <div>
-                <dt>Simulation horizon</dt>
-                <dd>{horizon.toFixed(2)} years after retirement</dd>
+                <dt>{text.horizon}</dt>
+                <dd>
+                  {horizon.toFixed(2)} {text.yearsAfter}
+                </dd>
               </div>
               {!projected && (
                 <div>
-                  <dt>CE conditional-on-impoverishment TV bound (approx.)</dt>
+                  <dt>{text.ceBound}</dt>
                   <dd>
                     {durbin && "approximation" in durbin
                       ? durbin.approximation.ceConditionalEventTvBound === null
-                        ? "Not available"
+                        ? text.unavailable
                         : `${(durbin.approximation.ceConditionalEventTvBound * 100).toFixed(2)} pp`
-                      : "Enable the approximation to calculate"}
+                      : text.enableApprox}
                   </dd>
                 </div>
               )}
               {!projected && (
                 <div>
-                  <dt>CE conditional CDF sup distance (estimated)</dt>
+                  <dt>{text.cdfDistance}</dt>
                   <dd>
                     {!cdfComparison
-                      ? "Enable the approximation to calculate"
+                      ? text.enableApprox
                       : "message" in cdfComparison
-                        ? "Calculation failed"
+                        ? text.failed
                         : cdfComparison.available
                           ? `${(cdfComparison.supDistance * 100).toFixed(2)} pp`
                           : cdfComparison.reason === "truncated-horizon"
-                            ? "Requires the full CE horizon"
+                            ? text.fullHorizon
                             : cdfComparison.reason === "no-weighted-hits"
-                              ? "No survival-weighted hits observed"
-                              : "Not available at zero CE risk"}
+                              ? text.noHits
+                              : text.zeroRisk}
                   </dd>
                 </div>
               )}
             </dl>
             {!projected && (
               <p>
-                The <TermLink term="durbin">CE bound</TermLink> concerns the
-                timing distribution conditional on impoverishment before death
-                under CE mortality. It is not a bound for this GM chart or for
-                the age-conditional update. Its numerical value uses approximate
-                quadrature. The CDF distance compares the same CE conditional
-                laws using simulated paths; Monte Carlo, time-step, bridge and
-                quadrature errors can make it exceed the theoretical bound.
+                {text.ceBoundPrefix}{" "}
+                <TermLink term="durbin">{text.ceBoundLink}</TermLink>{" "}
+                {text.ceBoundExplanation}
               </p>
             )}
             {!projected && cdfComparison && "message" in cdfComparison && (
-              <p role="status">{cdfComparison.message}</p>
+              <p role="status">
+                {validationMessage(cdfComparison.message, language)}
+              </p>
             )}
             <p>
-              The simulation has Monte Carlo, time-step and{" "}
-              <TermLink term="first-passage">bridge</TermLink> errors.
+              {text.simulationErrorBefore}{" "}
+              <TermLink term="first-passage">{text.bridgeLink}</TermLink>
+              {language === "en" ? " " : ""}
+              {text.simulationErrorAfter}
             </p>
           </details>
         </>

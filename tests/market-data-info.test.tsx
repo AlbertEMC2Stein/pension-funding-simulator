@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { renderToStaticMarkup } from "react-dom/server";
+import { renderWithDictionary as renderToStaticMarkup } from "./dictionary-render";
 import { MarketDataInfo } from "../src/components/setup/MarketDataInfo";
 
 test("market data information explains inputs and links to research sources", () => {

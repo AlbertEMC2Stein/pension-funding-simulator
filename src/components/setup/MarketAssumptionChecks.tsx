@@ -1,3 +1,6 @@
+import { useLanguage } from "../LanguageContext";
+import { marketCheckMessages } from "../../lib/i18n/market-checks";
+import { validationMessage } from "../../lib/i18n/validation";
 import { TermLink } from "../common";
 import { calibrateMarket } from "../../lib/market/calibrate-market";
 import type { MarketCalibrationDraft } from "../../lib/market/market-calibration";
@@ -14,6 +17,8 @@ export function MarketAssumptionChecks({
 }: {
   market: MarketCalibrationDraft;
 }) {
+  const { language } = useLanguage();
+  const text = marketCheckMessages[language];
   const input = buildMarketOptions(market);
   const calibration = input.ok ? calibrateMarket(input.market) : null;
 
@@ -28,10 +33,10 @@ export function MarketAssumptionChecks({
         role="status"
       >
         <strong>
-          Market assumption checks <span>Not available</span>
+          {text.title} <span>{text.unavailable}</span>
         </strong>
-        <p>Resolve any market input errors to evaluate these checks.</p>
-        {reason && <small>{reason}</small>}
+        <p>{text.resolve}</p>
+        {reason && <small>{validationMessage(reason, language)}</small>}
       </div>
     );
   }
@@ -50,35 +55,22 @@ export function MarketAssumptionChecks({
       role="status"
     >
       <strong>
-        Market assumption checks <span>{issues ? "Review" : "Passed"}</span>
+        {text.title} <span>{issues ? text.review : text.passed}</span>
       </strong>
-      {!positiveRho && (
-        <p>
-          The market risk premium is zero (ρ = 0). The compatible CE model and
-          its results require ρ &gt; 0.
-        </p>
-      )}
+      {!positiveRho && <p>{text.zeroRho}</p>}
       {negativeAssets.length > 0 && (
-        <p>
-          A Merton-vector component is negative for {negativeAssets.join(", ")}.
-          The unconstrained strategy requires short selling whenever wealth is
-          below the safe boundary, so it is not globally simplex-feasible.
-          Borrowing diagnostics are unavailable for this market.
-        </p>
+        <p>{text.negative(negativeAssets.join(", "))}</p>
       )}
       {!issues && (
         <p>
-          The real risk-free rate is positive, the{" "}
-          <TermLink term="covariance">covariance matrix</TermLink> is positive
-          definite, ρ &gt; 0, and all{" "}
-          <TermLink term="market-direction">Merton-vector</TermLink> components
-          are non-negative.
+          {text.positiveBefore}{" "}
+          <TermLink term="covariance">{text.covariance}</TermLink>{" "}
+          {text.positiveMiddle}{" "}
+          <TermLink term="market-direction">{text.merton}</TermLink>{" "}
+          {text.positiveAfter}
         </p>
       )}
-      <small>
-        These checks use the current market inputs. Mortality fit and
-        policy-specific conditions are checked separately.
-      </small>
+      <small>{text.note}</small>
     </div>
   );
 }

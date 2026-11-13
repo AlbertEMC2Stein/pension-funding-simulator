@@ -9,10 +9,9 @@ keys stable and descriptive; add a matching translation for each language.
 languages, then read the selected group in that panel. Keep financial model and
 simulation values independent of display language.
 
-Translation is incremental. The document is currently marked as English
-because most panel content is still English; the translated shell regions carry
-their selected `lang` attribute. Once all content is translated, revisit the
-document language and remove the partial-translation hints.
+The application updates the document language and metadata after restoring the
+saved preference. The developer-only panel remains English and identifies its
+language explicitly. File-format identifiers remain language-independent.
 
 Glossary entries use stable IDs and share their equations across languages.
 English content lives in `../help/dictionary.ts`; German prose is keyed by the
