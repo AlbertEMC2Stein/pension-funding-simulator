@@ -49,8 +49,8 @@ export function SetupFileActions() {
     } catch (cause) {
       setError(
         cause instanceof Error
-          ? setupFileError(cause.message, language)
-          : text.exportFailed,
+          ? cause.message
+          : setupActionMessages.en.exportFailed,
       );
     }
   }
@@ -62,7 +62,8 @@ export function SetupFileActions() {
     if (!file) return;
 
     try {
-      if (file.size > 2_000_000) throw new Error(text.tooLarge);
+      if (file.size > 2_000_000)
+        throw new Error(setupActionMessages.en.tooLarge);
       const setup = parseSetupFile(await file.text());
       if (importSetup(setup))
         notice(
@@ -75,8 +76,8 @@ export function SetupFileActions() {
     } catch (cause) {
       setError(
         cause instanceof Error
-          ? setupFileError(cause.message, language)
-          : text.importFailed,
+          ? cause.message
+          : setupActionMessages.en.importFailed,
       );
     }
   }
@@ -108,7 +109,7 @@ export function SetupFileActions() {
       </div>
       {error && (
         <p className="setup-file-error" role="alert">
-          {error}
+          {setupFileError(error, language)}
         </p>
       )}
     </div>

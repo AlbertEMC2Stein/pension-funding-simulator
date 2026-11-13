@@ -67,6 +67,9 @@ export function setupFileError(message: string, language: Language): string {
       "Ungültige Korrelationsmatrix: Alle Diagonaleinträge müssen 1 sein.",
     "Invalid saved risk or withdrawal setting.":
       "Das gespeicherte Risiko oder die Entnahme ist ungültig.",
+    [setupActionMessages.en.tooLarge]: setupActionMessages.de.tooLarge,
+    [setupActionMessages.en.importFailed]: setupActionMessages.de.importFailed,
+    [setupActionMessages.en.exportFailed]: setupActionMessages.de.exportFailed,
   };
 
   /** Map the stable table identifier to its German display name. */
@@ -101,8 +104,7 @@ export function setupFileError(message: string, language: Language): string {
 
   const prefix = "Invalid setup inputs: ";
   if (message.startsWith(prefix)) {
-    const issues = message.slice(prefix.length).split(/(?<=\.) (?=[A-Z])/);
-    return `Ungültige Konfigurationseingaben: ${issues.map((issue) => validationMessage(issue, language)).join(" ")}`;
+    return `Ungültige Konfigurationseingaben: ${validationMessage(message.slice(prefix.length), language)}`;
   }
 
   return translations[message] ?? message;

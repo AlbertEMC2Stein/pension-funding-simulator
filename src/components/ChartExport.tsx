@@ -84,7 +84,7 @@ export function ChartExport({
   context: ChartExportContext;
   imageLegend?: readonly ChartExportLegendItem[];
 }) {
-  const [error, setError] = useState("");
+  const [error, setError] = useState<"notReady" | "exportError" | null>(null);
   const { language } = useLanguage();
   const text = chartMessages[language];
 
@@ -97,7 +97,7 @@ export function ChartExport({
         })
       | null;
     if (!graph?.data?.length || graph.dataset.exportReady !== "true") {
-      setError(text.notReady);
+      setError("notReady");
       return;
     }
 
@@ -177,9 +177,9 @@ export function ChartExport({
           temporary.remove();
         }
       }
-      setError("");
+      setError(null);
     } catch {
-      setError(text.exportError);
+      setError("exportError");
     }
   }
 
@@ -213,7 +213,7 @@ export function ChartExport({
       </details>
       {error && (
         <p role="alert" className="chart-export-error">
-          {error}
+          {text[error]}
         </p>
       )}
     </div>

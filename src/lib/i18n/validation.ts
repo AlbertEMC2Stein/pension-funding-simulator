@@ -116,6 +116,21 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
     "Eine Simulation läuft noch. Soll sie unterbrochen und mit den aktuellen Einstellungen neu gestartet werden?",
   "Could not start the simulation worker.":
     "Der Simulationsprozess konnte nicht gestartet werden.",
+  "A simulation is already running in this worker.":
+    "In diesem Simulationsprozess läuft bereits eine Simulation.",
+  "Simulation failed.": "Die Simulation ist fehlgeschlagen.",
+  "GM fitting failed.": "Die GM-Anpassung ist fehlgeschlagen.",
+  "CE fitting failed.": "Die CE-Anpassung ist fehlgeschlagen.",
+  "Quadrature produced a non-finite integrand.":
+    "Die numerische Integration hat einen nichtendlichen Integranden ergeben.",
+  "Quadrature did not converge for this configuration.":
+    "Die numerische Integration ist für diese Konfiguration nicht konvergiert.",
+  "Could not calculate the Student-t confidence interval.":
+    "Das Student-t-Konfidenzintervall konnte nicht berechnet werden.",
+  "Could not calculate the chi-squared confidence interval.":
+    "Das Chi-Quadrat-Konfidenzintervall konnte nicht berechnet werden.",
+  "Degrees of freedom must be a positive integer.":
+    "Die Anzahl der Freiheitsgrade muss eine positive ganze Zahl sein.",
   "The simulation worker failed to load or run.":
     "Der Simulationsprozess konnte nicht geladen oder ausgeführt werden.",
   "Could not send the settings to the simulation worker.":
@@ -354,6 +369,9 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
 export function validationMessage(message: string, language: Language): string {
   if (language === "en") return message;
 
+  const knownMessage = germanValidationMessages[message];
+  if (knownMessage) return knownMessage;
+
   const birth = /^Enter a birth year from (\d+) to (\d+)\.$/.exec(message);
   if (birth)
     return `Geben Sie ein Geburtsjahr zwischen ${birth[1]} und ${birth[2]} ein.`;
@@ -436,5 +454,27 @@ export function validationMessage(message: string, language: Language): string {
   if (boundary)
     return `Die erforderliche Verarmungsgrenze muss mindestens 1 € und kleiner als Ihr Anfangskapital sein. (Erforderlicher Wert: ca. €${boundary[1]}.)`;
 
-  return germanValidationMessages[message] ?? message;
+  const cohortLoad = /^Could not load cohort data \((\d+)\)\.$/.exec(message);
+  if (cohortLoad)
+    return `Die Kohortendaten konnten nicht geladen werden (HTTP ${cohortLoad[1]}).`;
+
+  const backend =
+    /^Could not initialize a TensorFlow backend \(([\s\S]*)\)\.$/.exec(message);
+  if (backend)
+    return `Es konnte kein TensorFlow-Backend initialisiert werden (${backend[1]}).`;
+
+  const parameter =
+    /^(alpha|beta|lambda|p|kappa|tau|t) must be finite and (non-negative|positive)\.$/.exec(
+      message,
+    );
+  if (parameter)
+    return `${parameter[1]} muss endlich und ${parameter[2] === "positive" ? "positiv" : "nichtnegativ"} sein.`;
+
+  // Validation can combine several independent messages into one string.
+  // Match whole messages first so decimal values and CSV details stay intact.
+  const issues = message.split(/(?<=\.) (?=[A-Z])/);
+  if (issues.length > 1)
+    return issues.map((issue) => validationMessage(issue, language)).join(" ");
+
+  return message;
 }
