@@ -59,8 +59,8 @@ const panelHelp = {
   allocation: {
     title: "Portfolio allocation",
     paragraphs: [
-      "The curves show the share of wealth allocated to each asset at the chosen time and wealth level. They do not predict how your own wealth will evolve.",
-      "Negative risky-asset shares indicate short positions; a negative risk-free share indicates borrowing. The chart shows the selected policy. At retirement, the marker indicates your starting capital.",
+      "The curves show either the share of wealth or the amount allocated to each asset at the chosen time and wealth level. Euro amounts are adjusted for inflation. They do not predict how your own wealth will evolve.",
+      "Negative risky-asset positions indicate short selling; a negative risk-free position indicates borrowing. The chart shows the selected policy. At retirement, the marker indicates your starting capital.",
     ],
     terms: ["policy", "projection", "safe-boundary"],
   },

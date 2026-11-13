@@ -201,6 +201,22 @@ table.capital-table {
   padding: 16px;
 }
 
+/* Match the timing controls while keeping the allocation switch compact. */
+.allocation-view-control {
+  border: 0;
+  margin: 16px 0;
+  padding: 0;
+  max-width: 320px;
+  min-width: 0;
+}
+
+.allocation-view-control legend {
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
 .visual-picker-heading p,
 .visual-picker-note {
   color: var(--text-secondary);

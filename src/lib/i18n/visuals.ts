@@ -6,6 +6,10 @@ export interface VisualMessages {
   unconstrainedCE: string;
   allocation: string;
   allocationIntro: string;
+  allocationView: string;
+  relativeAllocation: string;
+  amountAllocation: string;
+  realAmounts: string;
   time: string;
   years: string;
   capitalOutside: string;
@@ -91,6 +95,10 @@ export const visualMessages: Record<Language, VisualMessages> = {
     allocation: "Portfolio allocation",
     allocationIntro:
       "Allocation by wealth between the impoverishment and safe levels.",
+    allocationView: "Display allocation as",
+    relativeAllocation: "Share (%)",
+    amountAllocation: "Amount (€)",
+    realAmounts: "Amounts are inflation-adjusted euros.",
     time: "Time after retirement",
     years: "years",
     capitalOutside:
@@ -99,7 +107,7 @@ export const visualMessages: Record<Language, VisualMessages> = {
     projectedNote:
       "The projected allocation prevents short positions and borrowing.",
     unconstrainedNote:
-      "Negative fractions indicate short positions or borrowing.",
+      "Negative positions indicate short selling or borrowing.",
     sliderEnd: "The slider ends one day before the CE endpoint.",
     sliderDisabled:
       "The endpoint is at most one day away, so the slider is disabled.",
@@ -196,6 +204,10 @@ export const visualMessages: Record<Language, VisualMessages> = {
     allocation: "Portfolioaufteilung",
     allocationIntro:
       "Aufteilung nach Vermögen zwischen der Verarmungs- und der sicheren Grenze.",
+    allocationView: "Aufteilung anzeigen als",
+    relativeAllocation: "Anteil (%)",
+    amountAllocation: "Betrag (€)",
+    realAmounts: "Die Beträge sind inflationsbereinigt.",
     time: "Zeit seit Ruhestandsbeginn",
     years: "Jahre",
     capitalOutside:
@@ -204,7 +216,7 @@ export const visualMessages: Record<Language, VisualMessages> = {
     projectedNote:
       "Die projizierte Aufteilung verhindert Leerverkäufe und Kreditaufnahme.",
     unconstrainedNote:
-      "Negative Anteile bedeuten Leerverkäufe oder Kreditaufnahme.",
+      "Negative Positionen bedeuten Leerverkäufe oder Kreditaufnahme.",
     sliderEnd: "Der Schieberegler endet einen Tag vor dem CE-Endpunkt.",
     sliderDisabled:
       "Der Endpunkt ist höchstens einen Tag entfernt; deshalb ist der Regler deaktiviert.",

@@ -19,6 +19,30 @@ export interface AllocationData {
   riskFreeFractions: number[];
 }
 
+/** Display portfolio positions as wealth fractions or real euro amounts. */
+export type AllocationView = "relative" | "amount";
+
+/** Convert sampled portfolio fractions into the selected display units. */
+export function allocationValues(
+  data: AllocationData,
+  view: AllocationView,
+): {
+  risky: number[][];
+  riskFree: number[];
+} {
+  if (view === "relative")
+    return { risky: data.riskyFractions, riskFree: data.riskFreeFractions };
+
+  return {
+    risky: data.riskyFractions.map((fractions) =>
+      fractions.map((fraction, index) => fraction * data.wealth[index]),
+    ),
+    riskFree: data.riskFreeFractions.map(
+      (fraction, index) => fraction * data.wealth[index],
+    ),
+  };
+}
+
 /** Last selectable time, one calendar day before the CE endpoint when possible. */
 export function allocationTimeLimit(endpoint: number): number {
   return Math.max(0, endpoint - 1 / 365.25);

@@ -4,6 +4,7 @@ import { renderWithDictionary as renderToStaticMarkup } from "./dictionary-rende
 import { AllocationCard } from "../src/components/evaluation/AllocationCard";
 import {
   allocationTimeLimit,
+  allocationValues,
   makeAllocationData,
 } from "../src/components/evaluation/allocation-data";
 import { makeChartData } from "../src/components/evaluation/RiskWithdrawalChart";
@@ -46,6 +47,15 @@ test("allocation retains borrowing and short positions rather than clipping them
 
   assert.ok(data.riskyFractions[0][0] < 0);
   assert.ok(data.riskFreeFractions[0] < 0);
+
+  const amounts = allocationValues(data, "amount");
+  assert.ok(amounts.risky[0][0] < 0);
+  assert.ok(amounts.riskFree[0] < 0);
+
+  for (let i = 0; i < data.wealth.length; i += 1) {
+    const total = amounts.risky.reduce((sum, asset) => sum + asset[i], 0);
+    assert.ok(Math.abs(total + amounts.riskFree[i] - data.wealth[i]) < 1e-7);
+  }
 });
 
 test("projected allocation respects the simplex and uses covariance weighting", () => {
@@ -67,10 +77,21 @@ test("projected allocation respects the simplex and uses covariance weighting", 
     delta: model.mortality.p,
   });
   const data = makeAllocationData(leveraged, withdrawal, 0, projection);
+  const amounts = allocationValues(data, "amount");
 
   for (let i = 0; i < data.wealth.length; i += 1) {
     assert.ok(data.riskyFractions.every((fractions) => fractions[i] >= -1e-9));
     assert.ok(data.riskFreeFractions[i] >= -1e-9);
+    assert.ok(
+      Math.abs(
+        amounts.risky[1][i] - data.riskyFractions[1][i] * data.wealth[i],
+      ) < 1e-8,
+    );
+    assert.ok(
+      Math.abs(
+        amounts.riskFree[i] - data.riskFreeFractions[i] * data.wealth[i],
+      ) < 1e-8,
+    );
   }
 
   // At the first sample the input is approximately (-1, 3). The projection
@@ -97,6 +118,8 @@ test("projected allocation is displayed with the time control enabled", () => {
   );
 
   assert.match(html, /PROJECTED CE POLICY/);
+  assert.match(html, /Share \(%\)/);
+  assert.match(html, /Amount \(€\)/);
   assert.match(html, /Projected CE portfolio allocation by wealth/);
   assert.doesNotMatch(html, /disabled/);
 });

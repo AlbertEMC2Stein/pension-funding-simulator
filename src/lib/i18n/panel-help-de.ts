@@ -38,8 +38,8 @@ export const panelHelpGerman = {
   allocation: {
     title: "Portfolioaufteilung",
     paragraphs: [
-      "Die Kurven zeigen die Vermögensanteile der einzelnen Anlagen für den gewählten Zeitpunkt und Vermögensstand. Sie sagen nicht die Entwicklung Ihres eigenen Vermögens voraus.",
-      "Negative Anteile riskanter Anlagen bedeuten Leerverkäufe; ein negativer risikofreier Anteil bedeutet Kreditaufnahme. Das Diagramm zeigt die gewählte Strategie. Zum Ruhestandsbeginn markiert eine Linie das Anfangskapital.",
+      "Die Kurven zeigen die Vermögensanteile oder Beträge der einzelnen Anlagen für den gewählten Zeitpunkt und Vermögensstand. Eurobeträge sind inflationsbereinigt. Sie sagen nicht die Entwicklung Ihres eigenen Vermögens voraus.",
+      "Negative Positionen riskanter Anlagen bedeuten Leerverkäufe; eine negative risikofreie Position bedeutet Kreditaufnahme. Das Diagramm zeigt die gewählte Strategie. Zum Ruhestandsbeginn markiert eine Linie das Anfangskapital.",
     ],
   },
   mortality: {

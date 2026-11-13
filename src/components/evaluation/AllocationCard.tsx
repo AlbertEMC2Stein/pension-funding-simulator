@@ -12,8 +12,10 @@ import { TermLink } from "../common";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   allocationTimeLimit,
+  allocationValues,
   makeAllocationData,
   type AllocationData,
+  type AllocationView,
 } from "./allocation-data";
 import type { RiskWithdrawalWithCovariance } from "./RiskWithdrawalChart";
 import {
@@ -23,13 +25,14 @@ import {
 import { StatusBadge } from "../StatusBadge";
 import { ChartExport } from "../ChartExport";
 
-/** Render portfolio fractions without clipping short positions or borrowing. */
+/** Render portfolio fractions or real euro positions, including negative holdings. */
 function AllocationPlot({
   data,
   assetNames,
   startingCapital,
   projected,
   selectedTime,
+  view,
 }: {
   data: AllocationData;
   projected: boolean;
@@ -38,6 +41,7 @@ function AllocationPlot({
   startingCapital: number | null;
   /** Selected time after retirement, in years. */
   selectedTime: number;
+  view: AllocationView;
 }) {
   const { language } = useLanguage();
   const copy = chartMessages[language];
@@ -74,7 +78,8 @@ function AllocationPlot({
       const colors = getComputedStyle(document.documentElement);
       const text = colors.getPropertyValue("--text-secondary").trim();
       const grid = colors.getPropertyValue("--chart-grid").trim();
-      const traces: object[] = data.riskyFractions.map((values, index) => ({
+      const positions = allocationValues(data, view);
+      const traces: object[] = positions.risky.map((values, index) => ({
         x: data.wealth,
         y: values,
         type: "scatter",
@@ -88,7 +93,7 @@ function AllocationPlot({
       }));
       traces.push({
         x: data.wealth,
-        y: data.riskFreeFractions,
+        y: positions.riskFree,
         type: "scatter",
         mode: "lines",
         name: copy.riskFreeAsset,
@@ -114,8 +119,14 @@ function AllocationPlot({
             automargin: true,
           },
           yaxis: {
-            title: { text: copy.allocation, standoff: 6 },
-            tickformat: ".0%",
+            title: {
+              text:
+                view === "relative" ? copy.allocation : copy.allocationAmount,
+              standoff: 6,
+            },
+            ...(view === "relative"
+              ? { tickformat: ".0%" }
+              : { tickprefix: "€", tickformat: "~s" }),
             ticklabelstandoff: 8,
             gridcolor: grid,
             automargin: true,
@@ -169,7 +180,7 @@ function AllocationPlot({
       disposed = true;
       cleanup?.();
     };
-  }, [data, assetNames, startingCapital, theme, language]);
+  }, [data, assetNames, startingCapital, theme, language, view]);
 
   return (
     <>
@@ -210,8 +221,9 @@ function AllocationPlot({
         context={{
           title: copy.allocation,
           xUnit: copy.euroWealth,
-          yUnit: copy.portfolioFraction,
-          view: `${projected ? copy.projected : copy.unconstrained} CE ${copy.policy}; ${selectedTime} ${copy.yearsAfterRetirement}${startingCapital === null ? "" : `; ${copy.capital} EUR ${startingCapital}`}`,
+          yUnit:
+            view === "relative" ? copy.portfolioFraction : copy.realEuroAmount,
+          view: `${projected ? copy.projected : copy.unconstrained} CE ${copy.policy}; ${view === "relative" ? copy.relativeAllocation : copy.amountAllocation}; ${selectedTime} ${copy.yearsAfterRetirement}${startingCapital === null ? "" : `; ${copy.capital} EUR ${startingCapital}`}`,
         }}
         imageLegend={[
           ...assetNames.map((name, index) => ({
@@ -251,6 +263,7 @@ export function AllocationCard({
   const { language } = useLanguage();
   const text = visualMessages[language];
   const [timePercent, setTimePercent] = useState(0);
+  const [view, setView] = useState<AllocationView>("relative");
   const prepared = useMemo<
     { projection?: ProjectionCurve } | { message: string }
   >(() => {
@@ -347,6 +360,27 @@ export function AllocationCard({
           </>
         )}
       </p>
+      <fieldset className="allocation-view-control">
+        <legend>{text.allocationView}</legend>
+        <div className="segmented timing-switch">
+          <button
+            type="button"
+            className={view === "relative" ? "selected" : ""}
+            aria-pressed={view === "relative"}
+            onClick={() => setView("relative")}
+          >
+            {text.relativeAllocation}
+          </button>
+          <button
+            type="button"
+            className={view === "amount" ? "selected" : ""}
+            aria-pressed={view === "amount"}
+            onClick={() => setView("amount")}
+          >
+            {text.amountAllocation}
+          </button>
+        </div>
+      </fieldset>
       <label className="field-label" htmlFor="allocation-time">
         {text.time}
       </label>
@@ -377,6 +411,7 @@ export function AllocationCard({
             data={chart.data}
             projected={projected}
             selectedTime={selectedTime ?? 0}
+            view={view}
             assetNames={assetNames}
             startingCapital={startingCapitalVisible ? startingCapital : null}
           />
@@ -387,6 +422,7 @@ export function AllocationCard({
             {text.stopped}{" "}
             {projected ? text.projectedNote : text.unconstrainedNote}{" "}
             {text.sliderEnd}
+            {view === "amount" && ` ${text.realAmounts}`}
             {timeLimit === 0 && ` ${text.sliderDisabled}`}
           </p>
         </>

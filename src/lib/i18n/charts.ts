@@ -19,6 +19,10 @@ export interface ChartMessages {
   riskFreeAsset: string;
   wealth: string;
   allocation: string;
+  allocationAmount: string;
+  relativeAllocation: string;
+  amountAllocation: string;
+  realEuroAmount: string;
   allocationError: string;
   allocationLegend: string;
   startingCapital: string;
@@ -81,6 +85,10 @@ export const chartMessages: Record<Language, ChartMessages> = {
     riskFreeAsset: "Risk-free asset",
     wealth: "Wealth (€)",
     allocation: "Portfolio allocation",
+    allocationAmount: "Amount invested (€)",
+    relativeAllocation: "Relative allocation",
+    amountAllocation: "Real euro amounts",
+    realEuroAmount: "real EUR",
     allocationError: "The allocation chart could not be displayed.",
     allocationLegend: "Portfolio allocation legend",
     startingCapital: "Starting capital (t = 0)",
@@ -143,6 +151,10 @@ export const chartMessages: Record<Language, ChartMessages> = {
     riskFreeAsset: "Risikofreie Anlage",
     wealth: "Vermögen (€)",
     allocation: "Portfolioaufteilung",
+    allocationAmount: "Anlagebetrag (€)",
+    relativeAllocation: "Relative Aufteilung",
+    amountAllocation: "Reale Eurobeträge",
+    realEuroAmount: "reale EUR",
     allocationError: "Das Aufteilungsdiagramm konnte nicht angezeigt werden.",
     allocationLegend: "Legende der Portfolioaufteilung",
     startingCapital: "Anfangskapital (t = 0)",
