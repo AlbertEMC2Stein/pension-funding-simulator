@@ -209,9 +209,9 @@ export const visualMessages: Record<Language, VisualMessages> = {
     sliderDisabled:
       "Der Endpunkt ist höchstens einen Tag entfernt; deshalb ist der Regler deaktiviert.",
     ceBenchmark: "UNBESCHRÄNKTER CE-VERGLEICHSWERT",
-    ceRiskForWithdrawal: "CE-Risiko für die gewählte Entnahme",
-    withdrawalForRisk: "Jährliche Entnahme für das gewählte CE-Risiko",
-    ceWithdrawalRisk: "CE-Entnahme und -Risiko",
+    ceRiskForWithdrawal: "CE-Risiko für die gewählte Auszahlung",
+    withdrawalForRisk: "Jährliche Auszahlung für das gewählte CE-Risiko",
+    ceWithdrawalRisk: "CE-Auszahlung und -Risiko",
     ceExplanation:
       "Analytischer CE-Modellzusammenhang für die unbeschränkte Strategie. Der Punkt markiert Ihre Auswahl; er stellt weder das Risiko der projizierten Strategie noch das GM-Risiko dar.",
     projectedPolicy: "PROJIZIERTE STRATEGIE",

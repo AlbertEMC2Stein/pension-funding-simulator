@@ -37,7 +37,7 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
   "Target risk must be between 0% and 100%.":
     "Das Zielrisiko muss zwischen 0 % und 100 % liegen.",
   "Annual withdrawal must be non-negative.":
-    "Die jährliche Entnahme darf nicht negativ sein.",
+    "Die jährliche Auszahlung darf nicht negativ sein.",
   "Number of paths must be a positive integer.":
     "Die Anzahl der Pfade muss eine positive ganze Zahl sein.",
   "Select a supported batch size.": "Wählen Sie eine unterstützte Stapelgröße.",
@@ -48,7 +48,7 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
   "A Merton-vector component is negative. The unconstrained strategy requires short selling whenever wealth is below the safe boundary, so it is not globally simplex-feasible.":
     "Eine Merton-Komponente ist negativ. Die unbeschränkte Strategie erfordert unterhalb der sicheren Grenze Leerverkäufe und ist daher nicht global im Simplex zulässig.",
   "Global feasibility is unavailable for these inputs and this withdrawal.":
-    "Die globale Zulässigkeit ist für diese Eingaben und diese Entnahme nicht verfügbar.",
+    "Die globale Zulässigkeit ist für diese Eingaben und diese Auszahlung nicht verfügbar.",
   "The Merton vector must be non-negative with at least one positive component.":
     "Der Merton-Vektor muss nichtnegativ sein und mindestens eine positive Komponente haben.",
   "The required impoverishment level could not be calculated.":
@@ -62,9 +62,9 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
   "This comparison is available for the unconstrained policy only. Turn off projection to calculate it.":
     "Dieser Vergleich ist nur für die unbeschränkte Strategie verfügbar. Deaktivieren Sie die Projektion, um ihn zu berechnen.",
   "This capital comparison is not yet supported when withdrawal is at or below the interest on the impoverishment level.":
-    "Dieser Kapitalvergleich wird noch nicht unterstützt, wenn die Entnahme höchstens den Zinsen auf die Verarmungsgrenze entspricht.",
+    "Dieser Kapitalvergleich wird noch nicht unterstützt, wenn die Auszahlung höchstens den Zinsen auf die Verarmungsgrenze entspricht.",
   "The capital comparison is unavailable for this withdrawal and model.":
-    "Der Kapitalvergleich ist für diese Entnahme und dieses Modell nicht verfügbar.",
+    "Der Kapitalvergleich ist für diese Auszahlung und dieses Modell nicht verfügbar.",
   "Enter a random seed before running.":
     "Geben Sie vor dem Start einen Zufallsstartwert ein.",
   "The CE policy requires a positive market risk premium (rho).":
@@ -171,9 +171,9 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
   "Enter a target risk from 0% to less than 100%.":
     "Geben Sie ein Zielrisiko von 0 % bis unter 100 % ein.",
   "Enter a non-negative annual withdrawal in euros.":
-    "Geben Sie eine nichtnegative jährliche Entnahme in Euro ein.",
+    "Geben Sie eine nichtnegative jährliche Auszahlung in Euro ein.",
   "Enter a non-negative annual withdrawal.":
-    "Geben Sie eine nichtnegative jährliche Entnahme ein.",
+    "Geben Sie eine nichtnegative jährliche Auszahlung ein.",
   "The selected risk is outside the supported numerical range.":
     "Das gewählte Risiko liegt außerhalb des unterstützten numerischen Bereichs.",
   "The CE risk is outside the supported numerical range.":
@@ -212,7 +212,7 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
     "Die Kohorten- oder Sterblichkeitseinstellungen sind ungültig.",
   "Initial capital must exceed the impoverishment level of at least €1.":
     "Das Anfangskapital muss über der Verarmungsgrenze von mindestens 1 € liegen.",
-  "Unsupported withdrawal mode.": "Der Entnahmemodus wird nicht unterstützt.",
+  "Unsupported withdrawal mode.": "Der Auszahlungsmodus wird nicht unterstützt.",
   "Invalid path count or time step.":
     "Ungültige Pfadanzahl oder ungültiger Zeitschritt.",
   "Invalid batch size, horizon or trajectory setting.":
@@ -265,7 +265,7 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
   "Target risk must be strictly between zero and one.":
     "Das Zielrisiko muss strikt zwischen null und eins liegen.",
   "Withdrawal is outside the supported numerical range.":
-    "Die Entnahme liegt außerhalb des unterstützten numerischen Bereichs.",
+    "Die Auszahlung liegt außerhalb des unterstützten numerischen Bereichs.",
   "The risky-region width is outside the supported numerical range.":
     "Die Breite des riskanten Bereichs liegt außerhalb des unterstützten numerischen Bereichs.",
   "Required capital is outside the supported numerical range.":
@@ -287,11 +287,11 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
   "The mortality endpoint must be positive or Infinity.":
     "Der Sterblichkeitsendpunkt muss positiv oder unendlich sein.",
   "The safe withdrawal is outside the supported numerical range.":
-    "Die sichere Entnahme liegt außerhalb des unterstützten numerischen Bereichs.",
+    "Die sichere Auszahlung liegt außerhalb des unterstützten numerischen Bereichs.",
   "Annual withdrawal must be finite and positive.":
-    "Die jährliche Entnahme muss endlich und positiv sein.",
+    "Die jährliche Auszahlung muss endlich und positiv sein.",
   "Annual withdrawal must exceed interest at the impoverishment level.":
-    "Die jährliche Entnahme muss die Zinsen auf die Verarmungsgrenze überschreiten.",
+    "Die jährliche Auszahlung muss die Zinsen auf die Verarmungsgrenze überschreiten.",
   "Time must be finite and non-negative.":
     "Der Zeitpunkt muss endlich und nichtnegativ sein.",
   "Time cannot be past the mortality endpoint.":

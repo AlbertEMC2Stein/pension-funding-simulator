@@ -66,9 +66,9 @@ export const quickStartMessages: Record<Language, QuickStartMessages> = {
         action: "Markt & Person öffnen",
       },
       {
-        title: "Entnahme wählen und Simulation starten",
+        title: "Auszahlung wählen und Simulation starten",
         description:
-          "Wählen Sie unter Auswertung in den Simulationseinstellungen ein Zielrisiko oder einen Entnahmebetrag. Aktivieren Sie bei Bedarf die Projektion und starten Sie die Simulation.",
+          "Wählen Sie unter Auswertung in den Simulationseinstellungen ein Zielrisiko oder einen Auszahlungsbetrag. Aktivieren Sie bei Bedarf die Projektion und starten Sie die Simulation.",
         action: "Auswertung öffnen",
       },
       {

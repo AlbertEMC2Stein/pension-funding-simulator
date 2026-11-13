@@ -48,6 +48,6 @@ export const feasibilityMessages: Record<Language, FeasibilityMessages> = {
     projectedAction:
       "Diese Aktion gilt nur für die unbeschränkte Strategie; die projizierte Strategie ist konstruktionsbedingt bereits zulässig.",
     thresholdApplied: (amount, custom) =>
-      `Ändert Ihre Verarmungsgrenze auf €${amount}, zur Wahrung der Zulässigkeit aufgerundet; ${custom ? "die Zielentnahme bleibt fest und das modellierte Risiko kann sich ändern" : "das Zielrisiko bleibt fest und die modellierte Entnahme kann sich ändern"}.`,
+      `Ändert Ihre Verarmungsgrenze auf €${amount}, zur Wahrung der Zulässigkeit aufgerundet; ${custom ? "die Zielauszahlung bleibt fest und das modellierte Risiko kann sich ändern" : "das Zielrisiko bleibt fest und die modellierte Auszahlung kann sich ändern"}.`,
   },
 };

@@ -1,23 +1,23 @@
 /** German titles and explanations for the contextual panel-help dialogs. */
 export const panelHelpGerman = {
   withdrawal: {
-    title: "Entnahme und Risiko",
+    title: "Auszahlung und Risiko",
     paragraphs: [
-      "Die Kurve zeigt den Zusammenhang zwischen jährlicher Entnahme und lebenslangem Verarmungsrisiko im analytischen CE-Modell. Der Punkt markiert das gewählte Risiko beziehungsweise die gewählte Entnahme und den jeweils daraus berechneten Wert.",
+      "Die Kurve zeigt den Zusammenhang zwischen jährlicher Auszahlung und lebenslangem Verarmungsrisiko im analytischen CE-Modell. Der Punkt markiert das gewählte Risiko beziehungsweise die gewählte Auszahlung und den jeweils daraus berechneten Wert.",
       "Die Kurve gilt für die unbeschränkte Strategie. Ergebnisse für die GM-Sterblichkeit und die projizierte Strategie werden gesondert angezeigt.",
     ],
   },
   gm: {
     title: "Risiko unter GM-Sterblichkeit",
     paragraphs: [
-      "Diese Karte vergleicht den Referenzwert des unbeschränkten CE-Modells mit dem simulierten Risiko unter dem angepassten Gompertz–Makeham-Modell. Bei einer vorgegebenen Entnahme ist der CE-Wert das zugehörige Modellrisiko.",
+      "Diese Karte vergleicht den Referenzwert des unbeschränkten CE-Modells mit dem simulierten Risiko unter dem angepassten Gompertz–Makeham-Modell. Bei einer vorgegebenen Auszahlung ist der CE-Wert das zugehörige Modellrisiko.",
       "Bei aktivierter Projektion zeigen gepaarte Pfade zusätzlich das projizierte Ergebnis und seine Differenz zum unbeschränkten Ergebnis. Die Schätzungen reichen bis zum Simulationshorizont; die GM-Überlebenswahrscheinlichkeit kann darüber hinaus positiv sein. Das Intervall beschreibt nur die Monte-Carlo-Unsicherheit.",
     ],
   },
   capital: {
     title: "Was bewirkt die Risikoübernahme?",
     paragraphs: [
-      "Vergleichen Sie für dieselbe jährliche Entnahme Ihr Anfangskapital mit dem modellierten Kapitalbedarf ohne Anlagerisiko. Die Differenz wird als Kapitalentlastung oder gegebenenfalls als Überschuss angezeigt.",
+      "Vergleichen Sie für dieselbe jährliche Auszahlung Ihr Anfangskapital mit dem modellierten Kapitalbedarf ohne Anlagerisiko. Die Differenz wird als Kapitalentlastung oder gegebenenfalls als Überschuss angezeigt.",
       "Die Tabelle zeigt zudem den Kapitalbedarf bei benachbarten CE-Risiken. Änderungen um 5 % beziehen sich relativ auf das gewählte Risiko, nicht auf fünf Prozentpunkte. Bei einem Risiko von null werden stattdessen 1 % und 5 % verglichen. Der Vergleich gilt für die unbeschränkte CE-Strategie.",
     ],
   },
@@ -50,7 +50,7 @@ export const panelHelpGerman = {
     ],
   },
   withdrawalTable: {
-    title: "Tabelle für Entnahme, Risiko und Strategie",
+    title: "Tabelle für Auszahlung, Risiko und Strategie",
     paragraphs: [
       "Jede Zeile verändert die dort angezeigten Eingaben; Markt-, Sterblichkeits- und Simulationseinstellungen werden gemeinsam verwendet. Ein Lauf hält diese Einstellungen fest. Nach Änderungen können Ergebnisse eine Aktualisierung benötigen.",
       "Der CE-Vergleichswert wird analytisch für die unbeschränkte Strategie berechnet. Das GM-Risiko wird für die in der Zeile gewählte Strategie bis zum Simulationshorizont simuliert.",
@@ -59,7 +59,7 @@ export const panelHelpGerman = {
   feasibilityTable: {
     title: "Tabelle zur Zulässigkeitssensitivität",
     paragraphs: [
-      "Jede Zeile variiert das gewählte Risiko beziehungsweise die Entnahme und die Verarmungsgrenze; die übrigen Einstellungen werden gemeinsam verwendet. Ein Lauf hält diese Einstellungen fest. Nach Änderungen können ältere Ergebnisse eine Aktualisierung benötigen.",
+      "Jede Zeile variiert das gewählte Risiko beziehungsweise die Auszahlung und die Verarmungsgrenze; die übrigen Einstellungen werden gemeinsam verwendet. Ein Lauf hält diese Einstellungen fest. Nach Änderungen können ältere Ergebnisse eine Aktualisierung benötigen.",
       "Die Tabelle betrifft die unbeschränkte Strategie. ζ beschreibt die globale Zulässigkeit, während Wahrscheinlichkeit und erwartete Dauer einer Kreditaufnahme simulierte Ergebnisse beschreiben. Bei negativen Merton-Komponenten und damit erforderlichen Leerverkäufen sind die Kreditkennzahlen nicht verfügbar.",
     ],
   },

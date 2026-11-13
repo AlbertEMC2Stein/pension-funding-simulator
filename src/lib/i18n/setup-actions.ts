@@ -66,7 +66,7 @@ export function setupFileError(message: string, language: Language): string {
     "Invalid correlation matrix: every diagonal entry must equal 1.":
       "Ungültige Korrelationsmatrix: Alle Diagonaleinträge müssen 1 sein.",
     "Invalid saved risk or withdrawal setting.":
-      "Das gespeicherte Risiko oder die Entnahme ist ungültig.",
+      "Das gespeicherte Risiko oder die Auszahlung ist ungültig.",
     [setupActionMessages.en.tooLarge]: setupActionMessages.de.tooLarge,
     [setupActionMessages.en.importFailed]: setupActionMessages.de.importFailed,
     [setupActionMessages.en.exportFailed]: setupActionMessages.de.exportFailed,
@@ -74,7 +74,7 @@ export function setupFileError(message: string, language: Language): string {
 
   /** Map the stable table identifier to its German display name. */
   function tableName(kind: string): string {
-    return kind === "withdrawal" ? "Entnahmetabelle" : "Zulässigkeitstabelle";
+    return kind === "withdrawal" ? "Auszahlungstabelle" : "Zulässigkeitstabelle";
   }
   const malformedTable =
     /^The (withdrawal|feasibility) table is malformed\.$/.exec(message);

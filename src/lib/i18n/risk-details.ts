@@ -157,11 +157,11 @@ export const riskDetailMessages: Record<Language, RiskDetailMessages> = {
       "Bei aktivierter Projektion erscheint hier zusätzlich ein gepaarter Strategievergleich. Die Schätzungen hängen vom Modell ab und sind keine bekannten zukünftigen Risiken.",
     capitalIntro:
       "Vergleichen Sie Ihr Anfangskapital mit dem Kapitalbedarf ohne Anlagerisiko für die gewählte",
-    withdrawalLink: "jährliche Entnahme",
+    withdrawalLink: "jährliche Auszahlung",
     capitalLearn: "Mehr zur",
     reliefLink: "Kapitalentlastung",
     capitalNote:
-      "Unbeschränktes CE-Modell · die jährliche Entnahme bleibt fest. Änderungen beziehen sich auf Ihr Anfangskapital; ein Ziel von mindestens 100 % liegt außerhalb des unterstützten Bereichs.",
+      "Unbeschränktes CE-Modell · die jährliche Auszahlung bleibt fest. Änderungen beziehen sich auf Ihr Anfangskapital; ein Ziel von mindestens 100 % liegt außerhalb des unterstützten Bereichs.",
     capitalZeroNote:
       "Ihr Anfangskapital kann das Minimum ohne Risikoübernahme übersteigen.",
     capitalRows: {

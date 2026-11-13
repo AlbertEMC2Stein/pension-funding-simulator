@@ -115,7 +115,7 @@ export const evaluationCardMessages: Record<Language, EvaluationCardMessages> =
         "Projiziertes GM-Risiko minus unbeschränkte CE-Referenz",
       valueRisk: "WERT DER RISIKOÜBERNAHME · UNBESCHRÄNKTE STRATEGIE",
       valueRiskTitle: "Was bewirkt die Risikoübernahme?",
-      withdrawalUsed: "Verwendete jährliche Entnahme:",
+      withdrawalUsed: "Verwendete jährliche Auszahlung:",
       year: "Jahr",
       riskFreeCapital: "Kapitalbedarf ohne Risikoübernahme",
       safeBoundary: "Sichere Grenze",

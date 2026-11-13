@@ -21,31 +21,31 @@ export const germanDictionary: Record<DictionaryTermId, GermanEntry> = {
     keywords: "Schwelle Vermögen Grenze Verarmung",
   },
   withdrawal: {
-    title: "Jährliche Entnahme und Anfangskapital",
+    title: "Jährliche Auszahlung und Anfangskapital",
     summary:
-      "Das Anfangskapital ist das zum Ruhestandsbeginn verfügbare Vermögen. Die Entnahme ist der zur Finanzierung von Ausgaben entnommene Betrag.",
+      "Das Anfangskapital ist das zum Ruhestandsbeginn verfügbare Vermögen. Die Auszahlung ist der Betrag, den Sie sich zur Finanzierung Ihrer Ausgaben auszahlen.",
     explanation:
-      "Das Modell verwendet eine konstante jährliche Entnahme in heutiger Kaufkraft. Berücksichtigte regelmäßige Einnahmen sind von der modellierten Entnahme abgezogen.",
+      "Das Modell verwendet eine konstante jährliche Auszahlung in heutiger Kaufkraft. Berücksichtigte regelmäßige Einnahmen sind von der modellierten Auszahlung abgezogen.",
     technical:
-      "Das zeitstetige Modell zieht die konstante reale Entnahmerate C vom Vermögen ab; der angezeigte Betrag ist in Euro pro Jahr angegeben.",
-    keywords: "Kapital Ausgaben Einkommen Entnahme",
+      "Das zeitstetige Modell zieht die konstante reale Auszahlungsrate C vom Vermögen ab; der angezeigte Betrag ist in Euro pro Jahr angegeben.",
+    keywords: "Kapital Ausgaben Einkommen Auszahlung Entnahme",
   },
   "safe-boundary": {
     title: "Sichere Grenze",
     summary:
-      "Die Vermögensgrenze, ab der die gewählte Entnahme im Modell ohne Anlagerisiko bis zum Sterblichkeitsendpunkt finanziert werden kann.",
+      "Die Vermögensgrenze, ab der die gewählte Auszahlung im Modell ohne Anlagerisiko bis zum Sterblichkeitsendpunkt finanziert werden kann.",
     explanation:
       "Sie dient als Vergleichsmaßstab für den Kapitalbedarf bei zugelassenem Anlagerisiko. Sie ist ein Modellergebnis und keine Garantie für ein reales Produkt.",
     technical:
       "Im nicht entarteten Modell mit endlichem Horizont, r > 0 und C > r xᵢₘₚ lautet die sichere Grenze:",
     symbols:
-      "C ist die jährliche Entnahme, xᵢₘₚ die Grenze, r der reale risikofreie Zinssatz und T der Endpunkt der Restlebensdauer.",
-    keywords: "risikofrei Kapital sichere Grenze Entnahme",
+      "C ist die jährliche Auszahlung, xᵢₘₚ die Grenze, r der reale risikofreie Zinssatz und T der Endpunkt der Restlebensdauer.",
+    keywords: "risikofrei Kapital sichere Grenze Auszahlung",
   },
   "capital-relief": {
     title: "Kapitalentlastung und Überschuss",
     summary:
-      "Die Kapitalentlastung vergleicht den Kapitalbedarf bei Risikoübernahme mit der sicheren Grenze für dieselbe jährliche Entnahme.",
+      "Die Kapitalentlastung vergleicht den Kapitalbedarf bei Risikoübernahme mit der sicheren Grenze für dieselbe jährliche Auszahlung.",
     explanation:
       "Bei einem Risiko von null wird Kapital oberhalb des sicheren Mindestbetrags als Überschuss angezeigt. Der Vergleich verwendet das unbeschränkte CE-Modell.",
     technical:
@@ -209,14 +209,14 @@ export const germanDictionary: Record<DictionaryTermId, GermanEntry> = {
   "target-risk": {
     title: "Zielrisiko",
     summary:
-      "Die gewählte Wahrscheinlichkeit einer Verarmung vor dem Tod, aus der das CE-Modell eine Entnahme ableitet.",
+      "Die gewählte Wahrscheinlichkeit einer Verarmung vor dem Tod, aus der das CE-Modell eine Auszahlung ableitet.",
     explanation:
       "Das analytische Ziel gilt unter seinen Voraussetzungen für die unbeschränkte CE-Strategie. Bei GM-Sterblichkeit oder Projektion kann das Risiko abweichen.",
     technical:
       "Für ein positives Zielrisiko erfüllt die abgeleitete Strategie im kompatiblen unbeschränkten CE-Modell:",
     symbols:
       "α ist die Zielwahrscheinlichkeit, τᵢₘₚ der Verarmungszeitpunkt und 𝒯 der zufällige Todeszeitpunkt. Dieses α ist nicht der ebenfalls α genannte GM-Sterblichkeitsparameter.",
-    keywords: "alpha Wahrscheinlichkeit Lebenszeit Entnahme Ziel",
+    keywords: "alpha Wahrscheinlichkeit Lebenszeit Auszahlung Ziel",
   },
   "gm-risk": {
     title: "Geschätztes GM-Risiko",
@@ -369,7 +369,7 @@ export const germanDictionary: Record<DictionaryTermId, GermanEntry> = {
     explanation:
       "Ein Lauf hält diese Einstellungen fest. Eine spätere Eingabeänderung kann dazu führen, dass ein älteres Ergebnis aktualisiert werden muss; der Zeilenname ist nur eine Beschriftung.",
     technical:
-      "Die Entnahmetabelle verwendet unbeschränkte CE-Werte und simuliert das GM-Risiko für die gewählte Strategie. Die Zulässigkeitstabelle betrifft unbeschränkte Kreditaufnahme unter ihren jeweiligen Voraussetzungen.",
+      "Die Auszahlungstabelle verwendet unbeschränkte CE-Werte und simuliert das GM-Risiko für die gewählte Strategie. Die Zulässigkeitstabelle betrifft unbeschränkte Kreditaufnahme unter ihren jeweiligen Voraussetzungen.",
     keywords: "Variante Zeile Strategie Einstellungen Vergleich",
   },
   "setup-results": {

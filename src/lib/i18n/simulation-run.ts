@@ -93,7 +93,7 @@ export const simulationRunMessages: Record<Language, SimulationRunMessages> = {
     policy: "Strategie",
     pairedPolicy: "Unbeschränkte und projizierte CE-Strategie (gepaart)",
     unconstrained: "Unbeschränkte CE-Strategie",
-    withdrawal: "Jährliche Entnahme",
+    withdrawal: "Jährliche Auszahlung",
     perYear: "/ Jahr",
     wealth: "Anfangskapital / Verarmungsgrenze",
     cohort: "Sterblichkeitskohorte",

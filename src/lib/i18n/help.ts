@@ -75,7 +75,7 @@ export const helpMessages: Record<Language, HelpMessages> = {
       calculated: "Ein Ergebnis für die erfassten Einstellungen liegt vor.",
     },
     search: "Glossar durchsuchen",
-    placeholder: "Zum Beispiel ‚Risiko‘ oder ‚Entnahme‘",
+    placeholder: "Zum Beispiel ‚Risiko‘ oder ‚Auszahlung‘",
     count: (count) =>
       `${count} ${count === 1 ? "Begriff" : "Begriffe"} angezeigt`,
     math: "Gleichungen erscheinen in den technischen Details ausgewählter Einträge.",
