@@ -67,9 +67,10 @@ computation limit, not a claim that every ten-asset case performs equally well.
 
 The six packaged cohort tables support female, male and custom survival-curve
 mixtures. GM and market-compatible CE models are fitted in a worker; changes to
-relevant inputs make the appropriate fit outdated. Startup performs a one-time background fit using valid default or locally
-restored inputs. A setup imported during a session still requires a manual fit. The exponential law remains a research benchmark, not a
-user-facing model.
+relevant inputs make the appropriate fit outdated. Startup performs a one-time
+background fit using valid default or locally restored inputs. A setup imported
+during a session still requires a manual fit. The exponential law remains a
+research benchmark, not a user-facing model.
 
 **Remaining:** Continue comparisons with appropriately matched reference fits,
 especially optimizer failures and difficult cohorts. KL divergence and the
@@ -90,9 +91,8 @@ the relevant no-borrowing condition.
 **Remaining:** Keep unsupported parameter regions explicit, including capital
 comparisons where withdrawal is at or below interest on the impoverishment
 level. Verify edge and limiting cases as further formulas are added. The
-[analytical module notes](../src/lib/model/analytical/README.md) contain useful
-formula provenance but also need a separate review for outdated connection
-status.
+[analytical module notes](../src/lib/model/analytical/README.md) record formula
+provenance and current connections.
 
 ### 5. Run snapshots, workers and reproducibility — implemented; format provisional
 
@@ -126,8 +126,7 @@ The unconstrained CE step uses exact safe-gap dynamics within its applicable
 region. First-passage times use local bridge approximations. The projected policy
 uses Euler stepping and a frozen-variance bridge. TensorFlow's GPU computations
 are generally Float32, and backend or time-step differences can affect results.
-See the [simulation notes](../src/lib/model/simulation/README.md) for details;
-some introductory status text there also needs a documentation review.
+See the [simulation notes](../src/lib/model/simulation/README.md) for details.
 
 **Remaining:** Run systematic time-step, batch-size, backend and path-count
 sensitivity checks, including projected cases and representative devices.
@@ -233,13 +232,12 @@ setup or results exports. Exported results are not currently re-importable.
 1. **Quick Start and dictionary:** The workflow guide, glossary, contextual
    links and panel help are available in English and German. Continue reviewing
    mathematical terminology and explanations as the model and interface evolve.
-2. **Refresh supporting documentation:** Review the analytical and simulation
-   READMEs for stale statements about UI connections and worker availability.
-   Keep the codebase guide and export documentation aligned with actual behavior.
-3. **Numerical and product verification:** Complete the time-step, projected
-   policy and borrowing comparisons above; then review responsive layouts,
-   keyboard access, both themes and the static GitHub Pages deployment. Record
-   platform coverage and known limitations.
+2. **Maintain supporting documentation:** Keep the README, codebase guide,
+   model notes and export documentation aligned with changes to behavior.
+3. **Product verification:** Review responsive layouts, keyboard access, both
+   themes and the static GitHub Pages deployment. Record platform coverage and
+   known limitations. The user has manually compared numerical results with
+   the manuscript; further sensitivity checks can be pursued when needed.
 4. **Developer panel:** Review the captured worker-input inspector as the worker
    interface evolves. Its numerical worker-check controls are independent of
    Evaluation and Data & tables.

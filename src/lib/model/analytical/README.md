@@ -20,8 +20,8 @@ years after retirement. The result is in euros. The implemented domain is
 At finite `T`, the value at `t = T` is the continuous limit; the lemma states
 the boundary for `t < T`. For an unbounded endpoint the boundary is `C / r`.
 
-This is a standalone calculation and is not connected to the evaluation panel.
-It requires a known withdrawal and the actual mortality support endpoint; the
+The calculation is used by the evaluation panel and simulation. It requires a
+known withdrawal and the fitted mortality support endpoint; the
 last age in the empirical cohort table is not itself a fitted endpoint. It
 does not establish availability of the paper's policy or feasibility results.
 The tests use hand-computable finite/infinite cases, limit and monotonicity

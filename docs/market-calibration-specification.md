@@ -58,13 +58,13 @@ The inverse relationship is `iN = exp(r) * (1 + inflation) - 1`. All computation
 - The current editor rejects a correlation matrix when its Cholesky diagonal **residual** is at most `1e-12`. This is a practical numerical guard, not a general condition-number test or a theorem. A positive-definite matrix can fail this guard. Report the limitation clearly and revisit its tolerance after numerical testing.
 - Use a stable linear solve, not an explicitly formed matrix inverse. Check the solve result and surface numerical failure. Because different asset volatilities affect the conditioning of `Sigma`, passing the correlation check alone does not guarantee a well-conditioned covariance solve.
 - A negative component of `m` is a valid calibration result. Whether it affects a feasibility or borrowing diagnostic depends on that result's exact assumptions. Do not disable every calculation based solely on its sign.
-- Zero `theta` gives `m = 0` and `rho = 0` for positive-definite `Sigma`; calibration can identify this case. The agreed paper-based model requires `rho > 0`, so mark paper-based analytical results unavailable at zero rather than applying formulas by substitution. The research manuscript source currently records an urgent TODO to add the standing assumption and review dependent results.
+- Zero `theta` gives `m = 0` and `rho = 0` for positive-definite `Sigma`; calibration can identify this case. The agreed paper-based model requires `rho > 0`, so mark paper-based analytical results unavailable at zero rather than applying formulas by substitution. The [historical zero-risk-premium analysis](zero-risk-premium-analysis.md) records the earlier manuscript review.
 - Mathematically `rho >= 0` for positive-definite `Sigma`. Investigate numerical inconsistencies rather than silently correcting a materially negative result.
-- Covariance-weighted projection and conditions for global simplex feasibility are later milestones; their assumptions and tolerances must be specified and tested separately.
+- Covariance-weighted projection and global simplex feasibility are implemented separately; see the [analytical model notes](../src/lib/model/analytical/README.md) for their assumptions and limitations.
 
 ## Reference cases, version 1
 
-These are calibration test cases, not financial forecasts. Values shown below are decimal fractions unless otherwise noted. Tolerances are proposed for double-precision tests; a future implementation must also report solve errors rather than relying solely on comparing rounded output.
+These are calibration test cases, not financial forecasts. Values shown below are decimal fractions unless otherwise noted. Tolerances are intended for double-precision tests; numerical solve failures must also be reported rather than relying solely on comparisons of rounded output.
 
 ### A. Manuscript two-asset example
 

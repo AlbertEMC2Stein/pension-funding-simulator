@@ -1,10 +1,11 @@
 # Help and dictionary audit
 
 Audit: `20261112-222747Z-website-help`  
-Scope: user-facing website copy, dictionary links and panel help, with a targeted
-reading of the mathematical manuscript and website implementations. This is a
-proposal for review, not a formal mathematical review or a set of implemented
-UI changes.
+This is a historical snapshot and proposal, not a current inventory. Since the
+audit, the dictionary, contextual links, quick start and panel help have been
+implemented in English and German. Use the application and translation files
+for their current content. The original audit below is retained for its
+rationale; it is not a formal mathematical review.
 
 ## How to read this audit
 

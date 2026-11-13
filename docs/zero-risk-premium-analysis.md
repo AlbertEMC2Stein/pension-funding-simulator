@@ -2,7 +2,13 @@
 
 This note is a targeted reading of the research manuscript's market definition and selected constant-elasticity, constraint and first-passage results. It is not a formal mathematical review. References below point to the sibling research project, which remains separate from the website. The website should not silently extend a theorem beyond its stated assumptions or treat an undefined formula as an answer.
 
-**Author's convention:** The paper-based model requires `rho > 0`. The inspected manuscript source currently contains an urgent TODO to add this standing assumption and review dependent results; the assumption has not yet been incorporated into the displayed market definition. The website will treat `rho = 0` as outside the paper-based analytical scope. The observations below are retained for context, not as an extension of the paper's results.
+**Author's convention:** The paper-based model requires `rho > 0`, and the
+website treats `rho = 0` as outside its paper-based analytical scope. This is
+a historical analysis: at the time of the manuscript inspection, the source
+contained a TODO to add the standing assumption. The author has since stated
+that the requirement was added; this note has not re-audited the research
+project. The observations below are retained for context, not as an extension
+of the paper's results.
 
 ## Relation between the cases
 
@@ -18,7 +24,7 @@ Thus zero `rho` and the **entire** Merton vector being zero are the same case un
 
 | Result | What the manuscript says or what follows for the zero case | Website implication |
 | --- | --- | --- |
-| Market definition | It assumes `r > 0` and positive-definite covariance. A new TODO calls for the standing assumption `theta != 0`, equivalently `rho > 0`, and review of dependent results. | Calibration may identify zero premium, but the website must mark paper-based analytical results unavailable. |
+| Market definition at the time of inspection | It assumed `r > 0` and positive-definite covariance; a TODO called for the standing assumption `theta != 0`, equivalently `rho > 0`, and review of dependent results. | Calibration may identify zero premium, but the website must mark paper-based analytical results unavailable. |
 | Compactified-exponential compatibility | The theorem displays `delta > 1 + rho / B(0)`; substituting `rho = 0` gives `delta > 1`, and its displayed hazard, value and feedback formulas do not divide by `rho`. The feedback expression becomes zero when `m = 0`. Source: `sections/4_compactified_policy.tex`, theorem `thm:compactified-exponential-compatibility`. | This algebraic substitution is not a proof that the theorem applies at zero. Its dependencies and intended positive-`rho` assumption need review before supporting that boundary case. |
 | Sustainable withdrawal and required capital under CE | The corollary assumes the compatible setting and uses `delta`, the risk level and the finite-horizon parameters. | The formulas inherit the scope of the compatible theorem; do not claim they are established at zero `rho` without further review. A zero-premium extension must not describe mortality-driven differences as a benefit of investment risk-taking. |
 | Simplex feasibility | The paper assumes `m >= 0` componentwise. Its explicit boundary-case discussion says `M = sum(m) = 0` implies `m = 0`, the feedback has no risky component, and every target `alpha` in `(0,1)` is compatible with the simplex constraint. Source: `sections/4_compactified_policy.tex`, proposition `prop:simplex-slackness` and corollary `cor:simplex-risk-tolerance`. | This explicit boundary-case discussion needs reconciliation with an intended standing `rho > 0` assumption. Zero entries in an otherwise nonnegative vector can still satisfy both the sign and strictly positive-`rho` conditions. |

@@ -1,11 +1,11 @@
 # Financial simulation
 
-This directory contains an initial scalar reference and a TensorFlow.js batch
-prototype for the unconstrained CE wealth process and a paired projected-policy
-prototype. The TensorFlow prototype is
-available through a worker in the developer panel. It estimates first-passage
-times with a local bridge approximation and reports CE- and GM-survival-weighted
-risk within the simulated horizon.
+This directory contains a scalar legacy reference and a TensorFlow.js batch
+implementation of the unconstrained CE wealth process and paired projected
+policy. The financial simulation worker is used by Evaluation, comparison
+tables and the developer panel. It estimates first-passage times with local
+bridge approximations and reports CE- and GM-survival-weighted risk within
+the simulated horizon.
 
 Suggested order:
 
@@ -70,11 +70,11 @@ the validated snapshot; the analytical model's threshold is derived from that
 same investor input rather than maintained as a separate editable value.
 All paths in a batch share one investor's initial capital. The tensor backend
 creates the path-state vector internally from that amount and the batch size.
-The snapshot and batch result format are not stable. Bridge-detected times
-remain approximate for a curved boundary. The evaluation panel displays paired
-projected-policy estimates when projection is selected. CPU TensorFlow has
-deterministic bridge checks and an analytical CE risk sanity check; the new
-bridge integration has not been verified on WebGPU.
+The snapshot and batch result format are provisional. Bridge-detected times
+remain approximate for a curved boundary. Evaluation displays paired
+projected-policy estimates when projection is selected. CPU tests include
+deterministic bridge checks and an analytical CE risk sanity check; GPU results
+and time-step sensitivity remain appropriate to review on representative devices.
 
 The TensorFlow scheduler creates one stream from the snapshot seed; each batch
 consumes it without resetting it. Reproducibility currently depends on keeping
@@ -126,8 +126,8 @@ independent financial paths and mortality. The curve is cumulative risk of
 impoverishment before death, not a distribution normalized to one. Its last
 point matches the corresponding horizon-limited GM or CE risk estimate, up
 to floating-point summation. Its time coordinates are years after retirement;
-the future chart must convert these to attained ages and preserve the step
-function or clearly identify any visual approximation.
+the timing chart converts these to attained ages and simplifies displayed points
+while retaining the full simulated data for the underlying calculations.
 
 The curve includes only hits by the simulation horizon and inherits the
 simulation's time-step and bridge approximations. It is currently a standalone
