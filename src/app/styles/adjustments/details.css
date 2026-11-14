@@ -337,10 +337,85 @@ input[aria-invalid="true"] {
   line-height: 1.5;
 }
 
+.detailed-guide {
+  margin-bottom: 18px;
+}
+
+.detailed-guide h2,
 .quick-start h2 {
   color: var(--text-strong);
-  font: 700 17px Manrope, sans-serif;
+  font:
+    700 17px Manrope,
+    sans-serif;
   margin: 8px 0;
+}
+
+.detailed-guide p {
+  max-width: 95ch;
+  line-height: 1.65;
+}
+
+.detailed-guide-steps {
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+  padding-top: 18px;
+}
+
+.detailed-guide-steps details {
+  margin-top: 12px;
+}
+
+.welcome-dialog {
+  width: min(640px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.welcome-heading,
+.welcome-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.welcome-language select {
+  min-width: 110px;
+}
+
+.welcome-steps {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+  padding-left: 20px;
+}
+
+.welcome-steps li + li {
+  margin-top: 5px;
+}
+
+.welcome-guide-link {
+  text-align: left;
+}
+
+.welcome-footer {
+  align-items: center;
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+  padding-top: 16px;
+}
+
+.welcome-dismiss {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.welcome-dismiss input {
+  accent-color: var(--accent);
 }
 
 .quick-start-steps {

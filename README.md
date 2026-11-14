@@ -24,8 +24,9 @@ website runs independently of the separate research project.
 3. Under **Data & tables**, compare variations using the shared market,
    mortality and simulation settings. Export the table or completed results.
 4. Use **Help & dictionary** for a quick start, explanations and technical
-   definitions. The main interface supports English and German, and light and
-   dark themes.
+   definitions. The welcome introduction links to a more detailed guide and
+   can be dismissed permanently in the current browser. The main interface
+   supports English and German, and light and dark themes.
 
 Editable inputs and table configurations are stored in browser local storage;
 language and theme preferences are saved separately. On startup, valid default

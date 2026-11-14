@@ -23,6 +23,7 @@ import { Evaluation } from "./evaluation/Evaluation";
 import { Setup } from "./setup/Setup";
 import { DataView } from "./DataView";
 import { HelpView } from "./HelpView";
+import { WelcomeDialog } from "./WelcomeDialog";
 import {
   SimulationDraftProvider,
   useSimulationDraft,
@@ -162,6 +163,13 @@ export function SimulatorDraft() {
     <LanguageProvider language={display.language}>
       <DraftContext.Provider value={{ navigate, notice }}>
         <SimulationDraftProvider>
+          <WelcomeDialog
+            onOpenGuide={() => navigate("help")}
+            onLanguageChange={(language) =>
+              updateDisplay({ ...display, language })
+            }
+            onStorageError={notice}
+          />
           <div className="app-shell">
             <aside
               className="rail"
