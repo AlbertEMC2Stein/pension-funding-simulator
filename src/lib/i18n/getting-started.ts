@@ -18,8 +18,11 @@ export interface GettingStartedMessages {
   whyParagraphs: readonly string[];
   guideLabel: string;
   guideTitle: string;
-  guideIntro: string;
-  steps: readonly { title: string; paragraphs: readonly string[] }[];
+  steps: readonly {
+    title: string;
+    paragraphs: readonly string[];
+    action: string;
+  }[];
 }
 
 /** The manuscript's motivation and the website's workflow, translated together. */
@@ -49,16 +52,15 @@ export const gettingStartedMessages: Record<Language, GettingStartedMessages> =
       whyTitle: "Planning income for an uncertain retirement",
       whyParagraphs: [
         "Retirement can last many years, but no one knows exactly how long. At the same time, investments fluctuate and inflation changes what money can buy. A fixed rule for everyone cannot reflect each person's savings, spending and circumstances.",
-      "The question is how much income your savings might support while limiting the chance of falling below a level you consider unacceptable. That level need not be zero: you may want to preserve a reserve for essential or unexpected expenses, rather than wait until all your savings are gone.",
+        "The question is how much income your savings might support while limiting the chance of falling below a level you consider unacceptable. That level need not be zero: you may want to preserve a reserve for essential or unexpected expenses, rather than wait until all your savings are gone.",
         "The simulator compares choices under a simplified model of markets and longevity. It can help you understand trade-offs, but it cannot predict your lifespan or future returns, or guarantee that your savings will last.",
       ],
       guideLabel: "STEP-BY-STEP GUIDE",
       guideTitle: "How to use the simulator",
-      guideIntro:
-        "Open a step for more detail. The four-block overview follows below.",
       steps: [
         {
-          title: "1. Set up the market",
+          title: "Set up the market",
+          action: "Open Market & investor",
           paragraphs: [
             "Open Market & investor and select Market. The example starts with two assets. For each, enter a name, expected annual growth and volatility; volatility describes how much returns fluctuate. Enter the nominal risk-free rate and your inflation assumption as annual percentages.",
             "Under the asset list, open the correlation matrix to describe how assets move together. You may use up to ten assets. Alternatively, import a CSV with dates and adjusted closing prices already expressed in euros. The app estimates the market inputs and shows uncertainty for the imported data.",
@@ -66,7 +68,8 @@ export const gettingStartedMessages: Record<Language, GettingStartedMessages> =
           ],
         },
         {
-          title: "2. Set up the investor",
+          title: "Set up the investor",
+          action: "Open Market & investor",
           paragraphs: [
             "Select Investor & mortality. Enter your birth year and expected retirement year, then choose the mortality table and longevity scenario. The cohort information describes a population, not your personal lifespan.",
             "Enter the savings available at retirement and an impoverishment level below that amount. This is the threshold you consider too low; for example, it could preserve a reserve for essential or unexpected expenses. The simulator models the chance of reaching it while you are alive. The smallest supported threshold is €1.",
@@ -74,7 +77,8 @@ export const gettingStartedMessages: Record<Language, GettingStartedMessages> =
           ],
         },
         {
-          title: "3. Choose a withdrawal and run",
+          title: "Choose a withdrawal and run",
+          action: "Open Evaluation",
           paragraphs: [
             "Open Evaluation and Simulation settings. Choose a target risk to calculate an annual withdrawal, or enter a withdrawal to see its corresponding model risk. The amounts are in today's purchasing power.",
             "The analytical CE relationship uses the unconstrained strategy. That strategy can involve borrowing or short selling. Turn on projection to compare a strategy that prevents both; the projection is a feasible comparison, not a claim of constrained optimality.",
@@ -82,7 +86,8 @@ export const gettingStartedMessages: Record<Language, GettingStartedMessages> =
           ],
         },
         {
-          title: "4. Compare and save",
+          title: "Compare and save",
+          action: "Open Data & tables",
           paragraphs: [
             "Open Data & tables to compare variations using shared market, investor and simulation settings. Add rows, choose each row's inputs and compute them. Changing relevant settings can make earlier results need updating.",
             "Export a setup to save editable inputs and table configurations. Export results separately; table and chart menus also offer downloads. Browser storage normally restores your inputs, but not previous simulation results. Imported historical price files and their diagnostics are not included in the setup export.",
@@ -119,11 +124,10 @@ export const gettingStartedMessages: Record<Language, GettingStartedMessages> =
       ],
       guideLabel: "SCHRITT-FÜR-SCHRITT-ANLEITUNG",
       guideTitle: "So nutzen Sie den Simulator",
-      guideIntro:
-        "Öffnen Sie einen Schritt für weitere Informationen. Darunter finden Sie die Übersicht mit vier Blöcken.",
       steps: [
         {
-          title: "1. Markt konfigurieren",
+          title: "Markt konfigurieren",
+          action: "Markt & Person öffnen",
           paragraphs: [
             "Öffnen Sie Markt & Person und wählen Sie Markt. Das Beispiel beginnt mit zwei Anlagen. Geben Sie für jede Anlage einen Namen, das erwartete jährliche Wachstum und die Volatilität ein; die Volatilität beschreibt, wie stark Renditen schwanken. Geben Sie den nominalen risikofreien Zinssatz und Ihre Inflationsannahme als jährliche Prozentwerte ein.",
             "Öffnen Sie unter der Anlageliste die Korrelationsmatrix, um das gemeinsame Verhalten der Anlagen zu beschreiben. Sie können bis zu zehn Anlagen verwenden. Alternativ importieren Sie eine CSV-Datei mit Datum und bereits in Euro vorliegenden angepassten Schlusskursen. Die App schätzt daraus die Markteingaben und zeigt deren Unsicherheit.",
@@ -131,15 +135,17 @@ export const gettingStartedMessages: Record<Language, GettingStartedMessages> =
           ],
         },
         {
-          title: "2. Persönliche Daten eingeben",
+          title: "Persönliche Daten eingeben",
+          action: "Markt & Person öffnen",
           paragraphs: [
             "Wählen Sie Person & Sterblichkeit. Geben Sie Ihr Geburtsjahr und das erwartete Ruhestandsjahr ein und wählen Sie die Sterbetafel und das Langlebigkeitsszenario. Die Kohortendaten beschreiben eine Bevölkerung, nicht Ihre persönliche Lebensdauer.",
-          "Geben Sie Ihr verfügbares Vermögen zum Ruhestandsbeginn und eine darunterliegende Verarmungsgrenze ein. Diese kann zum Beispiel für eine gewünschte Reserve für notwendige oder unerwartete Ausgaben stehen. Der Simulator modelliert das Risiko, diese Grenze zu Lebzeiten zu erreichen. Die kleinste unterstützte Grenze beträgt 1 €.",
+            "Geben Sie Ihr verfügbares Vermögen zum Ruhestandsbeginn und eine darunterliegende Verarmungsgrenze ein. Diese kann zum Beispiel für eine gewünschte Reserve für notwendige oder unerwartete Ausgaben stehen. Der Simulator modelliert das Risiko, diese Grenze zu Lebzeiten zu erreichen. Die kleinste unterstützte Grenze beträgt 1 €.",
             "Die Sterblichkeitsmodelle werden bei relevanten Eingabeänderungen automatisch angepasst. Auf diesem Reiter können Sie Überlebenskurve und Anpassungsdiagnostik prüfen; falls eine Anpassung fehlschlägt, prüfen Sie die Eingaben und versuchen Sie es erneut.",
           ],
         },
         {
-          title: "3. Auszahlung wählen und Simulation starten",
+          title: "Auszahlung wählen und Simulation starten",
+          action: "Auswertung öffnen",
           paragraphs: [
             "Öffnen Sie Auswertung und die Simulationseinstellungen. Wählen Sie ein Zielrisiko, um eine jährliche Auszahlung zu berechnen, oder geben Sie eine Auszahlung ein, um das zugehörige Modellrisiko zu sehen. Die Beträge sind in heutiger Kaufkraft angegeben.",
             "Der analytische CE-Zusammenhang verwendet die unbeschränkte Strategie. Diese kann Kreditaufnahme oder Leerverkäufe beinhalten. Mit der Projektion vergleichen Sie eine Strategie, die beides verhindert; sie ist eine zulässige Vergleichsstrategie und nicht nachweislich beschränkt optimal.",
@@ -147,7 +153,8 @@ export const gettingStartedMessages: Record<Language, GettingStartedMessages> =
           ],
         },
         {
-          title: "4. Vergleichen und speichern",
+          title: "Vergleichen und speichern",
+          action: "Daten & Tabellen öffnen",
           paragraphs: [
             "Unter Daten & Tabellen vergleichen Sie Varianten mit gemeinsamen Markt-, Personen- und Simulationseinstellungen. Fügen Sie Zeilen hinzu, wählen Sie deren Eingaben und berechnen Sie sie. Relevante Änderungen können eine Aktualisierung früherer Ergebnisse erfordern.",
             "Exportieren Sie eine Konfiguration, um Eingaben und Tabellen zu speichern. Ergebnisse werden getrennt exportiert; auch Tabellen und Diagramme können heruntergeladen werden. Der Browser stellt normalerweise Ihre Eingaben wieder her, aber keine früheren Simulationsergebnisse. Importierte Kursdateien und deren Diagnostik sind nicht im Konfigurationsexport enthalten.",

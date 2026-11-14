@@ -64,8 +64,15 @@ test("the introduction and expanded guide are available in both languages", () =
     );
     assert.ok(
       help.indexOf('id="detailed-guide-heading"') <
-        help.indexOf('id="quick-start-heading"'),
+        help.indexOf('class="quick-start-step"'),
     );
     assert.equal((help.match(/class="quick-start-step"/g) ?? []).length, 4);
+    assert.match(
+      help,
+      language === "en"
+        ? /The smallest supported threshold is €1/
+        : /Die kleinste unterstützte Grenze beträgt 1 €/,
+    );
+    assert.doesNotMatch(help, /<summary>1\. Set up the market<\/summary>/);
   }
 });

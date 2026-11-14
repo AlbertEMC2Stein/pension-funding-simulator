@@ -361,10 +361,6 @@ input[aria-invalid="true"] {
   padding-top: 18px;
 }
 
-.detailed-guide-steps details {
-  margin-top: 12px;
-}
-
 .welcome-dialog {
   width: min(640px, calc(100% - 32px));
   max-height: calc(100dvh - 32px);
@@ -429,11 +425,19 @@ input[aria-invalid="true"] {
 
 .quick-start-step {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 12px;
   padding: 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
+}
+
+.quick-start-step > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
 }
 
 .quick-start-number {
@@ -452,12 +456,8 @@ input[aria-invalid="true"] {
 }
 
 .quick-start-link {
+  margin-top: auto;
   text-align: left;
-}
-
-.quick-start-notes {
-  border-top: 1px solid var(--border);
-  padding-top: 10px;
 }
 
 .table-details-toggle {

@@ -7,7 +7,6 @@ import { localizedDictionary } from "../lib/help/localized-dictionary";
 import { helpMessages } from "../lib/i18n/help";
 import { useLanguage } from "./LanguageContext";
 import { RESULT_STATUSES, StatusBadge } from "./StatusBadge";
-import { QuickStart } from "./QuickStart";
 import { DetailedGuide } from "./DetailedGuide";
 
 /**
@@ -70,7 +69,6 @@ export function HelpView({ selectedTerm }: { selectedTerm: string | null }) {
         description={text.description}
       />
       <DetailedGuide />
-      <QuickStart />
       <div className="status-guide form-card">
         <span className="tiny-label">{text.guide}</span>
         <h2>{text.statuses}</h2>

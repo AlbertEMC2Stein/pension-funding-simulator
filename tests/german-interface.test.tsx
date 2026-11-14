@@ -23,7 +23,7 @@ function renderGerman(element: React.ReactNode): string {
 }
 
 test("quick start and contextual help use German explanations", () => {
-  assert.match(renderGerman(<QuickStart />), /Schnellstart/);
+  assert.match(renderGerman(<QuickStart />), /Markt konfigurieren/);
   const help = renderGerman(<PanelHelp panel="timing" />);
   assert.match(help, /bedingte Aktualisierung/);
   assert.match(help, /Simulationshorizont/);
@@ -147,7 +147,10 @@ test("German Evaluation retains numerical selection semantics", async () => {
   );
 
   assert.match(html, /Ihre Möglichkeiten im Ruhestand/);
-  assert.match(html, /Vergleichen Sie Auszahlungen, Risiken und Anlagestrategien/);
+  assert.match(
+    html,
+    /Vergleichen Sie Auszahlungen, Risiken und Anlagestrategien/,
+  );
   assert.match(html, /Verarmungsgrenze/);
   assert.match(html, /Simulation starten/);
   assert.match(html, /Globale Zulässigkeit/);

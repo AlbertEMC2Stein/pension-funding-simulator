@@ -2,8 +2,9 @@
 
 import { useLanguage } from "./LanguageContext";
 import { gettingStartedMessages } from "../lib/i18n/getting-started";
+import { QuickStart } from "./QuickStart";
 
-/** Explain the retirement problem and offer expanded instructions above the overview. */
+/** Explain the retirement problem and present the four detailed workflow steps. */
 export function DetailedGuide() {
   const { language } = useLanguage();
   const text = gettingStartedMessages[language];
@@ -21,18 +22,7 @@ export function DetailedGuide() {
       <div className="detailed-guide-steps">
         <span className="tiny-label">{text.guideLabel}</span>
         <h2 id="detailed-guide-heading">{text.guideTitle}</h2>
-        <p>{text.guideIntro}</p>
-        {text.steps.map((step) => (
-          <details
-            className="borrowing-details diagnostic-details"
-            key={step.title}
-          >
-            <summary>{step.title}</summary>
-            {step.paragraphs.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </details>
-        ))}
+        <QuickStart />
       </div>
     </section>
   );

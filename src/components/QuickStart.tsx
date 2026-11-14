@@ -2,26 +2,19 @@
 
 import { useDraft, type View } from "./common";
 import { useLanguage } from "./LanguageContext";
-import { quickStartMessages } from "../lib/i18n/quick-start";
+import { gettingStartedMessages } from "../lib/i18n/getting-started";
 
 /** Destinations are shared by all translations and never depend on display text. */
 const destinations: readonly View[] = ["setup", "setup", "evaluation", "data"];
 
-/** Explain the main workflow without requiring familiarity with the model. */
+/** Display the four detailed workflow steps with links to their workspace views. */
 export function QuickStart() {
   const { navigate } = useDraft();
   const { language } = useLanguage();
-  const text = quickStartMessages[language];
+  const text = gettingStartedMessages[language];
 
   return (
-    <section
-      className="form-card quick-start"
-      lang={language}
-      aria-labelledby="quick-start-heading"
-    >
-      <span className="tiny-label">{text.eyebrow}</span>
-      <h2 id="quick-start-heading">{text.title}</h2>
-      <p>{text.introduction}</p>
+    <div className="quick-start" lang={language}>
       <ol className="quick-start-steps">
         {text.steps.map((step, index) => (
           <li key={step.title} className="quick-start-step">
@@ -30,7 +23,9 @@ export function QuickStart() {
             </span>
             <div>
               <h3>{step.title}</h3>
-              <p>{step.description}</p>
+              {step.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
               <button
                 type="button"
                 className="term-link quick-start-link"
@@ -42,10 +37,6 @@ export function QuickStart() {
           </li>
         ))}
       </ol>
-      <div className="quick-start-notes">
-        <p>{text.fitNote}</p>
-        <p>{text.resultNote}</p>
-      </div>
-    </section>
+    </div>
   );
 }
