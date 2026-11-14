@@ -11,7 +11,7 @@ import {
   writeSavedDraft,
   type DraftStorage,
 } from "../src/lib/options/saved-draft";
-import { initialMortalityFitAction } from "../src/lib/mortality/initial-fit";
+import { mortalityFitNeedsUpdate } from "../src/lib/mortality/automatic-fit";
 
 /** In-memory browser-storage stand-in with observable values. */
 function memoryStorage() {
@@ -73,36 +73,21 @@ test("missing, malformed and unavailable storage never modify the existing entry
   );
 });
 
-test("initial mortality fit waits while browser recovery is being checked", () => {
-  const draft = initialSimulationDraft();
+test("automatic mortality fitting waits for browser recovery", () => {
+  const state = {
+    storageRestored: false,
+    cohortValid: true,
+    cohortReady: true,
+    gmKey: "cohort",
+    ceKey: "cohort/market",
+    fittedGmKey: null,
+    fittedCeKey: null,
+    retry: false,
+  };
+
+  assert.equal(mortalityFitNeedsUpdate(state), false);
   assert.equal(
-    initialMortalityFitAction({
-      cohortValid: true,
-      phase: "checking-storage",
-      cohortReady: true,
-      marketReady: true,
-      workerActive: false,
-    }),
-    "wait",
-  );
-  assert.equal(
-    initialMortalityFitAction({
-      cohortValid: true,
-      phase: "skipped",
-      cohortReady: true,
-      marketReady: true,
-      workerActive: false,
-    }),
-    "wait",
-  );
-  assert.equal(
-    initialMortalityFitAction({
-      cohortValid: true,
-      phase: "loading",
-      cohortReady: true,
-      marketReady: true,
-      workerActive: false,
-    }),
-    "start",
+    mortalityFitNeedsUpdate({ ...state, storageRestored: true }),
+    true,
   );
 });

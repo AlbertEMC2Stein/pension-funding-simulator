@@ -328,12 +328,12 @@ export function useRiskWithdrawalResult(): RiskWithdrawalWithCovariance {
     if (!fit)
       return {
         message:
-          "Fit the mortality models in Market & investor to calculate this curve.",
+          "The mortality fit is not ready. Check Investor & mortality if fitting fails.",
       };
     if (fit.key !== keys.ce)
       return {
         message:
-          "The CE mortality fit needs updating after your input changes.",
+          "The CE mortality fit does not match the current inputs. Check Investor & mortality if fitting fails.",
       };
     if (!fit.fit.converged)
       return {

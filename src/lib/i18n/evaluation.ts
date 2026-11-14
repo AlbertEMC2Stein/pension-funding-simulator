@@ -75,7 +75,8 @@ export const evaluationMessages: Record<Language, EvaluationMessages> = {
     preparingMortality: "Preparing mortality data…",
     fitting: "Fitting mortality models",
     starts: "starts",
-    reviewMortality: "Open Investor & mortality to review and fit the models.",
+    reviewMortality:
+      "Open Investor & mortality to review the problem and retry.",
     yourSetup: "YOUR SETUP",
     retirementAge: "Retirement age",
     years: "years",
@@ -143,7 +144,7 @@ export const evaluationMessages: Record<Language, EvaluationMessages> = {
     fitting: "Sterblichkeitsmodelle werden angepasst",
     starts: "Startpunkte",
     reviewMortality:
-      "Öffnen Sie Person & Sterblichkeit, um die Modelle zu prüfen und anzupassen.",
+      "Öffnen Sie Person & Sterblichkeit, um das Problem zu prüfen und die Anpassung erneut zu versuchen.",
     yourSetup: "IHRE KONFIGURATION",
     retirementAge: "Ruhestandsalter",
     years: "Jahre",

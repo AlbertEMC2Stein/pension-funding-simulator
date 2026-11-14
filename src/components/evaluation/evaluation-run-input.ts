@@ -43,7 +43,7 @@ export function prepareEvaluationRun(
     return {
       ok: false,
       errors: [
-        "Fit both mortality models for the current investor and market settings before running.",
+        "Mortality fits for the current inputs are not ready. Check Investor & mortality if fitting fails.",
       ],
     };
   if (!fits.gm.fit.converged || !fits.ce.fit.converged)

@@ -71,6 +71,12 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
     "Die CE-Strategie erfordert eine positive Marktrisikoprämie (Rho).",
   "Fit both mortality models for the current investor and market settings before running.":
     "Passen Sie vor dem Start beide Sterblichkeitsmodelle an die aktuellen Personen- und Markteinstellungen an.",
+  "Mortality fits for the current inputs are not ready. Check Investor & mortality if fitting fails.":
+    "Die Sterblichkeitsanpassungen für die aktuellen Eingaben sind noch nicht verfügbar. Prüfen Sie bei einem Fehler Person & Sterblichkeit.",
+  "The mortality fit is not ready. Check Investor & mortality if fitting fails.":
+    "Die Sterblichkeitsanpassung ist noch nicht verfügbar. Prüfen Sie bei einem Fehler Person & Sterblichkeit.",
+  "The CE mortality fit does not match the current inputs. Check Investor & mortality if fitting fails.":
+    "Die CE-Sterblichkeitsanpassung stimmt nicht mit den aktuellen Eingaben überein. Prüfen Sie bei einem Fehler Person & Sterblichkeit.",
   "Both current mortality fits must have converged before running.":
     "Beide aktuellen Sterblichkeitsanpassungen müssen vor dem Start konvergiert sein.",
   "Check the market inputs to calculate this curve.":
@@ -212,7 +218,8 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
     "Die Kohorten- oder Sterblichkeitseinstellungen sind ungültig.",
   "Initial capital must exceed the impoverishment level of at least €1.":
     "Das Anfangskapital muss über der Verarmungsgrenze von mindestens 1 € liegen.",
-  "Unsupported withdrawal mode.": "Der Auszahlungsmodus wird nicht unterstützt.",
+  "Unsupported withdrawal mode.":
+    "Der Auszahlungsmodus wird nicht unterstützt.",
   "Invalid path count or time step.":
     "Ungültige Pfadanzahl oder ungültiger Zeitschritt.",
   "Invalid batch size, horizon or trajectory setting.":

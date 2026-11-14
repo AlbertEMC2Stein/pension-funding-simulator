@@ -10,7 +10,10 @@ import { TermLink } from "../common";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import { ChartExport } from "../ChartExport";
-import { initialMortalityFitAction } from "../../lib/mortality/initial-fit";
+import {
+  mortalityFitNeedsUpdate,
+  scheduleMortalityFit,
+} from "../../lib/mortality/automatic-fit";
 import { buildMarketOptions } from "../../lib/options/simulation-options";
 import { calibrateMarket } from "../../lib/market/calibrate-market";
 import type { CeFit, GmFit } from "../../lib/mortality/mortality-fitting";
@@ -233,6 +236,9 @@ export function CohortChart({
   );
   const { gm: gmResult, ce: ceResult } = mortalityFits;
   const [fitErrors, setFitErrors] = useState<{ gm?: string; ce?: string }>({});
+  const [retry, setRetry] = useState(0);
+  const [loadRetry, setLoadRetry] = useState(0);
+  const lastRetryScheduled = useRef(0);
   const [running, setRunning] = useState<{
     gmKey: string;
     ceKey: string | null;
@@ -245,6 +251,7 @@ export function CohortChart({
   const retirement = years.retirementYear;
   const age = retirement - birth;
   const valid = years.valid;
+  const storageRestored = initialMortalityFit.phase !== "checking-storage";
   // A changed key immediately hides old data, even before the next effect runs.
   const key = `${birthYear}/${mortality}/${longevity}`;
   const marketInput = buildMarketOptions(draft.market);
@@ -277,7 +284,7 @@ export function CohortChart({
   );
   useEffect(() => {
     if (
-      (!active && initialMortalityFit.phase !== "loading") ||
+      !storageRestored ||
       !Number.isInteger(birth) ||
       birth < 1926 ||
       birth > 2026
@@ -315,23 +322,22 @@ export function CohortChart({
                 ? error.message
                 : "Could not load cohort data.",
           });
-          if (initialMortalityFit.phase === "loading")
-            setInitialMortalityFit({
-              phase: "error",
-              message: "Could not load the cohort data.",
-            });
+          setInitialMortalityFit({
+            phase: "error",
+            message: "Could not load the cohort data.",
+          });
         }
       });
 
     return () => controller.abort();
   }, [
-    active,
     birth,
     key,
     longevity,
     mortality,
-    initialMortalityFit.phase,
+    storageRestored,
     setInitialMortalityFit,
+    loadRetry,
   ]);
 
   const curve = useMemo(() => {
@@ -348,36 +354,11 @@ export function CohortChart({
 
   const gm = gmResult?.key === gmKey ? gmResult.fit : null;
   const ce = ceKey && ceResult?.key === ceKey ? ceResult.fit : null;
-  const oldRun =
-    running && (running.gmKey !== gmKey || running.ceKey !== ceKey);
+  /** Start a worker for the captured cohort and market, ignoring superseded messages. */
+  function startFit() {
+    if (!curve) return () => {};
 
-  /** Start a mortality worker for the current captured inputs. Ask before replacing an active fit and ignore messages from superseded workers. */
-  function startFit(automatic = false) {
-    if (!curve) return;
-
-    if (automatic && workerRef.current) return;
-    if (
-      workerRef.current &&
-      !window.confirm(
-        validationMessage(
-          "A mortality fit is still running. Interrupt it and start a new fit with the current settings?",
-          language,
-        ),
-      )
-    )
-      return;
-
-    if (
-      !automatic &&
-      (initialMortalityFit.phase === "loading" ||
-        initialMortalityFit.phase === "running" ||
-        initialMortalityFit.phase === "error")
-    )
-      setInitialMortalityFit({ phase: "skipped" });
-
-    workerRef.current?.terminate();
     setFitErrors({});
-    setMortalityFits({ gm: null, ce: null });
     let worker: Worker;
 
     try {
@@ -387,25 +368,23 @@ export function CohortChart({
       workerRef.current = null;
       setRunning(null);
       setFitErrors({ gm: "Could not start the fitting worker." });
-      if (automatic)
-        setInitialMortalityFit({
-          phase: "error",
-          message: "Could not start the automatic mortality fit.",
-        });
+      setInitialMortalityFit({
+        phase: "error",
+        message: "Could not start the automatic mortality fit.",
+      });
 
-      return;
+      return () => {};
     }
     workerRef.current = worker;
     const capturedGmKey = gmKey;
     const capturedCeKey = ceKey;
     let fitFailed = false;
-    if (automatic)
-      setInitialMortalityFit({
-        phase: "running",
-        model: "GM",
-        completed: 0,
-        total: 48,
-      });
+    setInitialMortalityFit({
+      phase: "running",
+      model: "GM",
+      completed: 0,
+      total: 48,
+    });
     setRunning({
       gmKey: capturedGmKey,
       ceKey: capturedCeKey,
@@ -426,13 +405,12 @@ export function CohortChart({
           completed: message.completed,
           total: message.total,
         });
-        if (automatic)
-          setInitialMortalityFit({
-            phase: "running",
-            model: message.model.toUpperCase(),
-            completed: message.completed,
-            total: message.total,
-          });
+        setInitialMortalityFit({
+          phase: "running",
+          model: message.model.toUpperCase(),
+          completed: message.completed,
+          total: message.total,
+        });
       } else if (message.type === "gm") {
         if (!message.fit.converged) fitFailed = true;
         setMortalityFits((current) => ({
@@ -455,16 +433,14 @@ export function CohortChart({
         worker.terminate();
         workerRef.current = null;
         setRunning(null);
-        if (automatic)
-          setInitialMortalityFit(
-            fitFailed
-              ? {
-                  phase: "error",
-                  message:
-                    "The automatic mortality fit could not be completed.",
-                }
-              : { phase: "complete" },
-          );
+        setInitialMortalityFit(
+          fitFailed
+            ? {
+                phase: "error",
+                message: "The automatic mortality fit could not be completed.",
+              }
+            : { phase: "complete" },
+        );
       }
     };
     worker.onerror = () => {
@@ -477,11 +453,10 @@ export function CohortChart({
         ...previous,
         gm: "The fitting worker failed.",
       }));
-      if (automatic)
-        setInitialMortalityFit({
-          phase: "error",
-          message: "The automatic mortality fitting worker failed.",
-        });
+      setInitialMortalityFit({
+        phase: "error",
+        message: "The automatic mortality fitting worker failed.",
+      });
     };
     try {
       worker.postMessage({
@@ -496,65 +471,93 @@ export function CohortChart({
       setFitErrors({
         gm: "Could not send the cohort data to the fitting worker.",
       });
-      if (automatic)
-        setInitialMortalityFit({
-          phase: "error",
-          message: "Could not start the automatic mortality fit.",
-        });
-    }
-  }
-
-  // Fit once after startup recovery, using the currently restored inputs.
-  useEffect(() => {
-    const action = initialMortalityFitAction({
-      phase: initialMortalityFit.phase,
-      cohortValid: valid,
-      cohortReady: curve !== null,
-      marketReady: !!market && !!ceKey,
-      workerActive: workerRef.current !== null,
-    });
-
-    if (action === "invalid-cohort" || action === "invalid-market") {
       setInitialMortalityFit({
         phase: "error",
-        message:
-          action === "invalid-cohort"
-            ? "The selected birth or retirement year is outside the supported cohort data."
-            : "The market inputs are not valid for the compatible mortality fit.",
+        message: "Could not start the automatic mortality fit.",
       });
+    }
+
+    return () => {
+      if (workerRef.current === worker) {
+        worker.terminate();
+        workerRef.current = null;
+      }
+    };
+  }
+
+  // Relevant edits cancel pending or running work. The short delay groups rapid
+  // keystrokes and slider changes before starting a replacement worker.
+  useEffect(() => {
+    if (!storageRestored) return;
+
+    setRunning(null);
+    setFitErrors({});
+
+    if (!valid) {
+      setInitialMortalityFit({ phase: "skipped" });
       return;
     }
 
-    if (action === "start") startFit(true);
-  }, [initialMortalityFit.phase, valid, curve, market, ceKey]);
+    if (!curve) {
+      if (!(loaded?.key === key && "error" in loaded))
+        setInitialMortalityFit({ phase: "loading" });
+      return;
+    }
 
-  if (!valid)
-    return (
-      <p role="status">
-        {fitText.invalidYears} {running && fitText.continues}
-      </p>
-    );
+    if (
+      !mortalityFitNeedsUpdate({
+        storageRestored,
+        cohortValid: valid,
+        cohortReady: true,
+        gmKey,
+        ceKey,
+        fittedGmKey: gmResult?.key ?? null,
+        fittedCeKey: ceResult?.key ?? null,
+        retry: retry !== lastRetryScheduled.current,
+      })
+    ) {
+      setInitialMortalityFit({ phase: "complete" });
+      return;
+    }
+
+    lastRetryScheduled.current = retry;
+    setInitialMortalityFit({ phase: "loading" });
+    return scheduleMortalityFit(startFit);
+  }, [storageRestored, valid, gmKey, ceKey, curve, loaded, key, retry]);
+
+  if (!valid) return <p role="status">{fitText.invalidYears}</p>;
   if (!active || !loaded || loaded.key !== key)
-    return (
-      <p role="status">
-        {fitText.loading} {running && fitText.continues}
-      </p>
-    );
+    return <p role="status">{fitText.loading}</p>;
   if ("error" in loaded)
-    return <p role="alert">{validationMessage(loaded.error, language)}</p>;
+    return (
+      <div>
+        <p role="alert">{validationMessage(loaded.error, language)}</p>
+        <button
+          type="button"
+          className="button button-light"
+          onClick={() => setLoadRetry((value) => value + 1)}
+        >
+          {fitText.retry}
+        </button>
+      </div>
+    );
   if (!curve) return null;
 
   return (
     <>
       <div className="mortality-fit-toolbar">
         <strong>{fitText.survivalByAge}</strong>
-        <button
-          type="button"
-          className="button button-primary"
-          onClick={() => startFit()}
-        >
-          {running ? fitText.update : fitText.fit}
-        </button>
+        {(fitErrors.gm ||
+          fitErrors.ce ||
+          initialMortalityFit.phase === "error") && (
+          <button
+            type="button"
+            className="button button-light"
+            onClick={() => setRetry((value) => value + 1)}
+          >
+            {fitText.retry}
+          </button>
+        )}
       </div>
       <Plot
         key={`${gmKey}/${!!gm}/${!!ce}`}
@@ -568,13 +571,19 @@ export function CohortChart({
         }
       />
       <p className="chart-disclaimer">{fitText.cohortNote(age)}</p>
-      {!running && !gm && !ce && !fitErrors.gm && !fitErrors.ce && (
-        <p>{fitText.notFitted}</p>
+      {!running && initialMortalityFit.phase === "loading" && (
+        <p role="status">{fitText.preparing}</p>
       )}
+      {!running &&
+        initialMortalityFit.phase !== "loading" &&
+        !gm &&
+        !ce &&
+        !fitErrors.gm &&
+        !fitErrors.ce && <p>{fitText.notFitted}</p>}
       {running && (
         <p role="status">
           {fitText.fitting} {running.stage}: {running.completed} /{" "}
-          {running.total} {fitText.starts}. {oldRun ? fitText.staleRun : ""}
+          {running.total} {fitText.starts}.
         </p>
       )}
       {!market && <p>{fitText.invalidMarket}</p>}

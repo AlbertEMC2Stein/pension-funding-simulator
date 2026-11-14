@@ -49,8 +49,9 @@ validates that boundary, including transferred worker inputs.
 packaged tables under `public/data/mortality/`; a mixture combines conditional
 survival curves rather than annual death probabilities. The fitting worker
 fits GM and market-compatible CE models using annual death bins and the final
-survival tail. Valid default or restored inputs start a background fit; a setup
-imported during the session must be fitted manually.
+survival tail. Valid default or restored inputs start a background fit. Relevant
+input changes and setup imports automatically start a new fit after a short
+debounce; superseded workers are terminated.
 
 [`model/analytical`](../src/lib/model/analytical/) contains the safe boundary,
 compatible CE policy, feasibility, projection and Durbin calculations. Its

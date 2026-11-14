@@ -99,7 +99,7 @@ test("dictionary renders its examples and mathematical notation", () => {
   );
   assert.match(html, /Your quick start/);
   assert.match(html, /Set up the market/);
-  assert.match(html, /Fit mortality|fit the mortality models/i);
+  assert.match(html, /mortality models are fitted automatically/i);
   assert.match(html, /Open Evaluation/);
   assert.match(html, /Monte Carlo/);
   assert.match(html, /Safe boundary/);

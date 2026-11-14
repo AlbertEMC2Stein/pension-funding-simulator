@@ -3,16 +3,14 @@ import type { Language } from "./messages";
 /** Labels and explanations for fitting and reviewing the mortality models. */
 export interface MortalityFitMessages {
   invalidYears: string;
-  continues: string;
   loading: string;
   survivalByAge: string;
-  update: string;
-  fit: string;
+  retry: string;
   cohortNote: (age: number) => string;
   notFitted: string;
+  preparing: string;
   fitting: string;
   starts: string;
-  staleRun: string;
   invalidMarket: string;
   staleFits: string;
   gmFit: string;
@@ -41,21 +39,18 @@ export const mortalityFitMessages: Record<Language, MortalityFitMessages> = {
   en: {
     invalidYears:
       "Enter a birth year from 1926 to 2026 and a retirement year giving an age from 0 to 99.",
-    continues: "The current fit continues with its original settings.",
     loading: "Loading cohort data…",
     survivalByAge: "Survival by age",
-    update: "Update fits",
-    fit: "Fit mortality models",
+    retry: "Retry fit",
     cohortNote: (age) =>
       `Cohort survival conditional on reaching age ${age}. Annual points are connected by straight lines. Data end at age 100; the remaining survival probability is not forced to zero.`,
     notFitted: "Mortality models have not been fitted for these inputs.",
+    preparing: "Preparing the automatic mortality fit…",
     fitting: "Fitting",
     starts: "starts",
-    staleRun:
-      "This run uses earlier settings; update fits to use your current inputs.",
     invalidMarket:
       "CE fitting requires valid market assumptions and positive rho. The GM fit remains available.",
-    staleFits: "Some previous fits need updating after input changes.",
+    staleFits: "Previous fits do not match the current inputs.",
     gmFit: "GM fit",
     ceFit: "CE fit",
     viewDiagnostics: "View fit diagnostics and model parameters",
@@ -81,24 +76,20 @@ export const mortalityFitMessages: Record<Language, MortalityFitMessages> = {
   de: {
     invalidYears:
       "Geben Sie ein Geburtsjahr von 1926 bis 2026 und ein Ruhestandsjahr mit einem Alter zwischen 0 und 99 ein.",
-    continues:
-      "Die laufende Anpassung verwendet weiterhin ihre ursprünglichen Einstellungen.",
     loading: "Kohortendaten werden geladen…",
     survivalByAge: "Überleben nach Alter",
-    update: "Anpassungen aktualisieren",
-    fit: "Sterblichkeitsmodelle anpassen",
+    retry: "Anpassung erneut versuchen",
     cohortNote: (age) =>
       `Überleben der Kohorte unter der Bedingung, das Alter ${age} erreicht zu haben. Jährliche Punkte sind geradlinig verbunden. Die Daten enden bei Alter 100; die verbleibende Überlebenswahrscheinlichkeit wird nicht auf null gesetzt.`,
     notFitted:
       "Für diese Eingaben wurden die Sterblichkeitsmodelle noch nicht angepasst.",
+    preparing: "Die automatische Sterblichkeitsanpassung wird vorbereitet…",
     fitting: "Anpassung",
     starts: "Startpunkte",
-    staleRun:
-      "Dieser Lauf verwendet frühere Einstellungen; aktualisieren Sie die Anpassungen für die aktuellen Eingaben.",
     invalidMarket:
       "Die CE-Anpassung benötigt gültige Marktannahmen und ein positives Rho. Die GM-Anpassung bleibt verfügbar.",
     staleFits:
-      "Einige frühere Anpassungen müssen nach Eingabeänderungen aktualisiert werden.",
+      "Frühere Anpassungen stimmen nicht mit den aktuellen Eingaben überein.",
     gmFit: "GM-Anpassung",
     ceFit: "CE-Anpassung",
     viewDiagnostics: "Anpassungsdiagnostik und Modellparameter anzeigen",

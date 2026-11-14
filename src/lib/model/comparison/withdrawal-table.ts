@@ -60,12 +60,13 @@ export function prepareWithdrawalTable(
     return {
       available: false,
       message:
-        "Fit the mortality models under Investor & mortality to calculate this table.",
+        "The mortality fit is not ready. Check Investor & mortality if fitting fails.",
     };
   if (fits.ce.key !== key)
     return {
       available: false,
-      message: "The CE mortality fit needs updating for the current inputs.",
+      message:
+        "The CE mortality fit does not match the current inputs. Check Investor & mortality if fitting fails.",
     };
   if (!fits.ce.fit.converged)
     return {

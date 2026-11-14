@@ -29,9 +29,10 @@ website runs independently of the separate research project.
 
 Editable inputs and table configurations are stored in browser local storage;
 language and theme preferences are saved separately. On startup, valid default
-or restored inputs trigger a background mortality fit. Fits and simulation
-results are not restored. Importing a setup clears existing fits and results;
-fit the imported inputs and run simulations to calculate new results.
+or restored inputs trigger a background mortality fit. Fits also update after
+relevant input changes and setup imports. Fits and simulation results are not
+restored; importing a setup clears existing fits and results, then starts a new
+fit. Run simulations to calculate new simulation results.
 
 Setup JSON contains inputs and table configurations, not results or the
 original price data. Results JSON, table CSV, and chart PNG, SVG and CSV exports

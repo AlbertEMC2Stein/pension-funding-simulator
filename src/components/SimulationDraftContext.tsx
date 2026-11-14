@@ -47,7 +47,7 @@ export type InspectedTables = Partial<
   Record<"withdrawal" | "feasibility", InspectedTableRow[]>
 >;
 
-/** One-time startup fit status, shared so Evaluation can show progress. */
+/** Automatic mortality fit status, shared so Evaluation can show progress. */
 export type InitialMortalityFit =
   | { phase: "checking-storage" }
   | { phase: "loading" }

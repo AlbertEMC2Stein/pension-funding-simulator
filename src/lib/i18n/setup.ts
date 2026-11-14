@@ -85,7 +85,7 @@ export const setupMessages: Record<Language, SetupMessages> = {
     tabs: "Setup sections",
     market: "Market",
     investor: "Investor & mortality",
-    reviewFit: "Review fit",
+    reviewFit: "Fit not current",
     calibrationNote: "A NOTE ON CALIBRATION",
     calibrationHeadline: "Historical returns are not forecasts.",
     calibrationDescription:
@@ -107,15 +107,16 @@ export const setupMessages: Record<Language, SetupMessages> = {
     marketFitBefore: "Market assumptions can affect the fitted",
     mortalityModel: "mortality model",
     marketFitAfter:
-      "After changing them, check the fit under Investor & mortality. The underlying cohort data do not change.",
+      "The fit updates automatically after changes; the underlying cohort data do not change.",
     cohortIntro: "Explore",
     cohortLink: "cohort",
     survivalLink: "survival",
-    fitModelsIntro: "from your expected retirement age and fit",
+    fitModelsIntro: "from your expected retirement age and the fitted",
     modelsLink: "mortality models",
-    fitStale: "The compatible CE fit needs updating after an input change.",
+    fitStale:
+      "The compatible CE fit does not match the current inputs; check its status below.",
     fitReview:
-      "The compatible CE fit depends on market assumptions. Check the fit again after changing them.",
+      "The compatible CE fit depends on market assumptions and updates automatically when valid inputs change.",
     cohortUnchanged: "The cohort data themselves do not change.",
     mortalityData: "MORTALITY DATA",
     cohortHeadline: "Built around your cohort.",
@@ -162,7 +163,7 @@ export const setupMessages: Record<Language, SetupMessages> = {
     tabs: "Konfigurationsbereiche",
     market: "Markt",
     investor: "Person & Sterblichkeit",
-    reviewFit: "Anpassung prüfen",
+    reviewFit: "Anpassung nicht aktuell",
     calibrationNote: "HINWEIS ZUR KALIBRIERUNG",
     calibrationHeadline: "Historische Renditen sind keine Prognose.",
     calibrationDescription:
@@ -186,17 +187,17 @@ export const setupMessages: Record<Language, SetupMessages> = {
     marketFitBefore: "Marktannahmen können das angepasste",
     mortalityModel: "Sterblichkeitsmodell",
     marketFitAfter:
-      "beeinflussen. Prüfen Sie nach Änderungen die Anpassung unter Person & Sterblichkeit. Die zugrunde liegenden Kohortendaten ändern sich nicht.",
+      "beeinflussen. Die Anpassung wird nach Änderungen automatisch aktualisiert; die zugrunde liegenden Kohortendaten ändern sich nicht.",
     cohortIntro: "Erkunden Sie das",
     cohortLink: "Kohorte",
     survivalLink: "Überleben",
     fitModelsIntro:
-      "ab dem voraussichtlichen Ruhestandsalter und passen Sie die",
+      "ab dem voraussichtlichen Ruhestandsalter und die angepassten",
     modelsLink: "Sterblichkeitsmodelle",
     fitStale:
-      "Die kompatible CE-Anpassung muss nach einer Eingabeänderung aktualisiert werden.",
+      "Die kompatible CE-Anpassung stimmt nicht mit den aktuellen Eingaben überein; prüfen Sie unten ihren Status.",
     fitReview:
-      "Die kompatible CE-Anpassung hängt von Marktannahmen ab. Prüfen Sie die Anpassung nach Änderungen erneut.",
+      "Die kompatible CE-Anpassung hängt von Marktannahmen ab und wird bei gültigen Eingabeänderungen automatisch aktualisiert.",
     cohortUnchanged: "Die Kohortendaten selbst bleiben unverändert.",
     mortalityData: "STERBLICHKEITSDATEN",
     cohortHeadline: "Auf Ihrer Kohorte aufgebaut.",

@@ -67,16 +67,16 @@ computation limit, not a claim that every ten-asset case performs equally well.
 
 The six packaged cohort tables support female, male and custom survival-curve
 mixtures. GM and market-compatible CE models are fitted in a worker; changes to
-relevant inputs make the appropriate fit outdated. Startup performs a one-time
-background fit using valid default or locally restored inputs. A setup imported
-during a session still requires a manual fit. The exponential law remains a
+relevant inputs make the appropriate fit outdated and trigger an automatic
+background refit. Startup and setup import also fit valid inputs. Superseded
+fits are cancelled after relevant changes; the exponential law remains a
 research benchmark, not a user-facing model.
 
 **Remaining:** Continue comparisons with appropriately matched reference fits,
 especially optimizer failures and difficult cohorts. KL divergence and the
 largest survival difference are available as technical diagnostics; do not
-introduce qualitative fit grades without defensible thresholds. Preserve the
-rule that loading a saved setup does not silently calculate results.
+introduce qualitative fit grades without defensible thresholds. A setup import
+recomputes mortality fits but does not automatically run financial simulations.
 
 ### 4. Unconstrained CE analysis and Evaluation — implemented
 
@@ -215,7 +215,7 @@ Editable setup inputs, name and both tables are saved in versioned browser local
 storage, including incomplete edits. On startup, the mortality models are fitted
 automatically using valid restored inputs; stored fits and simulation results are
 not restored. Setup JSON import validates inputs before replacing the workspace
-and clears prior fits and results; the imported mortality fit is started manually. Separate
+and clears prior fits and results; the imported mortality fit starts automatically. Separate
 exports provide results JSON, comparison-table CSV and PNG/SVG/CSV chart output.
 See [setup files](setup-file.md) and [results and chart exports](results-export.md)
 for formats and current limitations.

@@ -14,8 +14,9 @@ Monte Carlo results are not included; results export is a separate feature.
 Import validates the format, field types, supported choices, market and investor
 inputs, and comparison-row values before changing the workspace. Export also
 requires valid inputs so that its files can be imported. A valid import clears
-existing fits and results; if a simulation or mortality fit is running, the
-user must first confirm its interruption.
+existing fits and results, then automatically fits the imported mortality data;
+if a simulation or mortality fit is running, the user must first confirm its
+interruption.
 
 Reusing a seed does not alone guarantee identical results: the numerical
 settings, batch sequence, backend, model and data also matter. Cross-backend

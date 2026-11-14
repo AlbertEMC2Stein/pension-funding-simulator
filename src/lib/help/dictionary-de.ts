@@ -171,7 +171,7 @@ export const germanDictionary: Record<DictionaryTermId, GermanEntry> = {
     summary:
       "Bei der Anpassung werden Modellparameter so gewählt, dass ein Überlebensmodell die gewählten Kohortendaten annähert.",
     explanation:
-      "Die App passt GM und das marktkompatible CE-Modell an. Änderungen relevanter Marktannahmen können eine neue CE-Anpassung erfordern; die Kohortendaten bleiben unverändert.",
+      "Die App passt GM und das marktkompatible CE-Modell bei relevanten Eingabeänderungen automatisch an. Marktannahmen können die CE-Anpassung beeinflussen; die Kohortendaten bleiben unverändert.",
     technical:
       "Die Zielfunktion vergleicht jährliche Sterbewahrscheinlichkeiten und den abschließenden Überlebensrest mittels KL-Divergenz. Konvergenz des Optimierers misst für sich genommen nicht die Anpassungsgüte.",
     keywords: "Anpassung Kalibrierung KL Konvergenz",

@@ -20,7 +20,7 @@ export const setupActionMessages: Record<Language, SetupActionMessages> = {
     export: "Export setup",
     exported: "Setup exported. Results are not included.",
     imported:
-      "Setup imported. Fit mortality and run simulations to calculate results.",
+      "Setup imported. Mortality models update automatically; run simulations to calculate results.",
     versionMismatch:
       "Setup imported from a different model or cohort-data version. Review it before recalculating.",
     tooLarge: "The setup file is too large (maximum 2 MB).",
@@ -32,7 +32,7 @@ export const setupActionMessages: Record<Language, SetupActionMessages> = {
     export: "Konfiguration exportieren",
     exported: "Konfiguration exportiert. Ergebnisse sind nicht enthalten.",
     imported:
-      "Konfiguration importiert. Passen Sie die Sterblichkeitsmodelle an und starten Sie die Simulation, um Ergebnisse zu berechnen.",
+      "Konfiguration importiert. Die Sterblichkeitsmodelle werden automatisch aktualisiert; starten Sie die Simulation, um Ergebnisse zu berechnen.",
     versionMismatch:
       "Die importierte Konfiguration verwendet eine andere Modell- oder Kohortendatenversion. Prüfen Sie sie vor einer erneuten Berechnung.",
     tooLarge: "Die Konfigurationsdatei ist zu groß (höchstens 2 MB).",
@@ -74,7 +74,9 @@ export function setupFileError(message: string, language: Language): string {
 
   /** Map the stable table identifier to its German display name. */
   function tableName(kind: string): string {
-    return kind === "withdrawal" ? "Auszahlungstabelle" : "Zulässigkeitstabelle";
+    return kind === "withdrawal"
+      ? "Auszahlungstabelle"
+      : "Zulässigkeitstabelle";
   }
   const malformedTable =
     /^The (withdrawal|feasibility) table is malformed\.$/.exec(message);

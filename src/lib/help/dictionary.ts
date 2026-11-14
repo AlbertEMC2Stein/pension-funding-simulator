@@ -215,7 +215,7 @@ export const dictionaryEntries = [
     summary:
       "Fitting chooses model parameters so a survival model approximates the selected cohort data.",
     explanation:
-      "The app fits GM and market-compatible CE models. Changing relevant market assumptions can require a new CE fit; the underlying cohort data do not change.",
+      "The app fits GM and market-compatible CE models automatically when relevant inputs change. Market assumptions can affect the CE fit; the underlying cohort data do not change.",
     technical:
       "The objective compares annual death-probability bins and the final survival tail using KL divergence. Optimizer convergence does not itself measure fit quality.",
     keywords: "fitting calibration kl convergence parameters model",

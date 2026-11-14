@@ -24,9 +24,9 @@ export const quickStartMessages: Record<Language, QuickStartMessages> = {
         action: "Open Market & investor",
       },
       {
-        title: "Set up the investor and fit mortality",
+        title: "Set up the investor",
         description:
-          "In Investor & mortality, enter your retirement details, starting capital and impoverishment level. Review the survival curve and fit the mortality models.",
+          "In Investor & mortality, enter your retirement details, starting capital and impoverishment level. The mortality models are fitted automatically; you can review the survival curve and fit.",
         action: "Open Market & investor",
       },
       {
@@ -43,7 +43,7 @@ export const quickStartMessages: Record<Language, QuickStartMessages> = {
       },
     ],
     fitNote:
-      "On startup, the mortality models normally fit automatically using your restored inputs. After changing relevant inputs or importing a setup, check and fit the models in Investor & mortality before running.",
+      "Mortality models update automatically after relevant input changes or a setup import. If a fit fails, review the details under Investor & mortality and retry.",
     resultNote:
       "Inputs are normally saved in this browser, but fits and results are not saved automatically. Results are model-based estimates; Monte Carlo intervals describe sampling uncertainty only.",
   },
@@ -62,7 +62,7 @@ export const quickStartMessages: Record<Language, QuickStartMessages> = {
       {
         title: "Persönliche Daten und Sterblichkeitsmodelle",
         description:
-          "Geben Sie unter Person & Sterblichkeit Ihre Ruhestandsdaten, Ihr Anfangskapital und Ihre Verarmungsgrenze ein. Prüfen Sie die Überlebenskurve und passen Sie die Modelle an.",
+          "Geben Sie unter Person & Sterblichkeit Ihre Ruhestandsdaten, Ihr Anfangskapital und Ihre Verarmungsgrenze ein. Die Sterblichkeitsmodelle werden automatisch angepasst; Sie können die Überlebenskurve und Anpassung prüfen.",
         action: "Markt & Person öffnen",
       },
       {
@@ -79,7 +79,7 @@ export const quickStartMessages: Record<Language, QuickStartMessages> = {
       },
     ],
     fitNote:
-      "Beim Start werden die Sterblichkeitsmodelle normalerweise automatisch anhand Ihrer wiederhergestellten Eingaben angepasst. Nach relevanten Änderungen oder dem Import einer Konfiguration prüfen und passen Sie die Modelle vor der Simulation erneut an.",
+      "Die Sterblichkeitsmodelle werden nach relevanten Eingabeänderungen oder dem Import einer Konfiguration automatisch aktualisiert. Falls eine Anpassung fehlschlägt, prüfen Sie die Details unter Person & Sterblichkeit und versuchen Sie es erneut.",
     resultNote:
       "Eingaben werden normalerweise in diesem Browser gespeichert, Anpassungen und Simulationsergebnisse jedoch nicht. Die Ergebnisse sind modellbasierte Schätzungen; Monte-Carlo-Intervalle beschreiben ausschließlich die Stichprobenunsicherheit.",
   },
