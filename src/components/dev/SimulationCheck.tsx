@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { StatusBadge, type ResultStatus } from "../StatusBadge";
 import { calibrateMarket } from "../../lib/market/calibrate-market";
+import { resourceLoadError } from "../../lib/network/resource-errors";
 import { mortalityFitKeys } from "../../lib/mortality/fit-status";
 import { buildSimulationOptions } from "../../lib/options/simulation-options";
 import {
@@ -227,10 +228,11 @@ export function SimulationCheck() {
       const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
       worker = new Worker(`${basePath}/workers/financial-simulation.worker.js`);
     } catch {
-      return fail("Could not start the simulation worker.");
+      return fail(resourceLoadError("Could not start the simulation worker."));
     }
 
     const runId = ++runIdRef.current;
+    let workerResponded = false;
     workerRef.current = worker;
     setRun({
       signature,
@@ -248,6 +250,7 @@ export function SimulationCheck() {
     worker.onmessage = (event: MessageEvent<SimulationWorkerResponse>) => {
       const message = event.data;
       if (workerRef.current !== worker || message.runId !== runId) return;
+      workerResponded = true;
 
       if (message.type === "prepared")
         setRun(
@@ -306,7 +309,11 @@ export function SimulationCheck() {
           current && {
             ...current,
             phase: "error",
-            message: "The simulation worker failed to load or run.",
+            message: workerResponded
+              ? "The simulation worker failed."
+              : resourceLoadError(
+                  "The simulation worker failed to load or run.",
+                ),
           },
       );
     };

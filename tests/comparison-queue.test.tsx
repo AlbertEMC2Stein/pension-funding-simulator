@@ -118,6 +118,33 @@ test("queue runs two rows, then starts the next and keeps policy results distinc
   assert.equal(state!.running, false);
 });
 
+test("worker loading errors receive connection guidance but later failures do not", () => {
+  const workers: FakeWorker[] = [];
+  let state: ComparisonQueueState | null = null;
+  const queue = new ComparisonQueue(
+    [row(1), row(2)],
+    () => {
+      const worker = new FakeWorker();
+      workers.push(worker);
+      return worker;
+    },
+    (next) => {
+      state = next;
+    },
+  );
+
+  queue.start();
+  workers[0].onerror?.({} as ErrorEvent);
+  workers[1].emit({ type: "prepared", runId: 2, annualWithdrawal: 100 });
+  workers[1].onerror?.({} as ErrorEvent);
+
+  assert.match(
+    state!.rows[0].message!,
+    /internet connection|browser reports that it is offline/i,
+  );
+  assert.equal(state!.rows[1].message, "The simulation worker failed.");
+});
+
 test("feasibility jobs request and retain borrowing estimates", () => {
   const worker = new FakeWorker();
   let state: ComparisonQueueState | null = null;

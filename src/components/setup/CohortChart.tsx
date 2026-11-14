@@ -4,6 +4,7 @@ import { useLanguage } from "../LanguageContext";
 import { validationMessage } from "../../lib/i18n/validation";
 import { mortalityFitMessages } from "../../lib/i18n/mortality-fit";
 import { chartMessages } from "../../lib/i18n/charts";
+import { resourceLoadError } from "../../lib/network/resource-errors";
 
 import { TermLink } from "../common";
 
@@ -24,6 +25,7 @@ import {
 } from "../../lib/mortality/fit-status";
 import {
   cohortSurvival,
+  CohortRequestError,
   loadCohort,
   mixCohortSurvival,
   validateCohortYears,
@@ -315,16 +317,20 @@ export function CohortChart({
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) {
+          const message =
+            error instanceof CohortRequestError
+              ? resourceLoadError(error.message)
+              : error instanceof Error
+                ? error.message
+                : "Could not load cohort data.";
+
           setLoaded({
             key,
-            error:
-              error instanceof Error
-                ? error.message
-                : "Could not load cohort data.",
+            error: message,
           });
           setInitialMortalityFit({
             phase: "error",
-            message: "Could not load the cohort data.",
+            message,
           });
         }
       });
@@ -367,10 +373,11 @@ export function CohortChart({
     } catch {
       workerRef.current = null;
       setRunning(null);
-      setFitErrors({ gm: "Could not start the fitting worker." });
+      const message = resourceLoadError("Could not start the fitting worker.");
+      setFitErrors({ gm: message });
       setInitialMortalityFit({
         phase: "error",
-        message: "Could not start the automatic mortality fit.",
+        message,
       });
 
       return () => {};
@@ -379,6 +386,7 @@ export function CohortChart({
     const capturedGmKey = gmKey;
     const capturedCeKey = ceKey;
     let fitFailed = false;
+    let workerResponded = false;
     setInitialMortalityFit({
       phase: "running",
       model: "GM",
@@ -395,6 +403,7 @@ export function CohortChart({
     worker.onmessage = (event) => {
       if (workerRef.current !== worker) return;
 
+      workerResponded = true;
       const message = event.data;
 
       if (message.type === "progress") {
@@ -449,13 +458,16 @@ export function CohortChart({
       worker.terminate();
       workerRef.current = null;
       setRunning(null);
+      const message = workerResponded
+        ? "The fitting worker failed."
+        : resourceLoadError("The fitting worker failed to load or run.");
       setFitErrors((previous) => ({
         ...previous,
-        gm: "The fitting worker failed.",
+        gm: message,
       }));
       setInitialMortalityFit({
         phase: "error",
-        message: "The automatic mortality fitting worker failed.",
+        message,
       });
     };
     try {

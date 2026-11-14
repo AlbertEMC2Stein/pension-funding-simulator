@@ -128,6 +128,14 @@ export function mixCohortSurvival(
   }));
 }
 
+/** A cohort file request failed before the server returned an HTTP response. */
+export class CohortRequestError extends Error {
+  constructor(cause: unknown) {
+    super("Could not load cohort data.", { cause });
+    this.name = "CohortRequestError";
+  }
+}
+
 /** Fetch only the requested file; basePath is the static site's build-time prefix. */
 export async function loadCohort(
   birthYear: number,
@@ -137,12 +145,28 @@ export async function loadCohort(
   signal: AbortSignal,
 ): Promise<number[]> {
   const file = `cohort_table_1926_2026_${sex}_${scenario}.csv`;
-  const response = await fetch(`${basePath}/data/mortality/${file}`, {
-    signal,
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${basePath}/data/mortality/${file}`, { signal });
+  } catch (error) {
+    if (signal.aborted) throw error;
+
+    throw new CohortRequestError(error);
+  }
 
   if (!response.ok)
     throw new Error(`Could not load cohort data (${response.status}).`);
 
-  return parseCohortCsv(await response.text(), birthYear);
+  let content: string;
+
+  try {
+    content = await response.text();
+  } catch (error) {
+    if (signal.aborted) throw error;
+
+    throw new CohortRequestError(error);
+  }
+
+  return parseCohortCsv(content, birthYear);
 }

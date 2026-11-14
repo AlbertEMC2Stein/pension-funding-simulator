@@ -147,6 +147,16 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
     "Die Kohortendaten konnten nicht geladen werden.",
   "Could not start the fitting worker.":
     "Der Anpassungsprozess konnte nicht gestartet werden.",
+  "The fitting worker failed to load or run.":
+    "Der Anpassungsprozess konnte nicht geladen oder ausgeführt werden.",
+  "Your browser reports that it is offline.":
+    "Ihr Browser meldet, dass er offline ist.",
+  "Reconnect and try again.":
+    "Stellen Sie die Internetverbindung wieder her und versuchen Sie es erneut.",
+  "Check your internet connection and try again.":
+    "Prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+  "If the problem continues, reload the page.":
+    "Wenn das Problem weiterhin besteht, laden Sie die Seite erneut.",
   "Could not start the automatic mortality fit.":
     "Die automatische Sterblichkeitsanpassung konnte nicht gestartet werden.",
   "The automatic mortality fit could not be completed.":

@@ -19,6 +19,7 @@ import type {
 } from "../../lib/model/simulation/worker-protocol";
 import { useLanguage } from "../LanguageContext";
 import { validationMessage } from "../../lib/i18n/validation";
+import { resourceLoadError } from "../../lib/network/resource-errors";
 import { useSimulationDraft } from "../SimulationDraftContext";
 import { prepareEvaluationRun } from "./evaluation-run-input";
 
@@ -137,7 +138,7 @@ export function useEvaluationRun() {
       const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
       worker = new Worker(`${basePath}/workers/financial-simulation.worker.js`);
     } catch {
-      setErrors(["Could not start the simulation worker."]);
+      setErrors([resourceLoadError("Could not start the simulation worker.")]);
       return;
     }
 
@@ -149,6 +150,7 @@ export function useEvaluationRun() {
       ce: structuredClone(prepared.input.mortality.ce.parameters),
     };
     const runId = ++runIdRef.current;
+    let workerResponded = false;
     workerRef.current = worker;
     if (process.env.NODE_ENV === "development")
       setPrepared(structuredClone(prepared.input));
@@ -170,6 +172,7 @@ export function useEvaluationRun() {
     worker.onmessage = (event: MessageEvent<SimulationWorkerResponse>) => {
       const message = event.data;
       if (workerRef.current !== worker || message.runId !== runId) return;
+      workerResponded = true;
 
       if (message.type === "prepared")
         setRun(
@@ -235,7 +238,11 @@ export function useEvaluationRun() {
           current && {
             ...current,
             phase: "error",
-            message: "The simulation worker failed to load or run.",
+            message: workerResponded
+              ? "The simulation worker failed."
+              : resourceLoadError(
+                  "The simulation worker failed to load or run.",
+                ),
           },
       );
     };

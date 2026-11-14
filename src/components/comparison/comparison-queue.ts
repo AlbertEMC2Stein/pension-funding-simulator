@@ -3,6 +3,7 @@ import type {
   SimulationWorkerResponse,
 } from "../../lib/model/simulation/worker-protocol";
 import type { ComparisonRunRow } from "./comparison-run";
+import { resourceLoadError } from "../../lib/network/resource-errors";
 
 /** Current queue state as exposed to the table. */
 export interface ComparisonQueueState {
@@ -90,18 +91,29 @@ export class ComparisonQueue {
       const row = this.rows.find((item) => item.status === "queued");
       if (!row?.input) break;
 
+      let workerCreated = false;
       try {
         const worker = this.createWorker();
+        workerCreated = true;
+        let workerResponded = false;
         this.active.set(row.id, worker);
         this.update(row.id, {
           status: "running",
           startedAtMs: performance.now(),
         });
-        worker.onmessage = (event) => this.receive(row.id, event.data);
+        worker.onmessage = (event) => {
+          if (event.data.runId === row.id && this.active.get(row.id) === worker)
+            workerResponded = true;
+          this.receive(row.id, event.data);
+        };
         worker.onerror = () =>
           this.finish(row.id, {
             status: "error",
-            message: "The simulation worker failed.",
+            message: workerResponded
+              ? "The simulation worker failed."
+              : resourceLoadError(
+                  "The simulation worker failed to load or run.",
+                ),
           });
         worker.postMessage({
           type: "start",
@@ -114,10 +126,11 @@ export class ComparisonQueue {
           row.id,
           {
             status: "error",
-            message:
-              error instanceof Error
+            message: workerCreated
+              ? error instanceof Error
                 ? error.message
-                : "Could not start the simulation worker.",
+                : "Could not send the settings to the simulation worker."
+              : resourceLoadError("Could not start the simulation worker."),
           },
           false,
         );

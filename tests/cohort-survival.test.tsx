@@ -6,6 +6,7 @@ import {
   loadCohort,
   mixCohortSurvival,
   parseCohortCsv,
+  CohortRequestError,
   validateCohortYears,
 } from "../src/lib/mortality/cohort-survival";
 
@@ -100,6 +101,41 @@ test("loader uses the static-site base path and selected file", async () => {
         )
       ).length,
       100,
+    );
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test("cohort loader distinguishes network failures, HTTP errors and cancellation", async () => {
+  const original = globalThis.fetch;
+  const controller = new AbortController();
+
+  try {
+    globalThis.fetch = (async () => {
+      throw new TypeError("network unavailable");
+    }) as typeof fetch;
+    await assert.rejects(
+      loadCohort(1965, "female", "medium", "", controller.signal),
+      (error: unknown) =>
+        error instanceof CohortRequestError && error.cause instanceof TypeError,
+    );
+
+    globalThis.fetch = (async () =>
+      new Response("missing", { status: 404 })) as typeof fetch;
+    await assert.rejects(
+      loadCohort(1965, "female", "medium", "", controller.signal),
+      /404/,
+    );
+
+    const abort = new DOMException("Aborted", "AbortError");
+    controller.abort();
+    globalThis.fetch = (async () => {
+      throw abort;
+    }) as typeof fetch;
+    await assert.rejects(
+      loadCohort(1965, "female", "medium", "", controller.signal),
+      (error: unknown) => error === abort,
     );
   } finally {
     globalThis.fetch = original;
