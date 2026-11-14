@@ -52,7 +52,7 @@ export const gettingStartedMessages: Record<Language, GettingStartedMessages> =
       whyTitle: "Planning income for an uncertain retirement",
       whyParagraphs: [
         "Retirement can last many years, but no one knows exactly how long. At the same time, investments fluctuate and inflation changes what money can buy. A fixed rule for everyone cannot reflect each person's savings, spending and circumstances.",
-        "The question is how much income your savings might support while limiting the chance of falling below a level you consider unacceptable. That level need not be zero: you may want to preserve a reserve for essential or unexpected expenses, rather than wait until all your savings are gone.",
+        "The question is how much income your savings might support while limiting the chance of falling below a level you consider unacceptable. That level need not be zero: you may want a reserve for essential or unexpected expenses, or hope to leave something to your loved ones. The threshold measures wealth falling too low during your lifetime; it does not guarantee an inheritance.",
         "The simulator compares choices under a simplified model of markets and longevity. It can help you understand trade-offs, but it cannot predict your lifespan or future returns, or guarantee that your savings will last.",
       ],
       guideLabel: "STEP-BY-STEP GUIDE",
@@ -119,7 +119,7 @@ export const gettingStartedMessages: Record<Language, GettingStartedMessages> =
       whyTitle: "Einkommen für einen ungewissen Ruhestand planen",
       whyParagraphs: [
         "Der Ruhestand kann viele Jahre dauern, aber niemand weiß genau, wie lange. Gleichzeitig schwanken Anlagen und die Inflation verändert die Kaufkraft. Eine feste Regel für alle kann persönliche Ersparnisse, Ausgaben und Lebensumstände nicht berücksichtigen.",
-        "Die Frage ist, wie viel Einkommen Ihr Vermögen ermöglichen könnte, während Sie das Risiko begrenzen, unter eine für Sie nicht mehr akzeptable Vermögensgrenze zu fallen. Diese Grenze muss nicht null sein: Vielleicht möchten Sie eine Reserve für notwendige oder unerwartete Ausgaben bewahren, statt erst das Aufbrauchen Ihres gesamten Vermögens zu betrachten.",
+        "Die Frage ist, wie viel Einkommen Ihr Vermögen ermöglichen könnte, während Sie das Risiko begrenzen, unter eine für Sie nicht mehr akzeptable Vermögensgrenze zu fallen. Diese Grenze muss nicht null sein: Vielleicht möchten Sie eine Reserve für notwendige oder unerwartete Ausgaben bewahren oder Ihren Angehörigen etwas hinterlassen. Die Grenze betrachtet ein zu niedriges Vermögen zu Lebzeiten; sie garantiert kein Erbe.",
         "Der Simulator vergleicht Möglichkeiten anhand eines vereinfachten Modells für Märkte und Lebenserwartung. Er kann Zielkonflikte verdeutlichen, aber weder Ihre Lebensdauer oder künftige Renditen vorhersagen noch garantieren, dass Ihr Vermögen ausreicht.",
       ],
       guideLabel: "SCHRITT-FÜR-SCHRITT-ANLEITUNG",
