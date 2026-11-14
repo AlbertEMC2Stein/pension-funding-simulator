@@ -8,6 +8,7 @@ export interface FeasibilityMessages {
   title: string;
   projectedMessage: string;
   projectedDetails: string;
+  projectionUnchanged: string;
   unconstrainedDetails: string;
   makeFeasible: string;
   projectedAction: string;
@@ -25,6 +26,8 @@ export const feasibilityMessages: Record<Language, FeasibilityMessages> = {
       "The projected policy is globally feasible by construction: it is long-only and does not borrow.",
     projectedDetails:
       "The projected allocation stays within the simplex for all wealth levels.",
+    projectionUnchanged:
+      "The unconstrained strategy already satisfies the portfolio constraints, so projection does not change its theoretical allocations. Simulated results may still differ because of numerical approximations.",
     unconstrainedDetails:
       "For the unconstrained CE policy. The Merton vector must be componentwise non-negative, with at least one positive entry.",
     makeFeasible: "Make globally feasible (ζ = 1)",
@@ -42,6 +45,8 @@ export const feasibilityMessages: Record<Language, FeasibilityMessages> = {
       "Die projizierte Strategie ist konstruktionsbedingt global zulässig: Sie verwendet keine Leerverkäufe und nimmt keinen Kredit auf.",
     projectedDetails:
       "Die projizierte Aufteilung bleibt für alle Vermögensstände im Simplex.",
+    projectionUnchanged:
+      "Die unbeschränkte Strategie erfüllt bereits die Anlagebeschränkungen. Die Projektion ändert daher ihre theoretische Aufteilung nicht. Simulationsergebnisse können aufgrund numerischer Näherungen dennoch abweichen.",
     unconstrainedDetails:
       "Für die unbeschränkte CE-Strategie. Der Merton-Vektor muss komponentenweise nichtnegativ sein und mindestens eine positive Komponente haben.",
     makeFeasible: "Global zulässig machen (ζ = 1)",

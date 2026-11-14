@@ -103,7 +103,25 @@ test("unconstrained policy retains its diagnostic and enabled threshold action",
 
   assert.match(html, /data-status="borrowing"/);
   assert.match(html, /Borrowing possible/);
+  assert.doesNotMatch(html, /projection does not change/);
   assert.doesNotMatch(html, /disabled=""/);
+});
+
+test("globally feasible unconstrained allocations are unchanged by projection", () => {
+  for (const projected of [false, true]) {
+    const html = renderToStaticMarkup(
+      <FeasibilityControls
+        projected={projected}
+        custom={false}
+        feasibility={{ status: "feasible", message: "Feasible", zeta: 1 }}
+        threshold={{ value: "100000.00", amount: 100000 }}
+        onApply={() => {}}
+      />,
+    );
+
+    assert.match(html, /projection does not change its theoretical allocations/);
+    assert.match(html, /numerical approximations/);
+  }
 });
 
 test("current negative Merton direction is detected even when mortality fit is stale", () => {

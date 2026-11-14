@@ -42,6 +42,11 @@ export function FeasibilityControls({
 
   return (
     <>
+      {feasibility.status === "feasible" && (
+        <p className="info-line" role="status">
+          {text.projectionUnchanged}
+        </p>
+      )}
       <div className="feasibility-status" data-status={status} role="status">
         <strong>
           <TermLink term="global-feasibility">{text.title}</TermLink>{" "}
