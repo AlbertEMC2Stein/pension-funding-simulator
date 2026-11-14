@@ -68,9 +68,8 @@ export interface EvaluationMessages {
 export const evaluationMessages: Record<Language, EvaluationMessages> = {
   en: {
     eyebrow: "YOUR RETIREMENT, EXPLORED",
-    title: "How much can you withdraw in retirement?",
-    description:
-      "Explore how much you could withdraw each year for a chosen risk of your savings falling below a threshold you set. Compare the effects of investment returns, inflation, longevity and portfolio constraints.",
+    title: "Explore your retirement options",
+    description: "Compare withdrawals, risks and investment strategies.",
     checkingStorage: "Checking for a saved setup…",
     preparingMortality: "Preparing mortality data…",
     fitting: "Fitting mortality models",
@@ -136,9 +135,8 @@ export const evaluationMessages: Record<Language, EvaluationMessages> = {
   },
   de: {
     eyebrow: "IHR RUHESTAND IM BLICK",
-    title: "Wie viel können Sie sich im Ruhestand auszahlen?",
-    description:
-      "Erfahren Sie, wie Ihre jährliche Auszahlung mit dem Risiko zusammenhängt, dass Ihr Vermögen unter eine von Ihnen gewählte Grenze fällt. Vergleichen Sie den Einfluss von Anlagerenditen, Inflation, Lebenserwartung und Anlagebeschränkungen.",
+    title: "Ihre Möglichkeiten im Ruhestand",
+    description: "Vergleichen Sie Auszahlungen, Risiken und Anlagestrategien.",
     checkingStorage: "Gespeicherte Konfiguration wird gesucht…",
     preparingMortality: "Sterblichkeitsdaten werden vorbereitet…",
     fitting: "Sterblichkeitsmodelle werden angepasst",
