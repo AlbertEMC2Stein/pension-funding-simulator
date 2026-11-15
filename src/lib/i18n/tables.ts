@@ -121,12 +121,12 @@ export const tableMessages: Record<Language, TableMessages> = {
     withdrawalDescription:
       "Compare withdrawals and risk across unconstrained and projected policies.",
     feasibilityDescription:
-      "Vary risk or withdrawal and the impoverishment level for the unconstrained policy.",
+      "Vary risk or withdrawal and the desired reserve for the unconstrained policy.",
     otherShared: "All other settings are shared.",
     withdrawalNote:
       "The CE value uses the unconstrained policy, including for projected rows. GM risk is for the selected policy, through the CE horizon.",
     feasibilityNote:
-      "ζ ≤ 1 indicates global feasibility when all Merton-vector components are non-negative and at least one is positive. Negative components require short selling in the risky region. Borrowing probability and time use GM mortality; row-specific impoverishment levels start from the shared setup.",
+      "ζ ≤ 1 indicates global feasibility when all Merton-vector components are non-negative and at least one is positive. Negative components require short selling in the risky region. Borrowing probability and time use GM mortality; row-specific reserves start from the shared setup.",
     projectedUnavailable:
       "This comparison is available for the unconstrained policy only. Turn off projection to view it. The projected policy prevents borrowing and short selling by keeping allocations within the simplex.",
     shortUnavailable:
@@ -139,7 +139,7 @@ export const tableMessages: Record<Language, TableMessages> = {
     ceRisk: "CE LIFETIME RISK",
     withdrawalOrRisk: "WITHDRAWAL / CE RISK",
     gmRisk: "ESTIMATED GM RISK",
-    impoverishment: "IMPOVERISHMENT LEVEL",
+    impoverishment: "DESIRED RESERVE",
     bandwidth: "RELATIVE BANDWIDTH ζ",
     everBorrow: "EVER BORROWING (GM)",
     borrowingTime: "EXPECTED BORROWING TIME (GM)",
@@ -161,7 +161,7 @@ export const tableMessages: Record<Language, TableMessages> = {
     removeLabel: (id) => `Remove variation ${id}`,
     valueLabel: (id, risk) =>
       `Input value for variation ${id}, ${risk ? "percent" : "euros per year"}`,
-    thresholdLabel: (id) => `Impoverishment level for variation ${id}, euros`,
+    thresholdLabel: (id) => `Desired reserve for variation ${id}, euros`,
     deleteConfirm: "Delete this variation and its calculated values?",
     stopBatch: "Stopping after current batch…",
     etaBatch: "ETA after first batch",
@@ -231,12 +231,12 @@ export const tableMessages: Record<Language, TableMessages> = {
     withdrawalDescription:
       "Vergleichen Sie Auszahlungen und Risiken für unbeschränkte und projizierte Strategien.",
     feasibilityDescription:
-      "Variieren Sie Risiko oder Auszahlung und die Verarmungsgrenze für die unbeschränkte Strategie.",
+      "Variieren Sie Risiko oder Auszahlung und die gewünschte Rücklage für die unbeschränkte Strategie.",
     otherShared: "Alle übrigen Einstellungen werden gemeinsam verwendet.",
     withdrawalNote:
       "Der CE-Wert gilt auch bei projizierten Zeilen für die unbeschränkte Strategie. Das GM-Risiko bezieht sich bis zum CE-Horizont auf die gewählte Strategie.",
     feasibilityNote:
-      "ζ ≤ 1 zeigt globale Zulässigkeit an, wenn alle Merton-Komponenten nichtnegativ und mindestens eine positiv ist. Negative Komponenten erfordern im riskanten Bereich Leerverkäufe. Kreditwahrscheinlichkeit und -dauer verwenden GM-Sterblichkeit; zeilenspezifische Verarmungsgrenzen beginnen mit dem gemeinsamen Wert.",
+      "ζ ≤ 1 zeigt globale Zulässigkeit an, wenn alle Merton-Komponenten nichtnegativ und mindestens eine positiv ist. Negative Komponenten erfordern im riskanten Bereich Leerverkäufe. Kreditwahrscheinlichkeit und -dauer verwenden GM-Sterblichkeit; zeilenspezifische Rücklagen beginnen mit dem gemeinsamen Wert.",
     projectedUnavailable:
       "Dieser Vergleich ist nur für die unbeschränkte Strategie verfügbar. Deaktivieren Sie die Projektion. Die projizierte Strategie verhindert Kreditaufnahme und Leerverkäufe durch Beschränkung der Anteile auf das Simplex.",
     shortUnavailable:
@@ -249,7 +249,7 @@ export const tableMessages: Record<Language, TableMessages> = {
     ceRisk: "LEBENSLANGES CE-RISIKO",
     withdrawalOrRisk: "AUSZAHLUNG / CE-RISIKO",
     gmRisk: "GESCHÄTZTES GM-RISIKO",
-    impoverishment: "VERARMUNGSGRENZE",
+    impoverishment: "GEWÜNSCHTE RÜCKLAGE",
     bandwidth: "RELATIVE BANDBREITE ζ",
     everBorrow: "KREDITWAHRSCHEINLICHKEIT (GM)",
     borrowingTime: "ERWARTETE KREDITDAUER (GM)",
@@ -271,7 +271,7 @@ export const tableMessages: Record<Language, TableMessages> = {
     removeLabel: (id) => `Variante ${id} entfernen`,
     valueLabel: (id, risk) =>
       `Eingabewert der Variante ${id}, ${risk ? "Prozent" : "Euro pro Jahr"}`,
-    thresholdLabel: (id) => `Verarmungsgrenze der Variante ${id} in Euro`,
+    thresholdLabel: (id) => `Gewünschte Rücklage der Variante ${id} in Euro`,
     deleteConfirm: "Diese Variante und ihre berechneten Werte löschen?",
     stopBatch: "Abbruch nach aktuellem Stapel…",
     etaBatch: "Restzeit nach dem ersten Stapel",

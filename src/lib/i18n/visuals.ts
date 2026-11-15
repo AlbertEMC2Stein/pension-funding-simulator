@@ -94,7 +94,7 @@ export const visualMessages: Record<Language, VisualMessages> = {
     unconstrainedCE: "UNCONSTRAINED CE POLICY",
     allocation: "Portfolio allocation",
     allocationIntro:
-      "Allocation by wealth between the impoverishment and safe levels.",
+      "Allocation by wealth between the desired reserve and the safe level.",
     allocationView: "Display allocation as",
     relativeAllocation: "Share (%)",
     amountAllocation: "Amount (€)",
@@ -103,7 +103,7 @@ export const visualMessages: Record<Language, VisualMessages> = {
     years: "years",
     capitalOutside:
       "Starting capital is outside the displayed wealth interval.",
-    stopped: "The policy stops when the impoverishment level is reached.",
+    stopped: "The policy stops when wealth reaches the desired reserve.",
     projectedNote:
       "The projected allocation prevents short positions and borrowing.",
     unconstrainedNote:
@@ -122,7 +122,7 @@ export const visualMessages: Record<Language, VisualMessages> = {
     selectedPolicy: "SELECTED POLICY",
     trajectories: "Illustrative trajectories",
     trajectoryIntro:
-      "These example paths assume you remain alive. Each ends at impoverishment or the policy horizon; they are not predictions.",
+      "These example paths assume you remain alive. Each ends when wealth reaches the desired reserve or the policy horizon; they are not predictions.",
     paths: "Number of paths",
     shuffle: "Shuffle paths",
     reducedGrid:
@@ -134,7 +134,7 @@ export const visualMessages: Record<Language, VisualMessages> = {
     enableVisual:
       "Enable this visual before starting a simulation to retain example paths.",
     gmMortality: "GM MORTALITY",
-    timingTitle: "When might impoverishment occur?",
+    timingTitle: "When might wealth reach the reserve?",
     timingIntro:
       "Explore forecast and conditional risk across attained ages under the selected policy and fitted mortality model.",
     stale:
@@ -150,11 +150,11 @@ export const visualMessages: Record<Language, VisualMessages> = {
     runProjected: "Run a projected-policy simulation to see this chart.",
     runSimulation: "Run a simulation to see this chart.",
     selectedAge: "Selected age",
-    noPaths: "No simulated paths remain without impoverishment at this age.",
+    noPaths: "No simulated paths remain above the reserve at this age.",
     noSurvival: "Mortality survival at this age is numerically zero.",
     selectEarlier: "Select an age before the end of the simulation.",
     conditionalRisk:
-      "Remaining risk through the run horizon, given survival without impoverishment to the selected age",
+      "Remaining risk through the run horizon, given survival and wealth remaining above the reserve to the selected age",
     forecastRisk:
       "Risk from the selected age through the run horizon, assessed at retirement",
     timingDetails: "Approximation error & diagnostics",
@@ -167,7 +167,7 @@ export const visualMessages: Record<Language, VisualMessages> = {
     pathsSimulated: "Simulated paths",
     noEarlierHit: "Paths without an earlier hit",
     horizon: "Simulation horizon",
-    ceBound: "CE conditional-on-impoverishment TV bound (approx.)",
+    ceBound: "CE TV bound conditional on reaching the reserve (approx.)",
     cdfDistance: "CE conditional CDF sup distance (estimated)",
     unavailable: "Not available",
     enableApprox: "Enable the approximation to calculate",
@@ -193,7 +193,7 @@ export const visualMessages: Record<Language, VisualMessages> = {
     ceBoundPrefix: "The",
     ceBoundLink: "CE bound",
     ceBoundExplanation:
-      "concerns the timing distribution conditional on impoverishment before death under CE mortality. It is not a bound for this GM chart or for the age-conditional update. Its numerical value uses approximate quadrature. The CDF distance compares the same CE conditional laws using simulated paths; Monte Carlo, time-step, bridge and quadrature errors can make it exceed the theoretical bound.",
+      "concerns the timing distribution conditional on reaching the reserve before death under CE mortality. It is not a bound for this GM chart or for the age-conditional update. Its numerical value uses approximate quadrature. The CDF distance compares the same CE conditional laws using simulated paths; Monte Carlo, time-step, bridge and quadrature errors can make it exceed the theoretical bound.",
     simulationErrorBefore: "The simulation has Monte Carlo, time-step and",
     bridgeLink: "bridge",
     simulationErrorAfter: "errors.",
@@ -203,7 +203,7 @@ export const visualMessages: Record<Language, VisualMessages> = {
     unconstrainedCE: "UNBESCHRÄNKTE CE-STRATEGIE",
     allocation: "Portfolioaufteilung",
     allocationIntro:
-      "Aufteilung nach Vermögen zwischen der Verarmungs- und der sicheren Grenze.",
+      "Aufteilung nach Vermögen zwischen der gewünschten Rücklage und der sicheren Grenze.",
     allocationView: "Aufteilung anzeigen als",
     relativeAllocation: "Anteil (%)",
     amountAllocation: "Betrag (€)",
@@ -212,7 +212,8 @@ export const visualMessages: Record<Language, VisualMessages> = {
     years: "Jahre",
     capitalOutside:
       "Das Anfangskapital liegt außerhalb des dargestellten Vermögensbereichs.",
-    stopped: "Die Strategie endet beim Erreichen der Verarmungsgrenze.",
+    stopped:
+      "Die Strategie endet, wenn das Vermögen die gewünschte Rücklage erreicht.",
     projectedNote:
       "Die projizierte Aufteilung verhindert Leerverkäufe und Kreditaufnahme.",
     unconstrainedNote:
@@ -231,7 +232,7 @@ export const visualMessages: Record<Language, VisualMessages> = {
     selectedPolicy: "GEWÄHLTE STRATEGIE",
     trajectories: "Beispielhafte Vermögenspfade",
     trajectoryIntro:
-      "Diese Beispielpfade setzen voraus, dass Sie am Leben bleiben. Sie enden bei Verarmung oder am Strategiehorizont und sind keine Vorhersagen.",
+      "Diese Beispielpfade setzen voraus, dass Sie am Leben bleiben. Sie enden beim Erreichen der gewünschten Rücklage oder am Strategiehorizont und sind keine Vorhersagen.",
     paths: "Anzahl der Pfade",
     shuffle: "Pfade mischen",
     reducedGrid:
@@ -243,7 +244,7 @@ export const visualMessages: Record<Language, VisualMessages> = {
     enableVisual:
       "Aktivieren Sie diese Ansicht vor dem Simulationsstart, um Beispielpfade zu speichern.",
     gmMortality: "GM-STERBLICHKEIT",
-    timingTitle: "Wann könnte Verarmung eintreten?",
+    timingTitle: "Wann könnte das Vermögen die Rücklage erreichen?",
     timingIntro:
       "Erkunden Sie Prognose und bedingtes Risiko nach erreichtem Alter für die gewählte Strategie und das angepasste Sterblichkeitsmodell.",
     stale:
@@ -261,12 +262,12 @@ export const visualMessages: Record<Language, VisualMessages> = {
     runSimulation: "Starten Sie eine Simulation, um dieses Diagramm zu sehen.",
     selectedAge: "Gewähltes Alter",
     noPaths:
-      "In diesem Alter sind keine simulierten Pfade ohne vorherige Verarmung übrig.",
+      "In diesem Alter sind keine simulierten Pfade oberhalb der Rücklage übrig.",
     noSurvival:
       "Die Überlebenswahrscheinlichkeit ist in diesem Alter numerisch null.",
     selectEarlier: "Wählen Sie ein Alter vor dem Ende der Simulation.",
     conditionalRisk:
-      "Verbleibendes Risiko bis zum Laufhorizont, bedingt auf Überleben ohne Verarmung bis zum gewählten Alter",
+      "Verbleibendes Risiko bis zum Laufhorizont, bedingt auf Überleben und Vermögen oberhalb der Rücklage bis zum gewählten Alter",
     forecastRisk:
       "Risiko vom gewählten Alter bis zum Laufhorizont, bewertet zum Ruhestandsbeginn",
     timingDetails: "Näherungsfehler & Diagnostik",
@@ -280,7 +281,8 @@ export const visualMessages: Record<Language, VisualMessages> = {
     pathsSimulated: "Simulierte Pfade",
     noEarlierHit: "Pfade ohne früheren Treffer",
     horizon: "Simulationshorizont",
-    ceBound: "CE-Totalvariationsschranke bedingt auf Verarmung (ca.)",
+    ceBound:
+      "CE-Totalvariationsschranke bedingt auf Erreichen der Rücklage (ca.)",
     cdfDistance: "CE-Abstand der bedingten Verteilungsfunktionen (geschätzt)",
     unavailable: "Nicht verfügbar",
     enableApprox: "Näherung zur Berechnung aktivieren",
@@ -305,7 +307,7 @@ export const visualMessages: Record<Language, VisualMessages> = {
     ceBoundPrefix: "Die",
     ceBoundLink: "CE-Schranke",
     ceBoundExplanation:
-      "betrifft die Zeitverteilung unter CE-Sterblichkeit, bedingt auf Verarmung vor dem Tod. Sie ist keine Schranke für dieses GM-Diagramm oder die altersbedingte Aktualisierung. Ihr Wert wird durch approximative Quadratur berechnet. Der CDF-Abstand vergleicht dieselben bedingten CE-Verteilungen anhand simulierter Pfade; Monte-Carlo-, Zeitschritt-, Brücken- und Quadraturfehler können dazu führen, dass er die theoretische Schranke überschreitet.",
+      "betrifft die Zeitverteilung unter CE-Sterblichkeit, bedingt auf Erreichen der Rücklage vor dem Tod. Sie ist keine Schranke für dieses GM-Diagramm oder die altersbedingte Aktualisierung. Ihr Wert wird durch approximative Quadratur berechnet. Der CDF-Abstand vergleicht dieselben bedingten CE-Verteilungen anhand simulierter Pfade; Monte-Carlo-, Zeitschritt-, Brücken- und Quadraturfehler können dazu führen, dass er die theoretische Schranke überschreitet.",
     simulationErrorBefore:
       "Die Simulation enthält Monte-Carlo-, Zeitschritt- und",
     bridgeLink: "Brückenfehler",

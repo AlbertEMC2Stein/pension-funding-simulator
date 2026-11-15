@@ -91,7 +91,7 @@ test("completed simulated borrowing displays its estimate and MC interval", () =
 
   assert.match(html, /<strong>12\.50%<\/strong>/);
   assert.match(html, /10\.500% – 14\.500%/);
-  assert.match(html, /does not condition on impoverishment/);
+  assert.match(html, /does not condition on reaching the reserve/);
   assert.doesNotMatch(
     html,
     /probability of ever borrowing is not calculated yet/i,

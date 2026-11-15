@@ -48,4 +48,9 @@ test("German glossary retains all IDs and mathematical formulas", async () => {
     assert.ok(translated[index].summary && translated[index].technical);
   }
   assert.equal(localizedTermTitle("safe-boundary", "de"), "Sichere Grenze");
+  assert.equal(
+    localizedTermTitle("impoverishment", "de"),
+    "Gewünschte Rücklage",
+  );
+  assert.equal(localizedTermTitle("impoverishment", "en"), "Desired reserve");
 });

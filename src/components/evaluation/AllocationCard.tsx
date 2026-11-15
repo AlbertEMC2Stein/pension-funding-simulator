@@ -349,13 +349,13 @@ export function AllocationCard({
         {language === "de" ? (
           <>
             <TermLink term="policy">Aufteilung</TermLink> nach Vermögen zwischen
-            der <TermLink term="impoverishment">Verarmungsgrenze</TermLink> und
-            der <TermLink term="safe-boundary">sicheren Grenze</TermLink>.
+            der <TermLink term="impoverishment">gewünschten Rücklage</TermLink>{" "}
+            und der <TermLink term="safe-boundary">sicheren Grenze</TermLink>.
           </>
         ) : (
           <>
             <TermLink term="policy">Allocation</TermLink> by wealth between the{" "}
-            <TermLink term="impoverishment">impoverishment</TermLink> and{" "}
+            <TermLink term="impoverishment">desired reserve</TermLink> and the{" "}
             <TermLink term="safe-boundary">safe levels</TermLink>.
           </>
         )}

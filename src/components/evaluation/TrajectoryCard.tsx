@@ -270,14 +270,15 @@ export function TrajectoryCard({
         {language === "de" ? (
           <>
             Diese <TermLink term="trajectories">Beispielpfade</TermLink> setzen
-            voraus, dass Sie am Leben bleiben. Sie enden bei Verarmung oder am
-            Strategiehorizont und sind keine Vorhersagen.
+            voraus, dass Sie am Leben bleiben. Sie enden beim Erreichen der
+            gewünschten Rücklage oder am Strategiehorizont und sind keine
+            Vorhersagen.
           </>
         ) : (
           <>
             These <TermLink term="trajectories">example paths</TermLink> assume
-            you remain alive. Each ends at impoverishment or the policy horizon;
-            they are not predictions.
+            you remain alive. Each ends when wealth reaches the desired reserve
+            or the policy horizon; they are not predictions.
           </>
         )}
       </p>

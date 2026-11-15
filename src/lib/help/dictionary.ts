@@ -17,17 +17,18 @@ export const dictionaryEntries = [
   {
     id: "impoverishment",
     category: "RETIREMENT & WEALTH",
-    title: "Impoverishment level",
+    title: "Desired reserve",
     summary:
-      "The wealth level you choose as the point at which your retirement funding has fallen below an acceptable threshold.",
+      "A wealth threshold you choose for assessing the risk of your savings running low.",
     explanation:
-      "Reaching this level does not necessarily mean your wealth has reached zero.",
+      "The simulator estimates the risk of wealth reaching or falling below this amount while you are alive. It is not set aside separately or guaranteed; it could represent a buffer for expenses or an amount you hope to leave to others.",
     technical:
-      "The financial impoverishment time is the first time wealth reaches or falls below the chosen level.",
+      "The paper calls this threshold the impoverishment level. The first-passage time is the first time wealth reaches or falls below it; simulation results cover the stated run horizon.",
     equation: String.raw`\tau_{\mathrm{imp}}=\inf\{t\geq0:X_t\leq x_{\mathrm{imp}}\}`,
     symbols:
       "X is wealth; xᵢₘₚ is the threshold. The event of interest is reaching it before death.",
-    keywords: "threshold wealth ruin first passage",
+    keywords:
+      "reserve impoverishment level threshold wealth ruin first passage",
   },
   {
     id: "withdrawal",
@@ -263,7 +264,7 @@ export const dictionaryEntries = [
     category: "RISK & RESULTS",
     title: "Target risk",
     summary:
-      "The chance of impoverishment before death that you choose when the CE model derives a withdrawal.",
+      "The chance of wealth reaching the desired reserve before death that you choose when the CE model derives a withdrawal.",
     explanation:
       "The analytical target applies to the unconstrained CE policy under its assumptions. GM mortality or the projected policy can produce a different risk.",
     technical:
@@ -278,7 +279,7 @@ export const dictionaryEntries = [
     category: "RISK & RESULTS",
     title: "Estimated GM risk",
     summary:
-      "An estimated chance of impoverishment before death when the policy is evaluated under fitted Gompertz–Makeham mortality.",
+      "The estimated chance of wealth reaching the desired reserve before death, within the simulation horizon, under fitted Gompertz–Makeham mortality.",
     explanation:
       "It can differ from the CE target because the mortality model or policy differs. It is a model-based estimate, not a known future risk.",
     technical:
@@ -383,7 +384,7 @@ export const dictionaryEntries = [
       "For non-negative Merton components with M = Σᵢmᵢ > 0, the unconstrained CE policy is feasible when ζ ≤ 1:",
     equation: String.raw`\zeta=\frac{M\bigl(x_{\mathrm{safe}}(0)-x_{\mathrm{imp}}\bigr)}{(\delta-1)x_{\mathrm{imp}}}`,
     symbols:
-      "The action at ζ = 1 changes the impoverishment level while keeping the selected target input fixed. The projected policy is feasible by construction.",
+      "The action at ζ = 1 changes the desired reserve while keeping the selected target input fixed. The projected policy is feasible by construction.",
     keywords: "zeta simplex nonnegative merton global borrowing make feasible",
   },
   {
@@ -393,7 +394,7 @@ export const dictionaryEntries = [
     summary:
       "Borrowing occurs when the strategy needs a negative holding in the risk-free asset to fund its risky positions.",
     explanation:
-      "Ever-borrowing probability concerns borrowing while alive before impoverishment or the run horizon. Expected borrowing time averages over everyone, including those who never borrow.",
+      "Ever-borrowing probability concerns borrowing while alive before wealth reaches the reserve or the simulation ends. Expected borrowing time averages over everyone, including those who never borrow.",
     technical:
       "The measures use GM survival weighting. First-borrowing detection and occupation time use different numerical approximations and can differ path by path.",
     keywords:
@@ -404,7 +405,7 @@ export const dictionaryEntries = [
     category: "RISK & RESULTS",
     title: "Forecast and conditional update",
     summary:
-      "The timing chart shows the risk of impoverishment still ahead through the simulation horizon.",
+      "The timing chart shows the risk of wealth reaching the desired reserve through the simulation horizon.",
     explanation:
       "Forecast assesses that risk at retirement. Conditional update assumes the person is alive and has not reached the threshold by the selected age. It does not use observed current wealth.",
     technical:
@@ -417,7 +418,7 @@ export const dictionaryEntries = [
     category: "RISK & RESULTS",
     title: "Remaining risk and density",
     summary:
-      "Remaining risk is the modeled chance of an eligible impoverishment event still ahead through the horizon.",
+      "Remaining risk is the modeled chance of wealth reaching the reserve while alive during the remaining horizon.",
     explanation:
       "The curve falls toward zero at the horizon. Density bars show risk per year; an area across a range of ages represents a probability contribution.",
     technical:
@@ -429,11 +430,11 @@ export const dictionaryEntries = [
     category: "RISK & RESULTS",
     title: "Durbin approximation and error diagnostics",
     summary:
-      "A mathematical approximation to the unconstrained policy's impoverishment-time behavior.",
+      "A mathematical approximation to when wealth reaches the reserve under the unconstrained policy.",
     explanation:
       "The optional overlay is additional technical information; it is not an exact simulation result.",
     technical:
-      "The displayed CE total-variation bound concerns timing conditional on impoverishment before death under CE mortality. It is not a bound for the GM chart or the age-conditional update. The empirical CDF distance has sampling and numerical errors.",
+      "The displayed CE total-variation bound concerns timing conditional on reaching the reserve before death under CE mortality. It is not a bound for the GM chart or the age-conditional update. The empirical CDF distance has sampling and numerical errors.",
     keywords: "durbin first passage tv bound cdf sup approximation error",
   },
   {
@@ -443,7 +444,7 @@ export const dictionaryEntries = [
     summary:
       "Sample paths show possible modeled wealth histories, not forecasts of a particular person's future.",
     explanation:
-      "They assume the person remains alive and stop at impoverishment or the policy horizon. Shuffle changes the displayed sample without rerunning the simulation.",
+      "They assume the person remains alive and stop when wealth reaches the reserve or at the policy horizon. Shuffle changes the displayed sample without rerunning the simulation.",
     technical:
       "Only a bounded sample of paths and a reduced plotting grid are retained; short fluctuations can be omitted from the display.",
     keywords: "wealth paths sample shuffle lines simulation alive",

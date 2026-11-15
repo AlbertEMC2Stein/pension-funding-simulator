@@ -8,12 +8,7 @@ import { PanelHelp } from "../PanelHelp";
 
 import { useState } from "react";
 import { StatusBadge } from "../StatusBadge";
-import {
-  DemoAction,
-  PageHeading,
-  SectionHeading,
-  TermLink,
-} from "../common";
+import { DemoAction, PageHeading, SectionHeading, TermLink } from "../common";
 import {
   nominalRiskFreeRateError,
   inflationRateError,
@@ -538,7 +533,7 @@ function InvestorSetup({
               <div className="input-suffix">
                 <input
                   id="impoverishment-input"
-                  aria-describedby="impoverishment-percentage"
+                  aria-describedby="impoverishment-percentage reserve-explanation"
                   value={investor.impoverishmentLevel}
                   onChange={(event) =>
                     updateInvestor({ impoverishmentLevel: event.target.value })
@@ -550,6 +545,9 @@ function InvestorSetup({
                 {thresholdPercent === null
                   ? text.thresholdError
                   : `${thresholdPercent < 0.01 ? text.lessThan : new Intl.NumberFormat(language === "de" ? "de-DE" : "en-US", { maximumFractionDigits: 2 }).format(thresholdPercent)}% ${text.ofCapital}`}
+              </small>
+              <small id="reserve-explanation" className="input-hint">
+                {text.reserveExplanation}
               </small>
             </div>
           </div>

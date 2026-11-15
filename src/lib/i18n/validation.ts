@@ -1,5 +1,27 @@
 import type { Language } from "./messages";
 
+/** Present model validation errors using the user-facing reserve terminology. */
+const englishReserveMessages: Readonly<Record<string, string>> = {
+  "Enter an impoverishment level of at least €1.":
+    "Enter a desired reserve of at least €1.",
+  "Initial capital must exceed the impoverishment level.":
+    "Initial capital must exceed the desired reserve.",
+  "The required impoverishment level could not be calculated.":
+    "The required reserve could not be calculated.",
+  "This capital comparison is not yet supported when withdrawal is at or below the interest on the impoverishment level.":
+    "This capital comparison is not yet supported when withdrawal is at or below the interest on the desired reserve.",
+  "Enter valid capital and impoverishment amounts, with capital above the threshold.":
+    "Enter valid starting capital and a desired reserve below it.",
+  "Enter valid starting capital and an impoverishment level below it.":
+    "Enter valid starting capital and a desired reserve below it.",
+  "Initial capital must exceed the impoverishment level of at least €1.":
+    "Initial capital must exceed the desired reserve of at least €1.",
+  "The impoverishment level must be finite and positive.":
+    "The desired reserve must be finite and positive.",
+  "Annual withdrawal must exceed interest at the impoverishment level.":
+    "Annual withdrawal must exceed interest on the desired reserve.",
+};
+
 /** German equivalents of validation messages produced by the input parsers. */
 const germanValidationMessages: Readonly<Record<string, string>> = {
   "Enter a nominal risk-free rate greater than −100%.":
@@ -29,9 +51,9 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
   "Enter a positive initial capital in euros.":
     "Geben Sie ein positives Anfangskapital in Euro ein.",
   "Enter an impoverishment level of at least €1.":
-    "Geben Sie eine Verarmungsgrenze von mindestens 1 € ein.",
+    "Geben Sie eine gewünschte Rücklage von mindestens 1 € ein.",
   "Initial capital must exceed the impoverishment level.":
-    "Das Anfangskapital muss über der Verarmungsgrenze liegen.",
+    "Das Anfangskapital muss über der gewünschten Rücklage liegen.",
   "Mortality mixture weight must be between 0 and 1.":
     "Das Gewicht der Sterblichkeitsmischung muss zwischen 0 und 1 liegen.",
   "Target risk must be between 0% and 100%.":
@@ -52,7 +74,7 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
   "The Merton vector must be non-negative with at least one positive component.":
     "Der Merton-Vektor muss nichtnegativ sein und mindestens eine positive Komponente haben.",
   "The required impoverishment level could not be calculated.":
-    "Die erforderliche Verarmungsgrenze konnte nicht berechnet werden.",
+    "Die erforderliche Rücklage konnte nicht berechnet werden.",
   "The boundary cannot be represented within the supported investor inputs.":
     "Die Grenze kann mit den unterstützten persönlichen Eingaben nicht dargestellt werden.",
   "The boundary could not be verified at the supported numerical precision.":
@@ -62,7 +84,7 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
   "This comparison is available for the unconstrained policy only. Turn off projection to calculate it.":
     "Dieser Vergleich ist nur für die unbeschränkte Strategie verfügbar. Deaktivieren Sie die Projektion, um ihn zu berechnen.",
   "This capital comparison is not yet supported when withdrawal is at or below the interest on the impoverishment level.":
-    "Dieser Kapitalvergleich wird noch nicht unterstützt, wenn die Auszahlung höchstens den Zinsen auf die Verarmungsgrenze entspricht.",
+    "Dieser Kapitalvergleich wird noch nicht unterstützt, wenn die Auszahlung höchstens den Zinsen auf die gewünschte Rücklage entspricht.",
   "The capital comparison is unavailable for this withdrawal and model.":
     "Der Kapitalvergleich ist für diese Auszahlung und dieses Modell nicht verfügbar.",
   "Enter a random seed before running.":
@@ -90,7 +112,7 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
   "The CE mortality fit did not converge. Review the fit before using this curve.":
     "Die CE-Sterblichkeitsanpassung ist nicht konvergiert. Prüfen Sie die Anpassung, bevor Sie diese Kurve verwenden.",
   "Enter valid capital and impoverishment amounts, with capital above the threshold.":
-    "Geben Sie gültiges Kapital und eine gültige Verarmungsgrenze ein; das Kapital muss über der Grenze liegen.",
+    "Geben Sie gültiges Kapital und eine gültige gewünschte Rücklage ein; das Kapital muss über der Rücklage liegen.",
   "The CE relationship could not be calculated.":
     "Der CE-Zusammenhang konnte nicht berechnet werden.",
   "Malformed CSV quotation.": "Fehlerhafte Anführungszeichen in der CSV-Datei.",
@@ -181,7 +203,7 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
   "The CE mortality fit did not converge. Review the fit before calculating this table.":
     "Die CE-Sterblichkeitsanpassung ist nicht konvergiert. Prüfen Sie die Anpassung vor der Tabellenberechnung.",
   "Enter valid starting capital and an impoverishment level below it.":
-    "Geben Sie ein gültiges Anfangskapital und eine darunterliegende Verarmungsgrenze ein.",
+    "Geben Sie ein gültiges Anfangskapital und eine darunterliegende gewünschte Rücklage ein.",
   "The CE model is unavailable for these inputs.":
     "Das CE-Modell ist für diese Eingaben nicht verfügbar.",
   "Enter a target risk from 0% to less than 100%.":
@@ -227,7 +249,7 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
   "Investor cohort and mortality settings are invalid.":
     "Die Kohorten- oder Sterblichkeitseinstellungen sind ungültig.",
   "Initial capital must exceed the impoverishment level of at least €1.":
-    "Das Anfangskapital muss über der Verarmungsgrenze von mindestens 1 € liegen.",
+    "Das Anfangskapital muss über der gewünschten Rücklage von mindestens 1 € liegen.",
   "Unsupported withdrawal mode.":
     "Der Auszahlungsmodus wird nicht unterstützt.",
   "Invalid path count or time step.":
@@ -270,7 +292,7 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
   "A positive real rate and rho are required.":
     "Ein positiver Realzins und ein positives Rho sind erforderlich.",
   "The impoverishment level must be finite and positive.":
-    "Die Verarmungsgrenze muss endlich und positiv sein.",
+    "Die gewünschte Rücklage muss endlich und positiv sein.",
   "The Merton direction must be nonempty, finite and nonzero when rho is positive.":
     "Die Merton-Richtung muss bei positivem Rho nichtleer, endlich und von null verschieden sein.",
   "Invalid compatible mortality parameters.":
@@ -308,7 +330,7 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
   "Annual withdrawal must be finite and positive.":
     "Die jährliche Auszahlung muss endlich und positiv sein.",
   "Annual withdrawal must exceed interest at the impoverishment level.":
-    "Die jährliche Auszahlung muss die Zinsen auf die Verarmungsgrenze überschreiten.",
+    "Die jährliche Auszahlung muss die Zinsen auf die gewünschte Rücklage überschreiten.",
   "Time must be finite and non-negative.":
     "Der Zeitpunkt muss endlich und nichtnegativ sein.",
   "Time cannot be past the mortality endpoint.":
@@ -384,7 +406,21 @@ const germanValidationMessages: Readonly<Record<string, string>> = {
 
 /** Translate known validation errors without altering the underlying validation. */
 export function validationMessage(message: string, language: Language): string {
-  if (language === "en") return message;
+  if (language === "en") {
+    if (englishReserveMessages[message]) return englishReserveMessages[message];
+
+    const boundary =
+      /^The required impoverishment level must be at least €1 and less than your starting capital\. \(Required level: approx\. €(.+)\.\)$/.exec(
+        message,
+      );
+    if (boundary)
+      return `The required reserve must be at least €1 and less than your starting capital. (Required level: approx. €${boundary[1]}.)`;
+
+    const issues = message.split(/(?<=\.) (?=[A-Z])/);
+    return issues.length > 1
+      ? issues.map((issue) => validationMessage(issue, language)).join(" ")
+      : message;
+  }
 
   const knownMessage = germanValidationMessages[message];
   if (knownMessage) return knownMessage;
@@ -469,7 +505,7 @@ export function validationMessage(message: string, language: Language): string {
       message,
     );
   if (boundary)
-    return `Die erforderliche Verarmungsgrenze muss mindestens 1 € und kleiner als Ihr Anfangskapital sein. (Erforderlicher Wert: ca. €${boundary[1]}.)`;
+    return `Die erforderliche Rücklage muss mindestens 1 € und kleiner als Ihr Anfangskapital sein. (Erforderlicher Wert: ca. €${boundary[1]}.)`;
 
   const cohortLoad = /^Could not load cohort data \((\d+)\)\.$/.exec(message);
   if (cohortLoad)

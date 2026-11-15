@@ -19,7 +19,7 @@ const panelHelp = {
   withdrawal: {
     title: "Withdrawal and risk",
     paragraphs: [
-      "This curve shows the relationship between annual withdrawal and lifetime impoverishment risk in the analytical CE model. The marker shows your chosen risk or withdrawal and the corresponding model-derived value.",
+      "This curve shows the relationship between annual withdrawal and the lifetime risk of reaching your desired reserve in the analytical CE model. The marker shows your chosen risk or withdrawal and the corresponding model-derived value.",
       "The curve uses the unconstrained policy. Results for GM mortality and the projected policy are shown separately.",
     ],
     terms: ["target-risk", "mortality-models", "policy"],
@@ -41,7 +41,7 @@ const panelHelp = {
     terms: ["capital-relief", "safe-boundary", "percentage-points"],
   },
   timing: {
-    title: "When might impoverishment occur?",
+    title: "When might wealth reach the reserve?",
     paragraphs: [
       "Forecast shows the risk remaining after the selected age as assessed at retirement. Conditional update assumes you are alive and have not reached the threshold at that age; it does not use your current wealth.",
       "The remaining-risk curve falls to zero at the run horizon. Density bars show risk per year, and their area over an age range represents a contribution to risk. Results cover the simulated horizon rather than all possible future ages.",
@@ -51,7 +51,7 @@ const panelHelp = {
   borrowing: {
     title: "Borrowing exposure",
     paragraphs: [
-      "Ever-borrowing probability estimates the chance of borrowing while alive before impoverishment or the run horizon. Expected borrowing time averages over all paths, including those that never borrow.",
+      "Ever-borrowing probability estimates the chance of borrowing while alive before wealth reaches the reserve or the simulation ends. Expected borrowing time averages over all paths, including those that never borrow.",
       "Borrowing being possible somewhere does not mean it happens on every path. This view is unavailable for the projected policy, which prohibits borrowing, or when a negative Merton component implies short selling.",
     ],
     terms: ["borrowing", "global-feasibility", "market-direction"],
@@ -83,7 +83,7 @@ const panelHelp = {
   feasibilityTable: {
     title: "Feasibility sensitivity table",
     paragraphs: [
-      "Each row varies the selected risk or withdrawal and impoverishment level while sharing the remaining setup. A run captures those settings; earlier results can need updating after changes.",
+      "Each row varies the selected risk or withdrawal and desired reserve while sharing the remaining setup. A run captures those settings; earlier results can need updating after changes.",
       "The table concerns the unconstrained policy. ζ describes global feasibility, while borrowing probability and average borrowing time describe simulated outcomes. The borrowing measures are unavailable when a negative Merton component implies short selling.",
     ],
     terms: ["comparison-tables", "global-feasibility", "borrowing"],

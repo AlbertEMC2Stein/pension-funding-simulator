@@ -69,5 +69,5 @@ test("trajectory legend names the available visual elements", () => {
   const html = renderToStaticMarkup(<TrajectoryCard run={run} stale={false} />);
   assert.match(html, /Sample paths/);
   assert.match(html, /Safe boundary/);
-  assert.match(html, /Impoverishment level/);
+  assert.match(html, /Desired reserve/);
 });

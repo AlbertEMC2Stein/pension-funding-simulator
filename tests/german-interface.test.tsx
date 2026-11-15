@@ -68,7 +68,7 @@ test("run controls and status labels are translated", () => {
 test("German dictionary renders translated content and unchanged formulas", () => {
   const html = renderGerman(<HelpView selectedTerm={null} />);
 
-  assert.match(html, /Verarmungsgrenze/);
+  assert.match(html, /Gewünschte Rücklage/);
   assert.match(html, /Sichere Grenze/);
   assert.match(html, /Technische Details/);
   assert.match(html, /katex/);
@@ -151,7 +151,7 @@ test("German Evaluation retains numerical selection semantics", async () => {
     html,
     /Vergleichen Sie Auszahlungen, Risiken und Anlagestrategien/,
   );
-  assert.match(html, /Verarmungsgrenze/);
+  assert.match(html, /Gewünschte Rücklage/);
   assert.match(html, /Simulation starten/);
   assert.match(html, /Globale Zulässigkeit/);
 });

@@ -59,6 +59,7 @@ export interface SetupMessages {
   high: string;
   initialCapital: string;
   impoverishment: string;
+  reserveExplanation: string;
   availableCohorts: string;
   supportedAges: string;
   thresholdError: string;
@@ -138,7 +139,9 @@ export const setupMessages: Record<Language, SetupMessages> = {
     low: "Low",
     high: "High",
     initialCapital: "Initial capital",
-    impoverishment: "Impoverishment level",
+    impoverishment: "Desired reserve",
+    reserveExplanation:
+      "The wealth threshold used to assess your risk; it is not set aside separately or guaranteed.",
     availableCohorts: "Available cohorts",
     supportedAges: "Supported retirement ages: 0–99.",
     thresholdError: "Enter at least €1 and less than your initial capital.",
@@ -219,7 +222,9 @@ export const setupMessages: Record<Language, SetupMessages> = {
     low: "Niedrig",
     high: "Hoch",
     initialCapital: "Anfangskapital",
-    impoverishment: "Verarmungsgrenze",
+    impoverishment: "Gewünschte Rücklage",
+    reserveExplanation:
+      "Die Vermögensschwelle für Ihre Risikobetrachtung; sie wird nicht getrennt angelegt oder garantiert.",
     availableCohorts: "Verfügbare Kohorten",
     supportedAges: "Unterstütztes Ruhestandsalter: 0–99.",
     thresholdError:

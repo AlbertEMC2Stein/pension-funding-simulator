@@ -29,7 +29,7 @@ test("combined validation and setup errors translate each issue", () => {
 
   assert.equal(
     translated,
-    "Geben Sie ein positives Anfangskapital in Euro ein. Geben Sie eine Verarmungsgrenze von mindestens 1 € ein.",
+    "Geben Sie ein positives Anfangskapital in Euro ein. Geben Sie eine gewünschte Rücklage von mindestens 1 € ein.",
   );
   assert.equal(
     setupFileError(`Invalid setup inputs: ${issues}`, "de"),
@@ -38,6 +38,24 @@ test("combined validation and setup errors translate each issue", () => {
   assert.equal(
     setupFileError(setupActionMessages.en.tooLarge, "de"),
     setupActionMessages.de.tooLarge,
+  );
+  assert.equal(
+    validationMessage(issues, "en"),
+    "Enter a positive initial capital in euros. Enter a desired reserve of at least €1.",
+  );
+  assert.equal(
+    setupFileError(
+      "Invalid impoverishment level for Example in the feasibility table.",
+      "en",
+    ),
+    "Invalid desired reserve for Example in the feasibility table.",
+  );
+  assert.equal(
+    validationMessage(
+      "The required impoverishment level must be at least €1 and less than your starting capital. (Required level: approx. €200,000.)",
+      "en",
+    ),
+    "The required reserve must be at least €1 and less than your starting capital. (Required level: approx. €200,000.)",
   );
 });
 

@@ -43,7 +43,19 @@ export const setupActionMessages: Record<Language, SetupActionMessages> = {
 
 /** Translate fixed setup-file validation errors while preserving unknown details. */
 export function setupFileError(message: string, language: Language): string {
-  if (language === "en") return message;
+  if (language === "en") {
+    const invalidThreshold =
+      /^Invalid impoverishment level for (.+) in the feasibility table\.$/.exec(
+        message,
+      );
+    if (invalidThreshold)
+      return `Invalid desired reserve for ${invalidThreshold[1]} in the feasibility table.`;
+
+    const prefix = "Invalid setup inputs: ";
+    return message.startsWith(prefix)
+      ? prefix + validationMessage(message.slice(prefix.length), language)
+      : message;
+  }
 
   const translations: Record<string, string> = {
     "The file is not valid JSON.": "Die Datei ist kein gültiges JSON.",
@@ -102,7 +114,7 @@ export function setupFileError(message: string, language: Language): string {
       message,
     );
   if (invalidThreshold)
-    return `Ungültige Verarmungsgrenze für ${invalidThreshold[1]} in der Zulässigkeitstabelle.`;
+    return `Ungültige gewünschte Rücklage für ${invalidThreshold[1]} in der Zulässigkeitstabelle.`;
 
   const prefix = "Invalid setup inputs: ";
   if (message.startsWith(prefix)) {

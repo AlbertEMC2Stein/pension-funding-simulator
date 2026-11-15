@@ -132,7 +132,7 @@ export const riskDetailMessages: Record<Language, RiskDetailMessages> = {
     timePending:
       "Borrowing time has not been calculated. The global feasibility diagnostic is analytical when available.",
     firstEstimate:
-      "First borrowing uses a single-boundary bridge that does not condition on impoverishment or use a first-passage bridge.",
+      "First borrowing uses a single-boundary bridge that does not condition on reaching the reserve or use a first-passage bridge.",
     firstPending: "The probability of ever borrowing is not calculated yet.",
   },
   de: {
@@ -210,7 +210,7 @@ export const riskDetailMessages: Record<Language, RiskDetailMessages> = {
     timePending:
       "Die Kreditdauer wurde noch nicht berechnet. Die globale Zulässigkeitsdiagnostik ist, sofern verfügbar, analytisch.",
     firstEstimate:
-      "Die erste Kreditaufnahme verwendet eine Brücke für eine einzelne Grenze, die weder auf ausbleibende Verarmung bedingt noch eine Erstübertrittsbrücke verwendet.",
+      "Die erste Kreditaufnahme verwendet eine Brücke für eine einzelne Grenze. Sie berücksichtigt weder, dass die Rücklage zuvor nicht erreicht wurde, noch verwendet sie eine Erstübertrittsbrücke.",
     firstPending:
       "Die Wahrscheinlichkeit einer Kreditaufnahme wurde noch nicht berechnet.",
   },

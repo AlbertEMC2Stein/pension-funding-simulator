@@ -9,16 +9,17 @@ type GermanEntry = Pick<
 /** German explanations for every glossary entry, keyed by its stable ID. */
 export const germanDictionary: Record<DictionaryTermId, GermanEntry> = {
   impoverishment: {
-    title: "Verarmungsgrenze",
+    title: "Gewünschte Rücklage",
     summary:
-      "Der gewählte Vermögensstand, ab dem Ihre Ruhestandsfinanzierung unter eine für Sie akzeptable Grenze fällt.",
+      "Eine selbst gewählte Vermögensschwelle, anhand derer das Risiko eines zu geringen Vermögens betrachtet wird.",
     explanation:
-      "Das Erreichen dieser Grenze bedeutet nicht unbedingt, dass Ihr Vermögen null ist.",
+      "Der Simulator schätzt das Risiko, dass Ihr Vermögen zu Lebzeiten auf diesen Betrag oder darunter fällt. Die Rücklage wird nicht getrennt angelegt oder garantiert; sie kann zum Beispiel für unerwartete Ausgaben oder ein gewünschtes Erbe stehen.",
     technical:
-      "Der Verarmungszeitpunkt ist der erste Zeitpunkt, zu dem das Vermögen die gewählte Grenze erreicht oder unterschreitet.",
+      "Im Forschungsartikel heißt diese Schwelle Verarmungsgrenze. Der Erstübertrittszeitpunkt ist der erste Zeitpunkt, zu dem das Vermögen sie erreicht oder unterschreitet; Simulationsergebnisse gelten bis zum angegebenen Laufhorizont.",
     symbols:
       "X ist das Vermögen; xᵢₘₚ ist die Grenze. Betrachtet wird das Erreichen der Grenze vor dem Tod.",
-    keywords: "Schwelle Vermögen Grenze Verarmung",
+    keywords:
+      "Rücklage Reserve Verarmungsgrenze Schwelle Vermögen Grenze Verarmung",
   },
   withdrawal: {
     title: "Jährliche Auszahlung und Anfangskapital",
@@ -209,7 +210,7 @@ export const germanDictionary: Record<DictionaryTermId, GermanEntry> = {
   "target-risk": {
     title: "Zielrisiko",
     summary:
-      "Die gewählte Wahrscheinlichkeit einer Verarmung vor dem Tod, aus der das CE-Modell eine Auszahlung ableitet.",
+      "Die gewählte Wahrscheinlichkeit, dass das Vermögen die gewünschte Rücklage vor dem Tod erreicht, aus der das CE-Modell eine Auszahlung ableitet.",
     explanation:
       "Das analytische Ziel gilt unter seinen Voraussetzungen für die unbeschränkte CE-Strategie. Bei GM-Sterblichkeit oder Projektion kann das Risiko abweichen.",
     technical:
@@ -221,7 +222,7 @@ export const germanDictionary: Record<DictionaryTermId, GermanEntry> = {
   "gm-risk": {
     title: "Geschätztes GM-Risiko",
     summary:
-      "Die geschätzte Wahrscheinlichkeit einer Verarmung vor dem Tod bei Bewertung der Strategie mit angepasster Gompertz–Makeham-Sterblichkeit.",
+      "Die geschätzte Wahrscheinlichkeit, dass das Vermögen die gewünschte Rücklage vor dem Tod und innerhalb des Simulationshorizonts erreicht, bewertet mit angepasster Gompertz–Makeham-Sterblichkeit.",
     explanation:
       "Sie kann wegen eines anderen Sterblichkeitsmodells oder einer anderen Strategie vom CE-Ziel abweichen. Es handelt sich um eine modellbasierte Schätzung, nicht um ein bekanntes zukünftiges Risiko.",
     technical:
@@ -309,7 +310,7 @@ export const germanDictionary: Record<DictionaryTermId, GermanEntry> = {
     technical:
       "Für nichtnegative Merton-Komponenten mit M = Σᵢmᵢ > 0 ist die unbeschränkte CE-Strategie bei ζ ≤ 1 zulässig:",
     symbols:
-      "Die Aktion bei ζ = 1 verändert die Verarmungsgrenze und hält die gewählte Zieleingabe fest. Die projizierte Strategie ist konstruktionsbedingt zulässig.",
+      "Die Aktion bei ζ = 1 verändert die gewünschte Rücklage und hält die gewählte Zieleingabe fest. Die projizierte Strategie ist konstruktionsbedingt zulässig.",
     keywords: "zeta Simplex Merton global Kredit zulässig",
   },
   borrowing: {
@@ -317,7 +318,7 @@ export const germanDictionary: Record<DictionaryTermId, GermanEntry> = {
     summary:
       "Eine Kreditaufnahme liegt vor, wenn die Strategie eine negative Position in der risikofreien Anlage zur Finanzierung riskanter Positionen benötigt.",
     explanation:
-      "Die Wahrscheinlichkeit einer Kreditaufnahme betrifft Kreditaufnahme zu Lebzeiten vor Verarmung oder Simulationshorizont. Die erwartete Kreditdauer mittelt über alle Pfade einschließlich derer ohne Kreditaufnahme.",
+      "Die Wahrscheinlichkeit einer Kreditaufnahme betrifft Kreditaufnahme zu Lebzeiten, bevor das Vermögen die Rücklage erreicht oder die Simulation endet. Die erwartete Kreditdauer mittelt über alle Pfade einschließlich derer ohne Kreditaufnahme.",
     technical:
       "Die Kennzahlen verwenden GM-Überlebensgewichtung. Erste Kreditaufnahme und Belegungszeit verwenden unterschiedliche numerische Näherungen und können sich pfadweise unterscheiden.",
     keywords: "Kredit Dauer Wahrscheinlichkeit Hebel",
@@ -325,7 +326,7 @@ export const germanDictionary: Record<DictionaryTermId, GermanEntry> = {
   timing: {
     title: "Prognose und bedingte Aktualisierung",
     summary:
-      "Das Zeitdiagramm zeigt das bis zum Simulationshorizont noch bevorstehende Verarmungsrisiko.",
+      "Das Zeitdiagramm zeigt das bis zum Simulationshorizont verbleibende Risiko, dass das Vermögen die gewünschte Rücklage erreicht.",
     explanation:
       "Die Prognose bewertet dieses Risiko zum Ruhestandsbeginn. Die bedingte Aktualisierung setzt voraus, dass die Person zum gewählten Alter lebt und die Grenze noch nicht erreicht hat. Beobachtetes aktuelles Vermögen wird nicht verwendet.",
     technical:
@@ -335,7 +336,7 @@ export const germanDictionary: Record<DictionaryTermId, GermanEntry> = {
   density: {
     title: "Verbleibendes Risiko und Dichte",
     summary:
-      "Das verbleibende Risiko ist die modellierte Wahrscheinlichkeit eines noch bevorstehenden relevanten Verarmungsereignisses bis zum Horizont.",
+      "Das verbleibende Risiko ist die modellierte Wahrscheinlichkeit, dass das Vermögen die Rücklage zu Lebzeiten bis zum Horizont noch erreicht.",
     explanation:
       "Die Kurve fällt zum Horizont hin auf null. Dichtebalken zeigen Risiko pro Jahr; die Fläche über einem Altersbereich entspricht einem Wahrscheinlichkeitsbeitrag.",
     technical:
@@ -345,11 +346,11 @@ export const germanDictionary: Record<DictionaryTermId, GermanEntry> = {
   durbin: {
     title: "Durbin-Näherung und Fehlerdiagnostik",
     summary:
-      "Eine mathematische Näherung für das Verarmungszeitverhalten der unbeschränkten Strategie.",
+      "Eine mathematische Näherung für den Zeitpunkt, zu dem das Vermögen unter der unbeschränkten Strategie die Rücklage erreicht.",
     explanation:
       "Die optionale Einblendung ist zusätzliche technische Information und kein exaktes Simulationsergebnis.",
     technical:
-      "Die angezeigte CE-Schranke in Totalvariation betrifft die Zeitverteilung bedingt auf Verarmung vor dem Tod unter CE-Sterblichkeit. Sie gilt weder für das GM-Diagramm noch für die altersbedingte Aktualisierung. Der empirische CDF-Abstand enthält Stichproben- und numerische Fehler.",
+      "Die angezeigte CE-Schranke in Totalvariation betrifft die Zeitverteilung bedingt auf das Erreichen der Rücklage vor dem Tod unter CE-Sterblichkeit. Sie gilt weder für das GM-Diagramm noch für die altersbedingte Aktualisierung. Der empirische CDF-Abstand enthält Stichproben- und numerische Fehler.",
     keywords: "Durbin Näherung Schranke CDF Abstand Fehler",
   },
   trajectories: {
@@ -357,7 +358,7 @@ export const germanDictionary: Record<DictionaryTermId, GermanEntry> = {
     summary:
       "Beispielpfade zeigen mögliche modellierte Vermögensverläufe, keine Vorhersagen für die Zukunft einer bestimmten Person.",
     explanation:
-      "Sie setzen voraus, dass die Person am Leben bleibt, und enden bei Verarmung oder am Strategiehorizont. Mischen ändert die angezeigte Stichprobe ohne neue Simulation.",
+      "Sie setzen voraus, dass die Person am Leben bleibt, und enden beim Erreichen der Rücklage oder am Strategiehorizont. Mischen ändert die angezeigte Stichprobe ohne neue Simulation.",
     technical:
       "Es werden nur eine begrenzte Auswahl von Pfaden und ein reduziertes Darstellungsraster gespeichert; kurze Schwankungen können in der Darstellung fehlen.",
     keywords: "Vermögen Pfade Beispiele Mischen Simulation",

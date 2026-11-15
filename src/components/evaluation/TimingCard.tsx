@@ -323,7 +323,7 @@ function TimingPlot({
         role="img"
         aria-label={
           language === "en"
-            ? `${conditional ? "Conditional" : "Forecast"} ${density ? "impoverishment risk density" : "remaining impoverishment risk"} by attained age`
+            ? `${conditional ? "Conditional" : "Forecast"} ${density ? "density of risk of reaching the reserve" : "remaining risk of reaching the reserve"} by attained age`
             : `${conditional ? copy.conditional : copy.forecast}: ${density ? copy.densityTitle : copy.remainingRisk} · ${copy.attainedAge}`
         }
       />

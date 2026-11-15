@@ -87,10 +87,10 @@ export const evaluationCardMessages: Record<Language, EvaluationCardMessages> =
       borrowing: "Borrowing exposure",
       borrowingProbability: "Probability of ever borrowing",
       borrowingProbabilityNote:
-        "While alive and before impoverishment or the run horizon",
+        "While alive, before reaching the reserve or the run horizon",
       borrowingTime: "Expected time borrowing",
       borrowingTimeNote:
-        "Average time alive while borrowing before impoverishment or the run horizon",
+        "Average time alive while borrowing before reaching the reserve or the run horizon",
       borrowingDetails: "View borrowing diagnostics",
     },
     de: {
@@ -133,10 +133,10 @@ export const evaluationCardMessages: Record<Language, EvaluationCardMessages> =
       borrowing: "Kreditaufnahme",
       borrowingProbability: "Wahrscheinlichkeit einer Kreditaufnahme",
       borrowingProbabilityNote:
-        "Zu Lebzeiten und vor Verarmung oder dem Laufhorizont",
+        "Zu Lebzeiten, vor Erreichen der Rücklage oder dem Laufhorizont",
       borrowingTime: "Erwartete Kreditdauer",
       borrowingTimeNote:
-        "Durchschnittliche Kreditdauer zu Lebzeiten vor Verarmung oder dem Laufhorizont",
+        "Durchschnittliche Kreditdauer zu Lebzeiten vor Erreichen der Rücklage oder dem Laufhorizont",
       borrowingDetails: "Kreditdiagnostik anzeigen",
     },
   };

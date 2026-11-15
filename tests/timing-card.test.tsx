@@ -50,14 +50,17 @@ test("timing card presents captured GM forecast and age control", () => {
 
   assert.match(html, /UNCONSTRAINED POLICY/);
   assert.match(html, /GM MORTALITY/);
-  assert.match(html, /Forecast remaining impoverishment risk by attained age/);
+  assert.match(
+    html,
+    /Forecast remaining risk of reaching the reserve by attained age/,
+  );
   assert.match(html, /Selected age/);
   assert.match(html, /assessed at retirement/);
   assert.match(html, /Show Durbin approximation/);
   assert.doesNotMatch(html, /Coming soon/);
   assert.match(html, /<input type="checkbox"\/>/);
   assert.match(html, /Approximation error &amp; diagnostics/);
-  assert.match(html, /CE conditional-on-impoverishment TV bound/);
+  assert.match(html, /CE TV bound conditional on reaching the reserve/);
   assert.match(html, /CE conditional CDF sup distance/);
   assert.doesNotMatch(html, /Monte Carlo interval for this chart/);
   assert.ok(
@@ -74,7 +77,10 @@ test("timing card labels projected and stale results without silently substituti
   );
   assert.match(projected, /PROJECTED POLICY/);
   assert.doesNotMatch(projected, /Show Durbin approximation/);
-  assert.doesNotMatch(projected, /CE conditional-on-impoverishment TV bound/);
+  assert.doesNotMatch(
+    projected,
+    /CE TV bound conditional on reaching the reserve/,
+  );
   assert.doesNotMatch(projected, /CE conditional CDF sup distance/);
   assert.doesNotMatch(projected, /Monte Carlo interval for this chart/);
   assert.match(projected, /NEEDS UPDATING/);
@@ -90,7 +96,7 @@ test("timing card labels projected and stale results without silently substituti
   assert.match(missing, /Run a projected-policy simulation/);
   assert.doesNotMatch(
     missing,
-    /Forecast remaining impoverishment risk by attained age/,
+    /Forecast remaining risk of reaching the reserve by attained age/,
   );
 });
 

@@ -30,7 +30,7 @@ test("evaluation renders illustrative results and the main controls", () => {
   assert.match(html, /Starting capital/);
   assert.match(
     html.slice(html.indexOf("YOUR SETUP"), html.indexOf("Run simulation")),
-    /Impoverishment level/,
+    /Desired reserve/,
   );
   assert.match(html, /Target risk/);
   assert.ok(html.indexOf("YOUR SETUP") < html.indexOf("Run simulation"));

@@ -72,7 +72,7 @@ export const gettingStartedMessages: Record<Language, GettingStartedMessages> =
           action: "Open Market & investor",
           paragraphs: [
             "Select Investor & mortality. Enter your birth year and expected retirement year, then choose the mortality table and longevity scenario. The cohort information describes a population, not your personal lifespan.",
-            "Enter the savings available at retirement and an impoverishment level below that amount. This is the threshold you consider too low; for example, it could preserve a reserve for essential or unexpected expenses. The simulator models the chance of reaching it while you are alive. The smallest supported threshold is €1.",
+            "Enter the savings available at retirement and a desired reserve below that amount. This is the wealth threshold used to assess your risk; for example, it could represent a buffer for essential or unexpected expenses. The simulator models the chance of reaching it while you are alive. It is not set aside separately or guaranteed. The smallest supported threshold is €1.",
             "The mortality models fit automatically as relevant inputs change. You can review the survival chart and fit diagnostics on this tab; if a fit fails, check the inputs and retry.",
           ],
         },
@@ -139,7 +139,7 @@ export const gettingStartedMessages: Record<Language, GettingStartedMessages> =
           action: "Markt & Person öffnen",
           paragraphs: [
             "Wählen Sie Person & Sterblichkeit. Geben Sie Ihr Geburtsjahr und das erwartete Ruhestandsjahr ein und wählen Sie die Sterbetafel und das Langlebigkeitsszenario. Die Kohortendaten beschreiben eine Bevölkerung, nicht Ihre persönliche Lebensdauer.",
-            "Geben Sie Ihr verfügbares Vermögen zum Ruhestandsbeginn und eine darunterliegende Verarmungsgrenze ein. Diese kann zum Beispiel für eine gewünschte Reserve für notwendige oder unerwartete Ausgaben stehen. Der Simulator modelliert das Risiko, diese Grenze zu Lebzeiten zu erreichen. Die kleinste unterstützte Grenze beträgt 1 €.",
+            "Geben Sie Ihr verfügbares Vermögen zum Ruhestandsbeginn und eine darunterliegende gewünschte Rücklage ein. Sie dient als Vermögensschwelle für Ihre Risikobetrachtung und kann zum Beispiel eine Reserve für notwendige oder unerwartete Ausgaben darstellen. Der Simulator modelliert das Risiko, diese Schwelle zu Lebzeiten zu erreichen. Sie wird nicht getrennt angelegt oder garantiert. Die kleinste unterstützte Grenze beträgt 1 €.",
             "Die Sterblichkeitsmodelle werden bei relevanten Eingabeänderungen automatisch angepasst. Auf diesem Reiter können Sie Überlebenskurve und Anpassungsdiagnostik prüfen; falls eine Anpassung fehlschlägt, prüfen Sie die Eingaben und versuchen Sie es erneut.",
           ],
         },

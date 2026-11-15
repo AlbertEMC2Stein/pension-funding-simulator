@@ -3,7 +3,7 @@ export const panelHelpGerman = {
   withdrawal: {
     title: "Auszahlung und Risiko",
     paragraphs: [
-      "Die Kurve zeigt den Zusammenhang zwischen jährlicher Auszahlung und lebenslangem Verarmungsrisiko im analytischen CE-Modell. Der Punkt markiert das gewählte Risiko beziehungsweise die gewählte Auszahlung und den jeweils daraus berechneten Wert.",
+      "Die Kurve zeigt den Zusammenhang zwischen jährlicher Auszahlung und dem lebenslangen Risiko, die gewünschte Rücklage zu erreichen, im analytischen CE-Modell. Der Punkt markiert das gewählte Risiko beziehungsweise die gewählte Auszahlung und den jeweils daraus berechneten Wert.",
       "Die Kurve gilt für die unbeschränkte Strategie. Ergebnisse für die GM-Sterblichkeit und die projizierte Strategie werden gesondert angezeigt.",
     ],
   },
@@ -22,16 +22,16 @@ export const panelHelpGerman = {
     ],
   },
   timing: {
-    title: "Wann könnte Verarmung eintreten?",
+    title: "Wann könnte das Vermögen die Rücklage erreichen?",
     paragraphs: [
-      "Die Prognose zeigt das ab dem gewählten Alter verbleibende Risiko aus Sicht des Ruhestandsbeginns. Die bedingte Aktualisierung setzt voraus, dass Sie zu diesem Alter leben und die Verarmungsgrenze noch nicht erreicht haben. Das aktuelle Vermögen wird nicht eingegeben.",
+      "Die Prognose zeigt das ab dem gewählten Alter verbleibende Risiko aus Sicht des Ruhestandsbeginns. Die bedingte Aktualisierung setzt voraus, dass Sie zu diesem Alter leben und die gewünschte Rücklage noch nicht erreicht haben. Das aktuelle Vermögen wird nicht eingegeben.",
       "Die Kurve des verbleibenden Risikos fällt am Simulationshorizont auf null. Die Dichtebalken zeigen Risiko pro Jahr; ihre Fläche über einen Altersbereich entspricht einem Wahrscheinlichkeitsbeitrag. Die Ergebnisse reichen nur bis zum simulierten Horizont.",
     ],
   },
   borrowing: {
     title: "Kreditaufnahme",
     paragraphs: [
-      "Die Wahrscheinlichkeit einer Kreditaufnahme schätzt, ob zu Lebzeiten vor Verarmung oder dem Simulationshorizont jemals ein Kredit aufgenommen wird. Die erwartete Dauer mittelt über alle Pfade, auch über solche ohne Kreditaufnahme.",
+      "Die Wahrscheinlichkeit einer Kreditaufnahme schätzt, ob zu Lebzeiten vor Erreichen der Rücklage oder dem Simulationshorizont jemals ein Kredit aufgenommen wird. Die erwartete Dauer mittelt über alle Pfade, auch über solche ohne Kreditaufnahme.",
       "Dass eine Kreditaufnahme irgendwo möglich ist, bedeutet nicht, dass sie auf jedem Pfad eintritt. Diese Ansicht ist für die projizierte Strategie, die Kreditaufnahme verhindert, und bei negativen Merton-Komponenten, die Leerverkäufe bedingen, nicht verfügbar.",
     ],
   },
@@ -59,7 +59,7 @@ export const panelHelpGerman = {
   feasibilityTable: {
     title: "Tabelle zur Zulässigkeitssensitivität",
     paragraphs: [
-      "Jede Zeile variiert das gewählte Risiko beziehungsweise die Auszahlung und die Verarmungsgrenze; die übrigen Einstellungen werden gemeinsam verwendet. Ein Lauf hält diese Einstellungen fest. Nach Änderungen können ältere Ergebnisse eine Aktualisierung benötigen.",
+      "Jede Zeile variiert das gewählte Risiko beziehungsweise die Auszahlung und die gewünschte Rücklage; die übrigen Einstellungen werden gemeinsam verwendet. Ein Lauf hält diese Einstellungen fest. Nach Änderungen können ältere Ergebnisse eine Aktualisierung benötigen.",
       "Die Tabelle betrifft die unbeschränkte Strategie. ζ beschreibt die globale Zulässigkeit, während Wahrscheinlichkeit und erwartete Dauer einer Kreditaufnahme simulierte Ergebnisse beschreiben. Bei negativen Merton-Komponenten und damit erforderlichen Leerverkäufen sind die Kreditkennzahlen nicht verfügbar.",
     ],
   },
