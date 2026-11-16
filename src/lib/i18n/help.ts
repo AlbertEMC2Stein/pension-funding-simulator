@@ -15,6 +15,8 @@ interface HelpMessages {
   count: (count: number) => string;
   math: string;
   technical: string;
+  paper: string;
+  paperPage: (page: number) => string;
   empty: string;
   asideLabel: string;
   asideTitle: string;
@@ -48,6 +50,8 @@ export const helpMessages: Record<Language, HelpMessages> = {
     count: (count) => `Showing ${count} ${count === 1 ? "term" : "terms"}`,
     math: "Equations are rendered in the technical details of selected entries.",
     technical: "Technical details",
+    paper: "In the research paper",
+    paperPage: (page) => `Page ${page}`,
     empty: "No matching terms. Try another search.",
     asideLabel: "LEARN AS YOU GO",
     asideTitle: "As much detail as you need.",
@@ -80,6 +84,8 @@ export const helpMessages: Record<Language, HelpMessages> = {
       `${count} ${count === 1 ? "Begriff" : "Begriffe"} angezeigt`,
     math: "Gleichungen erscheinen in den technischen Details ausgewählter Einträge.",
     technical: "Technische Details",
+    paper: "In der wissenschaftlichen Arbeit",
+    paperPage: (page) => `Seite ${page}`,
     empty: "Keine passenden Begriffe. Versuchen Sie eine andere Suche.",
     asideLabel: "BEIM ERKUNDEN LERNEN",
     asideTitle: "So viel Detail wie Sie möchten.",

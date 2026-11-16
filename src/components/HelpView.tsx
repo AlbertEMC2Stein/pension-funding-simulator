@@ -4,6 +4,11 @@ import katex from "katex";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeading } from "./common";
 import { localizedDictionary } from "../lib/help/localized-dictionary";
+import {
+  paperReferences,
+  paperReferenceUrl,
+} from "../lib/help/paper-references";
+import type { DictionaryTermId } from "../lib/help/dictionary";
 import { helpMessages } from "../lib/i18n/help";
 import { useLanguage } from "./LanguageContext";
 import { RESULT_STATUSES, StatusBadge } from "./StatusBadge";
@@ -189,6 +194,38 @@ export function HelpView({ selectedTerm }: { selectedTerm: string | null }) {
                   <p>{entry.technical}</p>
                   {entry.equation && <Equation source={entry.equation} />}
                   {entry.symbols && <p>{entry.symbols}</p>}
+                  {paperReferences[entry.id as DictionaryTermId] && (
+                    <div className="dictionary-paper-references">
+                      <p>{text.paper}</p>
+                      <ul>
+                        {paperReferences[entry.id as DictionaryTermId]!.map(
+                          (reference) => (
+                            <li key={reference.destination}>
+                              <a
+                                href={paperReferenceUrl(
+                                  reference,
+                                  "destination",
+                                )}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {reference.label[language]}
+                              </a>{" "}
+                              (
+                              <a
+                                href={paperReferenceUrl(reference, "page")}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {text.paperPage(reference.page)}
+                              </a>
+                              )
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    </div>
+                  )}
                 </details>
               </article>
             ))}

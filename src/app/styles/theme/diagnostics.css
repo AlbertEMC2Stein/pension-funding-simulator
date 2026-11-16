@@ -619,6 +619,26 @@ table.capital-table {
   cursor: pointer;
 }
 
+.dictionary-paper-references {
+  margin-top: 14px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.dictionary-paper-references p {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.dictionary-paper-references ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.dictionary-paper-references a {
+  color: var(--accent);
+}
+
 .dictionary-aside {
   margin-top: 0;
 }
